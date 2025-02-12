@@ -9,22 +9,22 @@
  
 # --- COMMIT END ---
 # Type can be
-#   build   : build system
-#   feat    : new feature
-#   fix     : bug fix
-#   refactor: refactoring production code
-#   style   : formatting, missing semi colons, etc; no code change
-#   docs    : changes to documentation
-#   test    : adding or refactoring tests
-#             no productin code change
-#   chore   : updating grunt tasks etc
-#             no production code change
+#   build   : 빌드 시스템
+#   feat    : 새로운 기능
+#   fix     : 버그 수정
+#   refactor: 프로덕션 코드 리팩토링
+#   style   : 서식 지정, 세미콜론 누락 등, 코드 변경 없음
+#   docs    : 문서 변경
+#   test    : 테스트 추가 또는 리팩토링
+#             프로덕션 코드 변경 없음
+#   chore   : 단순 작업 업데이트 등
+#             프로덕션 코드 변경 없음
 # ------------------
 # Commit rules:
-#   Capitalize the subject line
-#   Use the imperative mood in the subject line
-#   Do not end the subject line with a period
-#   Separate subject from body with a blank line
-#   Use the body to explain what and why vs. how
-#   Can use multiple lines with "-" for bullet points in body
+#   subject 대문자 사용 (Capitalize)
+#   subject에 명령형 분위기 사용
+#   subject을 마침표로 끝내지 않기
+#   빈 줄로 subject와 body을 구분합니다.
+#   body을 사용하여 '무엇'과 '왜', '어떻게'를 설명합니다.
+#   body에서 글머리 기호에 “-”로 여러 줄 사용 가능
 # ------------------

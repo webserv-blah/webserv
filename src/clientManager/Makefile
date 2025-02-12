@@ -5,8 +5,8 @@ ifndef SRCDIR
 	SRCDIR = $(abspath ../)
 endif
 
-NAME := subsrc2.a
-HEAD := subsrc2.hpp
+NAME := ClientManager.a
+HEAD := ClientManager.hpp
 SRCS := $(wildcard *.cpp)
 
 include $(TOPDIR)/include_make/Variable.mk

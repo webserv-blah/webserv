@@ -24,3 +24,19 @@ void RequestMessage::addBody(std::string bodyData) {
 	this->body_.append("\r\n");
 	this->body_.append(bodyData);
 }
+
+// Parser 구현 후, 파싱 테스트용 함수, C++98 X
+#include <iostream>
+#include <iterator>
+void RequestMessage::printFields(void) const {
+	std::cout << "\033[32;7m< PrintFields :\033[0m"<<std::endl;
+	for (auto it : this->fieldLines_) {
+		std::cout <<"["<<it.first<<"]: ";
+		for (auto itt : it.second) {
+			std::cout <<"{"<<itt<<"}";
+			std::cout <<", ";
+		}
+		std::cout << std::endl;
+	}
+	std::cout << "\033[32;7m>\033[0m"<<std::endl;
+}

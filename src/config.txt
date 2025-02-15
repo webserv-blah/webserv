@@ -1,0 +1,52 @@
+server {
+    listen 127.0.0.1:8080;
+    server_names example.com www.example.com;
+
+    root /var/www/example;
+    index index.html;
+    upload_path /var/www/example/uploads;
+    cgi_extension .cgi;
+    
+    methods GET POST DELETE;
+    error_page 404 /404.html;
+    client_max_body_size 1048576;
+    autoindex on;
+
+    location / {
+    }
+    
+    location /static {
+        root /var/www/example/static;
+        autoindex off;
+    }
+    
+    location /api {
+        methods GET POST;
+        return_url /api/v2;
+        return_status 301;
+    }
+}
+
+server {
+    listen 192.168.0.1:80;
+    server_names mysite.com www.mysite.com;
+
+    root /var/www/mysite;
+    index index.php;
+    upload_path /var/www/mysite/uploads;
+    cgi_extension .php;
+    
+    methods GET POST;
+    error_page 500 /50x.html;
+    client_max_body_size 2097152;  # 2 MB in bytes
+    autoindex off;
+
+    location / {
+    }
+    
+    location /admin {
+        methods GET POST DELETE;
+        return_url /login;
+        return_status 302;
+    }
+}

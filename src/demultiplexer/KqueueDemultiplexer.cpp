@@ -1,55 +1,63 @@
 #include "KqueueDemultiplexer.hpp"
 
-KqueueDemultiplexer::KqueueDemultiplexer() {
-	_Demultiplexer_fd = kqueue();
-	if (_Demultiplexer_fd == -1) {
-		//에러처리
-		perror("kqueue");
+KqueueDemultiplexer::KqueueDemultiplexer() : eventList_(MAX_EVENT){
+	kq_ = kqueue();
+	if (kq_ == -1) {
+		perror("kqueue creation failed");
 	}
-	//_events초기화가 필요한가. 
 }
 
 KqueueDemultiplexer::~KqueueDemultiplexer() {
-	
+	close(kq_);
 }
 
 int		KqueueDemultiplexer::waitForEventImpl() {
-	int num_events = kevent(_Demultiplexer_fd, &_events[0], _events.len(), );
-	return num_events;
+	int numEvents = kevent(kq_, changedEvents_.data(), changedEvents_.size(), eventList_.data(), MAX_EVENT, nullptr);
+	changedEvents_.clear(); 
+	return numEvents;
 }
 
 void	KqueueDemultiplexer::addSocketImpl(int fd) {
-	//_ev.. 를 사용해야 맞는건지, ev를 매번 생성하거나 해야하는건지..
-	//events랑 changed_list 구분해서 관리해야하나?
-	EV_SET(&_ev, fd, EVFILT_READ, EV_ADD, 0, 0, nullptr);
-	EV_SET(&_ev, fd, EVFILT_EXCEPT, EV_ADD, 0, 0, nullptr);
+	struct kevent changes[2];
+
+	EV_SET(&changes[0], fd, EVFILT_READ, EV_ADD, 0, 0, nullptr);
+	EV_SET(&changes[1], fd, EVFILT_EXCEPT, EV_ADD, 0, 0, nullptr);
+	changedEvents_.insert(changedEvents_.end(), changes, changes + 2);
 }
-void	KqueueDemultiplexer::removeSocketImpl() {
-	
+void	KqueueDemultiplexer::removeSocketImpl(int fd) {
+	struct kevent changes[3];
+
+	EV_SET(&changes[0], fd, EVFILT_READ, EV_DELETE, 0, 0, nullptr);
+	EV_SET(&changes[1], fd, EVFILT_EXCEPT, EV_DELETE, 0, 0, nullptr);
+	EV_SET(&changes[2], fd, EVFILT_WRITE, EV_DELETE, 0, 0, nullptr);
+	changedEvents_.insert(changedEvents_.end(), changes, changes + 3);
 }
-void	KqueueDemultiplexer::addWriteEventImpl() {
-	
+void	KqueueDemultiplexer::addWriteEventImpl(int fd) {
+	struct kevent change;
+
+	EV_SET(&change, fd, EVFILT_WRITE, EV_ADD, 0, 0, nullptr);
+	changedEvents_.push_back(change);
 }
-void	KqueueDemultiplexer::removeWriteEventImpl() {
+void	KqueueDemultiplexer::removeWriteEventImpl(int fd) {
+	struct kevent change;
 	
+	EV_SET(&change, fd, EVFILT_WRITE, EV_DELETE, 0, 0, nullptr);
+	changedEvents_.push_back(change);
 }
 
-bool	KqueueDemultiplexer::isReadEventImpl(int idx) {
-	if (_events[idx].filter == EVFILT_READ) {
-		return true;
+int	KqueueDemultiplexer::getEventTypeImpl(int idx) {
+	if (eventList_[idx].filter == EVFILT_EXCEPT) {
+		return EXCEPTION_EVENT;
 	}
-	return false;
+	if (eventList_[idx].filter == EVFILT_READ) {
+		return READ_EVENT;
+	}
+	if (eventList_[idx].filter == EVFILT_WRITE) {
+		return WRITE_EVENT;
+	}
+	return UNKNOWN_EVENT;
 }
-bool	KqueueDemultiplexer::isWriteEventImpl(int idx) {
-	if (_events[idx].filter == EVFILT_WRITE) {
-		return true;
-	}
-	return false;
-	
-}
-bool	KqueueDemultiplexer::isExceptionEventImpl(int idx) {
-	if (_events[idx].filter == EVFILT_EXCEPT) {
-		return true;
-	}
-	return false;
+
+int KqueueDemultiplexer::getSocketFdImpl(int idx) {
+	return eventList_[idx].ident;
 }

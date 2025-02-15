@@ -1,53 +1,36 @@
 #include "DemultiplexerBase.hpp"
 
 template <typename Derived>
-DemultiplexerBase<Derived>::DemultiplexerBase() {
-	
+int DemultiplexerBase<Derived>::waitForEvent() {
+	return static_cast<Derived&>(*this).waitForEventImpl();
 }
 
 template <typename Derived>
-DemultiplexerBase<Derived>::~DemultiplexerBase() {
-	
+void DemultiplexerBase<Derived>::addSocket(int fd) {
+	static_cast<Derived&>(*this).addSocketImpl(fd);
 }
 
 template <typename Derived>
-int waitForEvent() {
-	return static_cast<Derived*>(this)->waitForEventImpl();
+void DemultiplexerBase<Derived>::removeSocket(int fd) {
+	static_cast<Derived&>(*this).removeSocketImpl(fd);
 }
 
 template <typename Derived>
-void addSocket() {
-	return static_cast<Derived*>(this)->addSocketImpl();
+void DemultiplexerBase<Derived>::addWriteEvent(int fd) {
+	static_cast<Derived&>(*this).addWriteEventImpl(fd);
 }
 
 template <typename Derived>
-void removeSocket() {
-	return static_cast<Derived*>(this)->removeSocketImpl();
+void DemultiplexerBase<Derived>::removeWriteEvent(int fd) {
+	static_cast<Derived&>(*this).removeWriteEventImpl(fd);
 }
 
 template <typename Derived>
-void addWriteEvent() {
-	return static_cast<Derived*>(this)->addWriteEventImpl();
+int	DemultiplexerBase<Derived>::getEventType(int idx) {
+	return static_cast<Derived&>(*this).getEventTypeImpl(idx);
 }
 
 template <typename Derived>
-void removeWriteEvent() {
-	return static_cast<Derived*>(this)->removeWriteEventImpl();
+int DemultiplexerBase<Derived>::getSocketFd(int idx) {
+	return static_cast<Derived&>(*this).getSocketFdImpl(idx);
 }
-
-template <typename Derived>
-bool isReadEvent() {
-	return static_cast<Derived*>(this)->isReadEventImpl();
-}
-
-template <typename Derived>
-bool isWriteEvent() {
-	return static_cast<Derived*>(this)->isWriteEventImpl();
-}
-
-template <typename Derived>
-bool isExceptionEvent() {
-	return static_cast<Derived*>(this)->isExceptionEventImpl();
-}
-
-

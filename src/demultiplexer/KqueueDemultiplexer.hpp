@@ -4,6 +4,8 @@
 #include "DemultiplexerBase.hpp"
 #include <sys/event.h>
 #include <iostream>
+#include <vector>
+#include <unistd.h>
 
 class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 	public:
@@ -11,22 +13,20 @@ class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 		~KqueueDemultiplexer();
 		int		waitForEventImpl();
 		void	addSocketImpl(int fd);
-		void	removeSocketImpl();
-		void	addWriteEventImpl();
-		void	removeWriteEventImpl();
+		void	removeSocketImpl(int fd);
+		void	addWriteEventImpl(int fd);
+		void	removeWriteEventImpl(int fd);
 		
-		bool	isReadEventImpl(int idx);
-		bool	isWriteEventImpl(int idx);
-		bool	isExceptionEventImpl(int idx);
+		int		getEventTypeImpl(int idx);
+		int		getSocketFdImpl(int idx);
+	
 	
 	private:
-		int				_Demultiplexer_fd;
-		struct kevent	_events[MAX_EVENT];
-		struct kevent	_ev;
-		
+		int							kq_;
+		std::vector<struct kevent>	eventList_;
+		std::vector<struct kevent>	changedEvents_;
 	
 };
 
 typedef KqueueDemultiplexer Demultiplexer;
-
 #endif

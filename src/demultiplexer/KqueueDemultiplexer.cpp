@@ -1,9 +1,14 @@
 #include "KqueueDemultiplexer.hpp"
 
-KqueueDemultiplexer::KqueueDemultiplexer() : eventList_(MAX_EVENT){
+KqueueDemultiplexer::KqueueDemultiplexer(std::set<int>& serverFds) : eventList_(MAX_EVENT){
 	kq_ = kqueue();
 	if (kq_ == -1) {
 		perror("kqueue creation failed");
+	}
+
+	std::set<int>::const_iterator it;
+	for (it = serverFds.begin(); it != serverFds.end(); ++it) {
+		addSocketImpl(*it);
 	}
 }
 

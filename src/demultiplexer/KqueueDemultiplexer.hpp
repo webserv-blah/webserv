@@ -2,14 +2,15 @@
 
 #pragma once
 #include "DemultiplexerBase.hpp"
-#include <sys/event.h>
 #include <iostream>
 #include <vector>
+#include <set>
+#include <sys/event.h>
 #include <unistd.h>
 
 class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 	public:
-		KqueueDemultiplexer();
+		KqueueDemultiplexer(std::set<int>& serverFds);
 		~KqueueDemultiplexer();
 		int		waitForEventImpl();
 		void	addSocketImpl(int fd);

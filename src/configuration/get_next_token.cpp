@@ -1,5 +1,6 @@
 #include "ConfigParser.hpp"
 
+// 파일에서 다음 토큰을 읽어오는 함수
 std::string ConfigParser::getNextToken(std::ifstream& configFile) {
     // 반환할 토큰
     std::string token;
@@ -61,19 +62,20 @@ std::string ConfigParser::getNextToken(std::ifstream& configFile) {
     return token;
 }
 
-// std::string ConfigParser::peekNextToken(std::ifstream& configFile) {
-//     // 현재 스트림 위치 저장
-//     std::streampos originalPos = configFile.tellg();
-//     // 현재 스트림 상태 저장
-//     std::ios::iostate originalState = configFile.rdstate();
+// 파일에서 다음 토큰을 미리 확인하는 함수
+std::string ConfigParser::peekNextToken(std::ifstream& configFile) {
+    // 현재 스트림 위치 저장
+    std::streampos originalPos = configFile.tellg();
+    // 현재 스트림 상태 저장
+    std::ios::iostate originalState = configFile.rdstate();
 
-//     // 다음 토큰 읽기
-//     std::string token = getNextToken(configFile);
+    // 다음 토큰 읽기
+    std::string token = getNextToken(configFile);
 
-//     // 위치와 상태 복원
-//     configFile.clear();                 // 가능한 EOF 또는 실패 플래그 지우기
-//     configFile.seekg(originalPos);      // 저장된 위치로 돌아가기
-//     configFile.setstate(originalState); // 원래 상태 복원
+    // 위치와 상태 복원
+    configFile.clear();                 // 가능한 EOF 또는 실패 플래그 지우기
+    configFile.seekg(originalPos);      // 저장된 위치로 돌아가기
+    configFile.setstate(originalState); // 원래 상태 복원
 
-//     return token;
-// }
+    return token;
+}

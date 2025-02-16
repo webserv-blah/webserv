@@ -19,13 +19,6 @@ void GlobalConfig::print() {
         std::cout << "\n";
 
         std::cout << "  Request Handling:\n";
-        std::cout << "    Methods: ";
-        for (size_t j = 0; j < servers[i].reqHandling.methods.size(); j++) {
-            std::cout << servers[i].reqHandling.methods[j];
-            if (j < servers[i].reqHandling.methods.size() - 1)
-                std::cout << ", ";
-        }
-        std::cout << "\n";
 
         std::cout << "    Error Pages:\n";
         for (std::map<int, std::string>::iterator it = servers[i].reqHandling.errorPages.begin();
@@ -48,9 +41,9 @@ void GlobalConfig::print() {
 
         std::cout << "    Auto Index: ";
         if (servers[i].reqHandling.autoIndex.isSet())
-            std::cout << (servers[i].reqHandling.autoIndex.value() ? "true" : "false");
+            std::cout << (servers[i].reqHandling.autoIndex.value() ? "on" : "off");
         else
-            std::cout << "N/A";
+            std::cout << "on";
         std::cout << "\n";
 
         if (!servers[i].locations.empty()) {
@@ -88,9 +81,9 @@ void GlobalConfig::print() {
 
                 std::cout << "        Auto Index: ";
                 if (servers[i].locations[j].reqHandling.autoIndex.isSet())
-                    std::cout << (servers[i].locations[j].reqHandling.autoIndex.value() ? "true" : "false");
+                    std::cout << (servers[i].locations[j].reqHandling.autoIndex.value() ? "on" : "off");
                 else
-                    std::cout << "N/A";
+                    std::cout << "on";
                 std::cout << "\n";
             }
         }

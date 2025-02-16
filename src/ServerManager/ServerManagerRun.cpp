@@ -1,6 +1,9 @@
 #include "ServerManager.hpp"
 #include "../demultiplexer/KqueueDemultiplexer.hpp"
 
+//Event Loop
+// 읽기 혹은 쓰기 상태 관련 enum(혹은 매크로) 논의 필요
+// 아래 사용된 status 매크로는 임시
 
 void ServerManager::run() {
 	Demultiplexer	reactor(serverFds_);
@@ -16,37 +19,42 @@ void ServerManager::run() {
 			int fd = reactor.getSocketFd(i);
 
 			if (type == EXCEPTION_EVENT) {
-				//error response 전송 여부
+				// error response 전송 여부 판단 후 추가
 				timeoutHandler.removeConnection(fd);
 				reactor.removeSocket(fd);
 			} else if (type == READ_EVENT) {
 				if (isServer(fd)) {
 					int clientFd = eventHandler.handleServerReadEvent(clientManager);
-					if (clientFd) { // if accepted
+					if (clientFd) {
 						reactor.addSocket(fd);
 						timeoutHandler.addConnection(clientFd);
 					}
 				} else {
 					int status = eventHandler.handleClientReadEvent();
-					if (status == ONGOING) {
-						reactor.addWriteEvent(fd);
-					} else if (status == CONNECTION_CLOSED) {
+					if (status == CONNECTION_CLOSED) {
 						timeoutHandler.removeConnection(fd);
 						reactor.removeSocket(fd);
+					} else if (status == WRITE_ONGOING) {
+						timeoutHandler.updateActivity(fd);
+						reactor.addWriteEvent(fd);
+					} else {
+						timeoutHandler.updateActivity(fd);
 					}
 				}
-			} else if (type == WRITE_EVENT) {
+			} else if (type == WRITE_EVENT) 
 				int status = eventHandler.handleClientWriteEvent();
-				if (status == DONE_WRITING) {
-					reactor.removeWriteEvent(fd);
-				} else if (status == CONNECTION_CLOSED) {
+				if (status == CONNECTION_CLOSED) {
 					timeoutHandler.removeConnection(fd);
 					reactor.removeSocket(fd);
+				} else if (status == DONE_WRITING) {
+					timeoutHandler.updateActivity(fd); // 지울지 여부 판단 필요
+					reactor.removeWriteEvent(fd);
+				} else {
+					timeoutHandler.updateActivity(fd);
 				}
 			} 
 		}
-
-		timeoutHandler.checkTimeouts(eventHandler, reactor, clientManager); //ref로 넘김
+		timeoutHandler.checkTimeouts(eventHandler, reactor, clientManager);
 	}
 
 }

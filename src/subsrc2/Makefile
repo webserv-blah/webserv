@@ -6,7 +6,9 @@ ifndef SRCDIR
 endif
 
 NAME := subsrc2.a
-HEAD := subsrc2.hpp
+HEAD := subsrc2.hpp \
+		subsrc22.hpp \
+
 SRCS := $(wildcard *.cpp)
 
 include $(TOPDIR)/include_make/Variable.mk

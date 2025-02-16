@@ -8,6 +8,7 @@
 //임시
 #include "../include/commonEnums.hpp"
 #include "../ClientManager/ClientManager.hpp"
+
 class RequestParser {};
 class StaticHandler {};
 class CgiHandler {};

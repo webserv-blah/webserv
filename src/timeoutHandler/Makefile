@@ -5,14 +5,8 @@ ifndef SRCDIR
 	SRCDIR = $(abspath ../)
 endif
 
-<<<<<<< HEAD:src/subsrc1/Makefile
-NAME := subsrc1.a
-HEAD := subsrc1.hpp \
-
-=======
 NAME := TimeoutHandler.a
 HEAD := TimeoutHandler.hpp
->>>>>>> e3e29c4... feat: TimeoutHandler.updateActivity() 구현.(#3):src/timeoutHandler/Makefile
 SRCS := $(wildcard *.cpp)
 
 include $(TOPDIR)/include_make/Variable.mk

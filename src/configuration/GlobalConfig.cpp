@@ -5,7 +5,7 @@
 #include <string>
 #include <map>
 
-void GlobalConfig::printGlobalConfig() {
+void GlobalConfig::print() {
     for (size_t i = 0; i < servers.size(); i++) {
         std::cout << "Server " << i + 1 << ":\n";
         std::cout << "  Host: " << servers[i].host << "\n";

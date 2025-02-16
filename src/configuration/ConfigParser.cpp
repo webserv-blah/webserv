@@ -12,17 +12,17 @@ void ConfigParser::parse(GlobalConfig& globalConfig, const std::string& path) {
         if (token.empty())
             break;
         if (token == "server") {
-            globalConfig.servers.emplace_back();
-            parseServerBlock(globalConfig.servers.back(), configFile);
+            globalConfig.servers.push_back(ServerConfig());
+            parseServerBlock(configFile, globalConfig.servers.back());
         } else {
             throw std::runtime_error("Unexpected token in config file: " + token);
         }
     }
 
     // Get effective request handling for each location block.
-    for (ServerConfig& server : globalConfig.servers) {
-        for (LocationConfig& location : server.locations) {
-            getEffectiveReqHandling(server.reqHandling, location.reqHandling);
+    for (std::vector<ServerConfig>::iterator server = globalConfig.servers.begin(); server != globalConfig.servers.end(); ++server) {
+        for (std::vector<LocationConfig>::iterator location = server->locations.begin(); location != server->locations.end(); ++location) {
+            getEffectiveReqHandling(server->reqHandling, location->reqHandling);
         }
     }
 }
@@ -52,12 +52,12 @@ void ConfigParser::parseServerBlock(std::ifstream& configFile, ServerConfig& ser
             parseServerNames(configFile, serverBlock.serverNames);
         }
         else if (token == "location") {
-            serverBlock.locations.emplace_back();
+            serverBlock.locations.push_back(LocationConfig());
             parseLocationBlock(configFile, serverBlock.locations.back());
             continue;
         }
         else {
-            parseReqHandleConf(token, serverBlock.reqHandling, configFile);
+            parseReqHandleConf(configFile, serverBlock.reqHandling, token);
         }
 
         token = getNextToken(configFile);
@@ -92,7 +92,7 @@ void ConfigParser::parseLocationBlock(std::ifstream& configFile, LocationConfig&
             parseMethods(configFile, locationBlock.reqHandling.methods);
         }
         else {
-            parseReqHandleConf(token, locationBlock.reqHandling, configFile);
+            parseReqHandleConf(configFile, locationBlock.reqHandling, token);
         }
 
         token = getNextToken(configFile);

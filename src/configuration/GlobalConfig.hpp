@@ -6,37 +6,6 @@
 # include <vector>
 # include <map>
 
-class ServerConfig;
-class LocationConfig;
-class ReqHandleConf;
-
-// GlobalConfig는 웹 서버의 전체 구성을 나타냅니다.
-class GlobalConfig {
-public:
-    std::vector<ServerConfig> servers;        // 서버 구성 목록
-    void print();
-};
-
-// ServerConfig는 특정 서버의 구성을 나타냅니다.
-class ServerConfig {
-public:
-    std::string host;                         // 호스트 이름 또는 IP 주소
-    unsigned int port;                        // 수신 대기할 포트 번호
-    std::vector<std::string> serverNames;     // 서버 이름 별칭
-    ReqHandleConf reqHandling;                // 이 서버의 기본 요청 처리
-    std::vector<LocationConfig> locations;    // 위치별 구성 목록
-
-    // 기본 생성자는 원하는 경우 포트를 일반적인 기본값으로 초기화할 수 있습니다.
-    ServerConfig() : port(80) {}              // 포트를 80으로 기본 설정합니다.
-};
-
-// LocationConfig는 특정 위치 블록의 구성을 나타냅니다.
-class LocationConfig {
-public:
-    std::string path;                         // 위치 경로 (예: "/images")
-    ReqHandleConf reqHandling;                // 이 위치의 요청 처리 구성
-};
-
 // ReqHandleConf는 요청 처리를 위한 설정을 나타냅니다.
 class ReqHandleConf {
 public:
@@ -53,11 +22,40 @@ public:
 
     // 기본 생성자는 멤버를 기본값으로 초기화합니다.
     ReqHandleConf()
-    : 
-      methods("GET", "POST", "DELETE"),
-      indexFile("index.html"),
-      returnStatus(0),
-    {}
+    : indexFile("index.html"),
+      returnStatus(0)
+    {
+        methods.push_back("GET");
+        methods.push_back("POST");
+        methods.push_back("DELETE");
+    }
+};
+
+// LocationConfig는 특정 위치 블록의 구성을 나타냅니다.
+class LocationConfig {
+public:
+    std::string path;                         // 위치 경로 (예: "/images")
+    ReqHandleConf reqHandling;                // 이 위치의 요청 처리 구성
+};
+
+// ServerConfig는 특정 서버의 구성을 나타냅니다.
+class ServerConfig {
+public:
+    std::string host;                         // 호스트 이름 또는 IP 주소
+    unsigned int port;                        // 수신 대기할 포트 번호
+    std::vector<std::string> serverNames;     // 서버 이름 별칭
+    ReqHandleConf reqHandling;                // 이 서버의 기본 요청 처리
+    std::vector<LocationConfig> locations;    // 위치별 구성 목록
+
+    // 기본 생성자는 원하는 경우 포트를 일반적인 기본값으로 초기화할 수 있습니다.
+    ServerConfig() : port(80) {}              // 포트를 80으로 기본 설정합니다.
+};
+
+// GlobalConfig는 웹 서버의 전체 구성을 나타냅니다.
+class GlobalConfig {
+public:
+    std::vector<ServerConfig> servers;        // 서버 구성 목록
+    void print();
 };
 
 #endif

@@ -1,16 +1,41 @@
 #include "RequestMessage.hpp"
-#include <exception>
+#include <stdexcept>
 
-RequestMessage::RequestMessage() {}
-RequestMessage::RequestMessage(TypeMethod method, std::string target) : method_(method), target_(target) {}
+RequestMessage::RequestMessage() : method_(INIT) {}
+RequestMessage::RequestMessage(TypeMethod method, std::string targetURI) : method_(method), targetURI_(targetURI) {}
 RequestMessage::~RequestMessage() {}
+
+bool RequestMessage::hasMethod() const {
+	if (this->method_ == INIT)
+		return false;
+	return true;
+}
+
+TypeMethod RequestMessage::getMethod() const {
+	if (hasMethod())
+		return this->method_;
+	throw std::exception();//doesn't have a method yet
+}
+
+std::string RequestMessage::getTargetURI() const {
+	return this->targetURI_;
+}
+
+TypeField RequestMessage::getFields() const {
+	return this->fieldLines_;
+}
+
+std::string RequestMessage::getBody() const {
+	return this->body_;
+}
+
 
 void RequestMessage::setMethod(TypeMethod method) {
 	this->method_ = method;
 }
 
-void RequestMessage::setTarget(std::string target) {
-	this->target_ = target;
+void RequestMessage::setTargetURI(std::string targetURI) {
+	this->targetURI_ = targetURI;
 }
 
 void RequestMessage::addFields(std::string field, std::vector<std::string> values) {

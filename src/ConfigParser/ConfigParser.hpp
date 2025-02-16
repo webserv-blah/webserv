@@ -3,15 +3,13 @@
 #include "GlobalConfig.hpp"
 #include "utilities.hpp"
 
-#include <string>
-#include <vector>
-#include <map>
-#include <fstream>
-#include <stdexcept>
-#include <cctype>
-#include <stdexcept>
-#include <algorithm>
-#include <iterator>
+#include <string>            // std::string
+#include <vector>            // std::vector
+#include <map>               // std::map
+#include <fstream>           // std::ifstream
+#include <stdexcept>         // std::runtime_error
+#include <cctype>            // std::isdigit, std::isxdigit, std::isspace, std::tolower
+#include <iterator>          // std::iterator
 
 // 설정 파일 파서
 class ConfigParser {

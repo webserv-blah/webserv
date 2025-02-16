@@ -4,11 +4,8 @@
 #include <map>
 #include <vector>
 
-enum Method {
-	GET,
-	POST,
-	DELETE
-};
+#define CRLF "\r\n"
+enum Method { INIT, GET, POST, DELETE };
 
 class RequestMessage {
 	public:
@@ -19,16 +16,27 @@ class RequestMessage {
 		RequestMessage(TypeMethod method, std::string target);
 		~RequestMessage();
 
-		void	setMethod(TypeMethod method);
-		void	setTarget(std::string target);
-		void	addFields(std::string field, std::vector<std::string> values);
-		void	addBody(std::string bodyData);
+		bool		hasMethod() const;
+		
+		TypeMethod	getMethod() const;
+		std::string	getTargetURI() const;
+		TypeField	getFields() const;
+		std::string	getBody() const;
+		void		setMethod(TypeMethod method);
+		void		setTargetURI(std::string targetURI);
+		void		addFields(std::string field, std::vector<std::string> values);
+		void		addBody(std::string bodyData);
 
 	private:
+		//should I record CRLF?
 		TypeMethod	method_;
-		std::string	target_;
+		std::string	targetURI_;
 		TypeField	fieldLines_;
 		std::string	body_;
-		
+
+		//message data
+		ssize_t		contentLength;
+		//...
+
 		void	printFields(void) const;
 };

@@ -1,11 +1,10 @@
-#include "subsrc1.hpp"
-#include "subsrc2.hpp"
-#include "subsrc22.hpp"
+#include "GlobalConfig.hpp"
+#include "ConfigParser.hpp"
 
-int main(){
-	subsrc1 one;
-	subsrc2 two;
+int main(int argc, char** argv) {
+    GlobalConfig globalConfig;
 
-	one.funct();
-	two.funct();
+    ConfigParser::parse(globalConfig, "config.txt");
+    globalConfig.print();
+    return 0;
 }

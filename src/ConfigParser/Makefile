@@ -5,11 +5,13 @@ ifndef SRCDIR
 	SRCDIR = $(abspath ../)
 endif
 
-NAME := subsrc1.a
-HEAD := subsrc1.hpp \
-
+NAME := ConfigParser.a
+HEAD := ConfigParser.hpp \
+		utilities.hpp
 SRCS := $(wildcard *.cpp)
 
 include $(TOPDIR)/include_make/Variable.mk
+CPPFLAGS += -I$(SRCDIR)/GlobalConfig
+
 include $(TOPDIR)/include_make/Link.mk
 include $(TOPDIR)/include_make/Recipe_subsrc.mk

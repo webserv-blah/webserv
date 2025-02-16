@@ -5,17 +5,8 @@
 #define WRITE_EVENT 2
 #define EXCEPTION_EVENT 3
 #define UNKNOWN_EVENT -1
-//enum으로 수정 예정.
-/*
-enum class EventType {
-    READ = 1,
-    WRITE = 2,
-    EXCEPTION = 3,
-    UNKNOWN = -1
-};
-*/
 
-template<typename Derived>
+template <typename Derived>
 class DemultiplexerBase {
 	public:
 		int		waitForEvent(); 
@@ -27,8 +18,8 @@ class DemultiplexerBase {
 		int		getSocketFd(int idx);
 	
 	protected:
-		DemultiplexerBase() = default;
-		~DemultiplexerBase() = default;
+		DemultiplexerBase();
+		~DemultiplexerBase();
 	
 };
 

@@ -6,7 +6,11 @@ ifndef SRCDIR
 endif
 
 NAME := configuration.a
-HEAD := GlobalConfig.hpp ConfigParser.hpp Optional.hpp utilities.hpp
+HEAD := configuration.hpp \
+		GlobalConfig.hpp \
+		ConfigParser.hpp \
+		Optional.hpp \
+		utilities.hpp
 SRCS := $(wildcard *.cpp)
 
 include $(TOPDIR)/include_make/Variable.mk

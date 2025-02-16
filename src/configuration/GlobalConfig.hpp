@@ -22,13 +22,8 @@ public:
 
     // 기본 생성자는 멤버를 기본값으로 초기화합니다.
     ReqHandleConf()
-    : indexFile("index.html"),
-      returnStatus(0)
-    {
-        methods.push_back("GET");
-        methods.push_back("POST");
-        methods.push_back("DELETE");
-    }
+    : returnStatus(0)
+    {}
 };
 
 // LocationConfig는 특정 위치 블록의 구성을 나타냅니다.

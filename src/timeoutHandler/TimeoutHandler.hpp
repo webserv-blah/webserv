@@ -1,8 +1,13 @@
 #pragma once
 
-# include <map>
+#include <map>
 
-# define LIMIT 60 //sec
+//임시
+#include "../EventHandler/EventHandler.hpp"
+#include "../Demultiplexer/KqueueDemultiplexer.hpp"
+#include "../ClientManager/ClientManager.hpp"
+
+#define LIMIT 60 //sec => 만료 시간 논의
 
 class TimeoutHandler {
     public:
@@ -16,7 +21,7 @@ class TimeoutHandler {
         
         void addConnection(int fd);
         void updateActivity(int fd);
-        void checkTimeOuts();
+        void checkTimeouts(EventHandler& eventHandler, Demultiplexer& reactor, ClientManager& clientManager);
         void removeConnection(int fd);
 
     private:

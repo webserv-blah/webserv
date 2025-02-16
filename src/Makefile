@@ -5,7 +5,7 @@ ifndef SRCDIR
 	SRCDIR = $(abspath ./)
 endif
 
-NAME := webserv
+NAME := program
 SRCS := $(wildcard *.cpp)
 
 # SRCS(in SRCDIR) ------

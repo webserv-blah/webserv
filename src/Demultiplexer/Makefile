@@ -5,9 +5,10 @@ ifndef SRCDIR
 	SRCDIR = $(abspath ../)
 endif
 
-NAME := subsrc2.a
-HEAD := subsrc2.hpp \
-		subsrc22.hpp \
+NAME := Demultiplexer.a
+HEAD := DemultiplexerBase.hpp \
+		DemultiplexerBase.tpp \
+		KqueueDemultiplexer.hpp \
 
 SRCS := $(wildcard *.cpp)
 

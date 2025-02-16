@@ -1,4 +1,5 @@
-#include "configuration.hpp"
+#include "GlobalConfig.hpp"
+#include "ConfigParser.hpp"
 
 int main(int argc, char** argv) {
     GlobalConfig globalConfig;

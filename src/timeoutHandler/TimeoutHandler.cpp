@@ -21,7 +21,7 @@ void    TimeoutHandler::addConnection(int fd) {
 //최근 활동 시각 및 만료 시각 업데이트
 void    TimeoutHandler::updateActivity(int fd) {
     ConnectionIter cit = connections_.find(fd);
-    if (cit == connections_.end()) { 
+    if (cit == connections_.end()) {
         return ;
     }
     
@@ -40,7 +40,6 @@ void    TimeoutHandler::updateActivity(int fd) {
 
 //만료된 연결 처리
 void    TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& reactor, ClientManager& clientManager) {
-
     time_t currentTime = getTime();
 
     while (!expireQueue_.empty()) {

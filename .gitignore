@@ -1,6 +1,6 @@
 # User
 # (1)program
-(manda_program)
+webserv
 include/*
 src/manda/include/*
 # (2)etc.

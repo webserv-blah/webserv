@@ -3,6 +3,7 @@
 
 #include "GlobalConfig.hpp"
 #include "utilities.hpp"
+#include "Optional.hpp"
 
 #include <string>
 #include <vector>

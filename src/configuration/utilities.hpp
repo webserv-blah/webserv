@@ -1,4 +1,4 @@
-#ifndif UTILITIES_HPP
+#ifndef UTILITIES_HPP
 # define UTILITIES_HPP
 
 #include <string>
@@ -15,4 +15,4 @@ namespace utils {
 
 }
 
-#define UTILITIES_HPP
+#endif

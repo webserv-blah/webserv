@@ -1,5 +1,4 @@
-#ifndef OPTIONAL_HPP
-# define OPTIONAL_HPP
+#pragma once
 
 // 템플릿 클래스 Optional 정의
 template<typename T>
@@ -33,4 +32,3 @@ private:
     bool    isSet_;  // 값이 설정되었는지 여부를 저장하는 변수
 };
 
-#endif

@@ -1,0 +1,16 @@
+#pragma once
+
+enum SessionStatus {
+    READ_CONTINUE,
+    READ_COMPLETE,
+    WRITE_CONTINUE,
+    WRITE_COMPLETE,
+    CONNECTION_CLOSED,
+    CONNECTION_ERROR
+};
+
+enum Event {
+    READ_EVENT,
+    WRITE_EVENT,
+    EXCEPTION_EVENT
+};

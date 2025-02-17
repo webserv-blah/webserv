@@ -9,7 +9,12 @@ NAME := webserv
 SRCS := $(wildcard *.cpp)
 
 # SRCS(in SRCDIR) ------
-DIRS := $(subst /,,$(filter-out include/, $(wildcard */)))
+DIRS := utils \
+		GlobalConfig \
+		ConfigParser \
+		ServerManager \
+		Demultiplexer \
+		TimeoutHandler
 SUBS := $(addsuffix .a,$(DIRS))
 
 include $(TOPDIR)/include_make/Variable.mk

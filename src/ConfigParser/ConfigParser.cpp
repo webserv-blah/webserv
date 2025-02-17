@@ -1,12 +1,12 @@
 #include "ConfigParser.hpp"
 
 // globalConfig와 파일 경로를 받아 설정 파일을 파싱하는 함수
-void ConfigParser::parse(GlobalConfig& globalConfig, const std::string& path) {
+void ConfigParser::parse(GlobalConfig& globalConfig, const char* path) {
 	// 파일 경로로부터 입력 스트림을 생성함
-	std::ifstream configFile(path.c_str());
+	std::ifstream configFile(path);
 	if (!configFile.is_open()) {
 		// 파일을 열지 못하면 예외 발생
-		throw std::runtime_error("Failed to open config file: " + path);
+		throw std::runtime_error("Failed to open config file");
 	}
 
 	std::string token;

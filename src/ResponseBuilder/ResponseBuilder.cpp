@@ -4,8 +4,7 @@
 #include <sstream>
 
 ResponseBuilder::ResponseBuilder(const ReqHandleConf& conf)
-	: currConf_(conf), statusCode_(200), reasonPhrase_("OK")
-{
+	: currConf_(conf), statusCode_(200), reasonPhrase_("OK") {
 }
 
 ResponseBuilder::~ResponseBuilder() {
@@ -28,7 +27,7 @@ void ResponseBuilder::setBody(const std::string &bodyContent) {
 	headers_["Content-Length"] = oss.str();
 }
 
-// 파일 내용 읽기 (주로 buildError()에서 사용)
+// 파일 내용 읽기
 bool ResponseBuilder::readFileContentToString(const std::string &filePath, std::string &outContent) const {
 	std::ifstream file(filePath.c_str(), std::ios::in | std::ios::binary);
 	if (!file.is_open()) {
@@ -84,14 +83,13 @@ std::string ResponseBuilder::assembleResponse(int statusCode,
 }
 
 // 일반 응답
-std::string ResponseBuilder::build() const {
+std::string ResponseBuilder::build() {
 	// 혹시 Body가 비었는데 Content-Length가 설정 안됐으면 0으로 세팅
 	if (body_.empty()) {
 		if (headers_.find("Content-Length") == headers_.end()) {
 			std::ostringstream oss;
 			oss << 0;
-			// build()가 const 함수이므로 const_cast
-			const_cast<ResponseBuilder*>(this)->headers_["Content-Length"] = oss.str();
+			headers_["Content-Length"] = oss.str();
 		}
 	}
 	return assembleResponse(statusCode_, reasonPhrase_, headers_, body_);

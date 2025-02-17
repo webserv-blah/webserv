@@ -16,7 +16,7 @@ public:
 	void setBody(const std::string &bodyContent);
 
 	// 일반 응답 생성
-	std::string build() const;
+	std::string build();
 
 	// 에러 응답 생성 (커스텀/기본/기본 Fallback)
 	std::string buildError(int errorPageCode) const;

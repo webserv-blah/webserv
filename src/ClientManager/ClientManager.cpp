@@ -27,6 +27,7 @@ void	ClientManager::removeClient(int fd) {
 	clientList_.erase(it);
 }
 
+//fd에 대응하는 clientSession 객체 반환
 ClientSession	ClientManager::accessClientSession(int fd) {
 	if (clientList_.find(fd) == clientList_.end()) {
 		return (ClientSession)0;

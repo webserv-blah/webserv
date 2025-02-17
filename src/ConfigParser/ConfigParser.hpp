@@ -1,7 +1,7 @@
 #pragma once
 
 #include "GlobalConfig.hpp"
-#include "utilities.hpp"
+#include "utils.hpp"
 
 #include <string>            // std::string
 #include <vector>            // std::vector
@@ -14,7 +14,7 @@
 // 설정 파일 파서
 class ConfigParser {
 public:
-	static void	parse(GlobalConfig& globalConfig, const std::string& path);
+	static void	parse(GlobalConfig& globalConfig, const char* path);
 
 private:
 	static void	parseServerBlock(std::ifstream& configFile, ServerConfig& serverBlock);

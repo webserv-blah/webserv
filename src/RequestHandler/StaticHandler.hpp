@@ -5,6 +5,9 @@
 #include "GlobalConfig.hpp"
 #include "Request.hpp"
 #include <string>
+#include <fstream>
+#include <sstream>
+#include <vector>
 
 class StaticHandler {
 public:

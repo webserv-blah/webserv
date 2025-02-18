@@ -1,4 +1,4 @@
-#include <iostream>
+#include <iostream>//중간 과정을 출력하기 위한 임시 헤더
 
 #include "RequestParser.hpp"
 #include "utils.hpp"
@@ -6,10 +6,10 @@
 #include <sstream>
 
 RequestParser::RequestParser() : oneLineMaxLength_(ONELINE_MAX_LENGTH), uriMaxLength_(URI_MAX_LENGTH) {}
-//RequestParser::RequestParser(size_t configBodyLength) {}
 RequestParser::~RequestParser() {}
 
 //void RequestParser::setConfigBodyLength(size_t length) {
+	// MUST TO DO: Config를 반영하는 로직 필요, Body파싱 구현시 하게 될 듯
 //	this->bodyMaxLength = length;
 //}
 
@@ -18,7 +18,7 @@ std::string RequestParser::parse(const std::string &readData, RequestMessage &re
 	std::string buffer;
 	TypeReqStatus newStatus;
 
-	// 다시 마저 읽어오는 경우도 생각해봐야함
+	// MUST TO DO: 다시 마저 읽어오는 경우도 생각해봐야함
 	while (std::getline(iss, buffer, '\n')) {
 		//std::cout << "WHILE: " << buffer <<std::endl;
 		if (!buffer.empty() && buffer[buffer.size() - 1] == '\r') {
@@ -32,23 +32,22 @@ std::string RequestParser::parse(const std::string &readData, RequestMessage &re
 				continue ;
 			}
 			this->handleOneLine(buffer.erase(buffer.size() - 1), reqMsg);
-			if (iss.peek() == EOF)// - [ ] 덜 읽어들인 케이스
+			if (iss.peek() == EOF)// MUST TO DO: 덜 읽어들인 케이스 // ?????MUST TO DO: 완료 이전 판단중에 iss.peek() == EOF라면 기다려봐야함
 				return buffer;// == remain data
 		} else {
 			throw std::logic_error("Error: single \\n error");
 		}
-		//////////정상종료시에 connenction & content length 디폴트값설정 해주자!
+		// MUST TO DO: 정상종료시에 connenction & content length 디폴트값설정 해줘야함
 	}
 	iss >> buffer;
-	this->parseBody(buffer, reqMsg);//body는 content length만큼 그대로 읽어들임 
+	this->parseBody(buffer, reqMsg);// MUST TO DO: body는 content length만큼 그대로 읽어들임 
 	return "";
 }
 
 
 void RequestParser::handleOneLine(const std::string &line, RequestMessage &reqMsg) {
 	const TypeReqStatus curStatus = reqMsg.getStatus();
-			//request message의 완성도에 따라 
-			//각 helper함수를 호출하면 될 것 같다
+
 	if (curStatus == REQ_INIT
 	||  curStatus == REQ_TOP_CRLF)
 		this->parseStartLine(line, reqMsg);
@@ -57,7 +56,6 @@ void RequestParser::handleOneLine(const std::string &line, RequestMessage &reqMs
 		this->parseFieldLine(line, reqMsg);
 	//if (reqMsg.getStatus() == REQ_HEADER_CRLF) {
 	//	this->parseBody(line, reqMsg);//body는 content length만큼 그대로 읽어들임 
-	//	//////////////////////////////
 	//	break ;//body는 CRLF를 그대로 담아야하기때문에 다르게 처리되어야함
 	//}
 }
@@ -67,9 +65,9 @@ TypeReqStatus RequestParser::setStatusCRLF(const TypeReqStatus &curStatus) {
 	if (curStatus == REQ_INIT)
 		return REQ_TOP_CRLF;
 	if (curStatus == REQ_HEADER_FIELD)
-		return REQ_HEADER_CRLF;
+		return REQ_HEADER_CRLF;// MUST TO DO: 이 상태에서 request가 새롭게 들어오면 DONE을 해줘야하는 상황이 있음
 	return REQ_ERROR;
-	//??? done상태가..???
+	// MUST TO DO: 이상태에서 DONE의 판단을 할 수 있는가?
 }
 
 void RequestParser::parseStartLine(const std::string &line, RequestMessage &reqMsg) {
@@ -108,19 +106,18 @@ void RequestParser::parseFieldLine(const std::string &line, RequestMessage &reqM
 	iss.get();//trim 임시
 	iss >> value;
 
-	std::vector<std::string> values(1, value);//temp
+	std::vector<std::string> values(1, value);// MUST TO DO: 여러 value를 처리하는 로직
 	reqMsg.addFields(name, values);
 
 	try {
 		if (name == "Host")
 			reqMsg.setMetaHost(value);
 		if (name == "Content-Length")
-			reqMsg.setMetaContentLength(value);//int는... 안될 것 같은데..
+			reqMsg.setMetaContentLength(value);
 		if (name == "Connection")
 			reqMsg.setMetaConnection(value);
 	} catch (const std::exception &e) {
-		//it is header field value error
-		//how to save this... 
+		// MUST TO DO: Header Field value오류 처리
 	}
 
 	reqMsg.setStatus(REQ_HEADER_FIELD);
@@ -128,11 +125,13 @@ void RequestParser::parseFieldLine(const std::string &line, RequestMessage &reqM
 
 void RequestParser::parseBody(const std::string &line, RequestMessage &reqMsg) {
 	//if (reqMsg.getMetaContentLength())
+
 	reqMsg.addBody(line);
+
 	//reqMsg.setStatus(REQ_BODY_ING);
-	reqMsg.setStatus(REQ_DONE);//우선은 종료 처리... 여기서 마음대로 종료하면 안됨!
+	reqMsg.setStatus(REQ_DONE);// MUST TO DO: 우선 종료가 아닌, 추가적인 로직이 많이 필요함
 }
 
 //void RequestParser::cleanUpChunkedBody() {
-
+	// MUST TO DO: 청크 전송 파싱
 //}

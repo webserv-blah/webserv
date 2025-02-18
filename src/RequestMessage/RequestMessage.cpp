@@ -2,20 +2,12 @@
 #include "utils.hpp"
 #include <stdexcept>
 
-RequestMessage::RequestMessage() : method_(INIT), status_(REQ_INIT) {}
+RequestMessage::RequestMessage() : method_(NONE), status_(REQ_INIT) {}
 RequestMessage::RequestMessage(TypeMethod method, std::string targetURI) : method_(method), targetURI_(targetURI) {}
 RequestMessage::~RequestMessage() {}
 
-bool RequestMessage::hasMethod() const {
-	if (this->method_ == INIT)
-		return false;
-	return true;
-}
-
 TypeMethod RequestMessage::getMethod() const {
-	if (hasMethod())
-		return this->method_;
-	throw std::exception();//doesn't have a method yet
+	return this->method_;
 }
 
 std::string RequestMessage::getTargetURI() const {
@@ -30,11 +22,11 @@ std::string RequestMessage::getBody() const {
 	return this->body_;
 }
 
-void RequestMessage::setMethod(TypeMethod method) {
+void RequestMessage::setMethod(const TypeMethod &method) {
 	this->method_ = method;
 }
 
-void RequestMessage::setTargetURI(std::string targetURI) {
+void RequestMessage::setTargetURI(const std::string &targetURI) {
 	this->targetURI_ = targetURI;
 }
 
@@ -66,15 +58,15 @@ ssize_t RequestMessage::getMetaContentLength() const {
 	return this->metaContentLength_;
 }
 
-void RequestMessage::setStatus(TypeReqStatus status) {
+void RequestMessage::setStatus(const TypeReqStatus &status) {
 	this->status_ = status;
 }
 
-void RequestMessage::setMetaHost(std::string value) {
+void RequestMessage::setMetaHost(const std::string &value) {
 	this->metaHost_ = value;
 }
 
-void RequestMessage::setMetaConnection(std::string value) {
+void RequestMessage::setMetaConnection(const std::string &value) {
 	if (value == "keep-alive")
 		this->metaConnection_ = KEEP_ALIVE;
 	if (value == "close")
@@ -82,7 +74,7 @@ void RequestMessage::setMetaConnection(std::string value) {
 	throw std::logic_error("Error: connection value");
 }
 
-void RequestMessage::setMetaContentLength(std::string value) {
+void RequestMessage::setMetaContentLength(const std::string &value) {
 	this->metaContentLength_ = utils::stosizet(value);
 }
 

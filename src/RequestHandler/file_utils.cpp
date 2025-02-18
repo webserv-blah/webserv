@@ -2,7 +2,7 @@
 
 using namespace fileUtilities;
 
-ValidationResult validatePath(const std::string& path)
+EnumValidationResult validatePath(const std::string& path)
 {
 	// 1) stat으로 파일 정보를 가져온다
 	struct stat st;

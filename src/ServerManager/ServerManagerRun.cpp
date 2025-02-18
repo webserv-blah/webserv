@@ -60,14 +60,19 @@ void ServerManager::run() {
 
 }
 
+void ServerManager::cleanUpConnections(ClientManager& clientManager, eventHandler& eventHandler) {
+	//clientManager의 ClientSessionMapIter => 연결되어있는 client에 eventHandler.handleShutDown(clientSession);
+	//후에 clientManager.removeClient(fd);
+}
+
 // ServerManager의 멤버 함수로 둘지, 별도의 함수로 둘지
-void ServerManager::addClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, & timeoutHandler) {
+void ServerManager::addClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler) {
 	clientManager.addClient(clientFd);
 	timeoutHandler.addConnection(clientFd);
 	reactor.addSocket(clientFd);
 }
 
-void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, & timeoutHandler) {
+void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler) {
 	clientManager.removeClient(clientFd);
 	timeoutHandler.removeConnection(clientFd);
 	reactor.removeSocket(clientFd);

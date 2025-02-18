@@ -6,8 +6,11 @@
 #include <cstdio>
 
 //임시
+#include "../include/commonEnums.hpp"
+#include "../ClientManager/ClientManager.hpp"
 class RequestParser {};
-class IRequestHandler {};
+class StaticHandler {};
+class CgiHandler {};
 class ResponseBuilder {};
 
 class EventHandler {
@@ -15,18 +18,20 @@ class EventHandler {
 		EventHandler();
 		~EventHandler();
 		int		handleServerReadEvent(int fd);
-		int		handleClientReadEvent(int fd);
-		int 	handleClientWriteEvent(int fd);
-		void	handleExceptionEvent(int fd);
-		void	handleTimeout(int fd);
-		void	handleServerShutDown(int fd);
+		int		handleClientReadEvent(ClientSession& clientSession);
+		int 	handleClientWriteEvent(ClientSession& clientSession);
+		void	handleExceptionEvent(ClientSession& clientSession);
+		void	handleTimeout(ClientSession& clientSession);
+		void	handleServerShutDown(ClientSession& clientSession);
 		
 	private:
 		RequestParser	parser_;
-		IRequestHandler	handler_;
+		StaticHandler	staticHandler_;
+		CgiHandler		cgiHandler_;
 		ResponseBuilder	rspBuilder_;
 
-		int		readRequest(); //rcv()
-		int		sendResponse(); //send()
+		int		readRequest(ClientSession& clientSession); //rcv()
+		int		sendResponse(ClientSession& clientSession); //send()
+		int		sendErrorResponse(ClientSession& clientSession); 
 
 };

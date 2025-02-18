@@ -1,4 +1,5 @@
 #include "RequestMessage.hpp"
+#include "utils.hpp"
 #include <stdexcept>
 
 RequestMessage::RequestMessage() : method_(INIT), status_(REQ_INIT) {}
@@ -11,7 +12,7 @@ bool RequestMessage::hasMethod() const {
 	return true;
 }
 
-RequestMessage::TypeMethod RequestMessage::getMethod() const {
+TypeMethod RequestMessage::getMethod() const {
 	if (hasMethod())
 		return this->method_;
 	throw std::exception();//doesn't have a method yet
@@ -45,11 +46,11 @@ void RequestMessage::addFields(std::string field, std::vector<std::string> value
 }
 
 void RequestMessage::addBody(std::string bodyData) {
-	this->body_.append("\r\n");
 	this->body_.append(bodyData);
+	this->body_.append("\r\n");
 }
 
-RequestMessage::TypeReqStatus RequestMessage::getStatus() const {
+TypeReqStatus RequestMessage::getStatus() const {
 	return this->status_;
 }
 
@@ -57,7 +58,7 @@ std:: string RequestMessage::getMetaHost() const {
 	return this->metaHost_;
 }
 
-ssize_t RequestMessage::getMetaConnection() const {
+TypeConnection RequestMessage::getMetaConnection() const {
 	return this->metaConnection_;
 }
 
@@ -73,40 +74,45 @@ void RequestMessage::setMetaHost(std::string value) {
 	this->metaHost_ = value;
 }
 
-void RequestMessage::setMetaConnection(ssize_t value) {
-	this->metaConnection_ = value;
+void RequestMessage::setMetaConnection(std::string value) {
+	if (value == "keep-alive")
+		this->metaConnection_ = KEEP_ALIVE;
+	if (value == "close")
+		this->metaConnection_ = CLOSE;
+	throw std::logic_error("Error: connection value");
 }
 
-void RequestMessage::setMetaContentLength(ssize_t value) {
-	this->metaContentLength_ = value;
+void RequestMessage::setMetaContentLength(std::string value) {
+	this->metaContentLength_ = utils::stosizet(value);
 }
-
-
 
 // Parser 구현 후, 파싱 테스트용 함수, C++98 X
 #include <iostream>
 #include <iterator>
 void RequestMessage::printResult() const {
-	std::cout << "\033[32;7m PrintStartLine :\033[0m"<<std::endl;
-
+	std::cout << "\033[32;7m StartLine :\033[0m"<<std::endl;
 	std::cout <<"\033[37;2mmethod: \033[0m";
-	if (this->method_ == GET)
-		std::cout <<"GET;"<<std::endl;
-	else if (this->method_ == POST)
-		std::cout <<"POST;"<<std::endl;
-	else if (this->method_ == DELETE)
-		std::cout <<"DELETE;"<<std::endl;
-	else if (this->method_ == INIT)
-		std::cout <<"INIT;"<<std::endl;
-	else
-		std::cout <<"(none);"<<std::endl;
+	const char *method;
+	switch (this->method_) {
+		case INIT:
+			method = "INIT";
+		case GET:
+			method = "GET";
+		case POST:
+			method = "POST";
+		case DELETE:
+			method = "DELETE";
+	}
+	std::cout <<method<<";"<<std::endl;
+	
 	std::cout <<"\033[37;2muri: \033[0m";
 	std::cout <<this->targetURI_<<";"<<std::endl;
 	this->printFields();
 	this->printBody();
+	this->printMetaData();
 }
 void RequestMessage::printFields(void) const {
-	std::cout << "\033[32;7m PrintFields :\033[0m"<<std::endl;
+	std::cout << "\033[32;7m Fields :\033[0m"<<std::endl;
 	for (auto it : this->fieldLines_) {
 		int cnt = 0;
 		std::cout <<it.first<<": {";
@@ -120,7 +126,8 @@ void RequestMessage::printFields(void) const {
 	}
 }
 void RequestMessage::printBody(void) const {
-	std::cout << "\033[32;7m PrintBody :\033[0m"<<std::endl;
+	std::cout << "\033[32;7m Body :\033[0m"<<std::endl;
+	std::cout <<"\033[37;2mcount: "<<this->body_.length()<<"\033[0m\n";
 	for (auto it = this->body_.begin(); it != this->body_.end(); ++it) {
         if (*it == '\n')
             std::cout << "\\n" << std::endl;
@@ -129,4 +136,18 @@ void RequestMessage::printBody(void) const {
         else
             std::cout << *it;
 	}
+}
+void RequestMessage::printMetaData(void) const {
+	std::cout << "\033[37;7m MetaData :\033[0m"<<std::endl;
+	std::cout <<"\033[37;2mHost_: "<<this->metaHost_ <<";\033[0m\n";
+	std::cout <<"\033[37;2mConnection_: ";
+	const char *connection;
+	switch (this->metaConnection_) {
+		case KEEP_ALIVE:
+			connection = "keep-alive";
+		case CLOSE:
+			connection = "close";
+	}
+	std::cout<<connection <<";\033[0m\n";
+	std::cout <<"\033[37;2mContentLength_: "<<this->metaContentLength_ <<";\033[0m\n";
 }

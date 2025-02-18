@@ -10,6 +10,8 @@ namespace utils {
 
 	// 문자열을 int로 변환하는 함수
 	int stoi(const std::string& str);
+	// 문자열을 size_t로 변환하는 함수
+	size_t stosizet(const std::string& str);
 
 	// 입력 반복자 [first, last) 범위 내의 모든 요소가
 	// 주어진 조건(pred)을 만족하는지 확인하는 템플릿 함수

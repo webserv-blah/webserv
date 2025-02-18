@@ -19,7 +19,8 @@ class ServerManager {
 		std::set<int>	serverFds_;
 		bool			serverStatus_; //signal 핸들링과 관련 있으므로 논의 필요
 
-		void addClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, & timeoutHandler);
-		void removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, & timeoutHandler);
+		void addClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler);
+		void removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler);
+		void cleanUpConnections(ClientManager& clientManager, eventHandler& eventHandler);
 
 };

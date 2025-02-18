@@ -3,10 +3,10 @@
 #include <stdexcept>
 
 RequestMessage::RequestMessage() : method_(NONE), status_(REQ_INIT) {}
-RequestMessage::RequestMessage(TypeMethod method, std::string targetURI) : method_(method), targetURI_(targetURI) {}
+RequestMessage::RequestMessage(EnumMethod method, std::string targetURI) : method_(method), targetURI_(targetURI) {}
 RequestMessage::~RequestMessage() {}
 
-TypeMethod RequestMessage::getMethod() const {
+EnumMethod RequestMessage::getMethod() const {
 	return this->method_;
 }
 
@@ -22,7 +22,7 @@ std::string RequestMessage::getBody() const {
 	return this->body_;
 }
 
-void RequestMessage::setMethod(const TypeMethod &method) {
+void RequestMessage::setMethod(const EnumMethod &method) {
 	this->method_ = method;
 }
 
@@ -42,7 +42,7 @@ void RequestMessage::addBody(std::string bodyData) {
 	this->body_.append("\r\n");
 }
 
-TypeReqStatus RequestMessage::getStatus() const {
+EnumReqStatus RequestMessage::getStatus() const {
 	return this->status_;
 }
 
@@ -50,7 +50,7 @@ std:: string RequestMessage::getMetaHost() const {
 	return this->metaHost_;
 }
 
-TypeConnection RequestMessage::getMetaConnection() const {
+EnumConnection RequestMessage::getMetaConnection() const {
 	return this->metaConnection_;
 }
 
@@ -58,7 +58,7 @@ ssize_t RequestMessage::getMetaContentLength() const {
 	return this->metaContentLength_;
 }
 
-void RequestMessage::setStatus(const TypeReqStatus &status) {
+void RequestMessage::setStatus(const EnumReqStatus &status) {
 	this->status_ = status;
 }
 
@@ -86,8 +86,8 @@ void RequestMessage::printResult() const {
 	std::cout <<"\033[37;2mmethod: \033[0m";
 	const char *method;
 	switch (this->method_) {
-		case INIT:
-			method = "INIT";
+		case NONE:
+			method = "NONE";
 		case GET:
 			method = "GET";
 		case POST:

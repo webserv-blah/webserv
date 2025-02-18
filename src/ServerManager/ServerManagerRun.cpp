@@ -55,12 +55,17 @@ void ServerManager::run() {
 		}
 		timeoutHandler.checkTimeouts(eventHandler, reactor, clientManager);
 	}
-
+	cleanUpConnections(clientManager, eventHandler);
 }
 
 void ServerManager::cleanUpConnections(ClientManager& clientManager, eventHandler& eventHandler) {
-	//clientManager의 ClientSessionMapIter => 연결되어있는 client에 eventHandler.handleShutDown(clientSession);
-	//후에 clientManager.removeClient(fd);
+	std::map<int, ClientSession*>			clientList = clientManager.accessClientSessionMap();
+	std::map<int, ClientSession*>::iterator	it;
+
+	for (it = clientList.begin(); it != clientList.end(); ) {
+		eventHandler.handleShutDown(*it->second);
+		it = clientManager.removeClient(it->first);
+	}
 }
 
 // ServerManager의 멤버 함수로 둘지, 별도의 함수로 둘지

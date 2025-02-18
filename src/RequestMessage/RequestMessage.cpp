@@ -86,8 +86,8 @@ void RequestMessage::printResult() const {
 	std::cout <<"\033[37;2mmethod: \033[0m";
 	const char *method;
 	switch (this->method_) {
-		case INIT:
-			method = "INIT";
+		case NONE:
+			method = "NONE";
 		case GET:
 			method = "GET";
 		case POST:

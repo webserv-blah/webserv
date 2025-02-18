@@ -32,6 +32,6 @@ class EventHandler {
 
 		int		readRequest(ClientSession& clientSession); //rcv()
 		int		sendResponse(ClientSession& clientSession); //send()
-		int		sendErrorResponse(ClientSession& clientSession); 
+		int		sendErrorResponse(ClientSession& clientSession);
 
 };

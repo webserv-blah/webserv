@@ -1,4 +1,5 @@
 #include "ServerManager.hpp"
+
 // EventLoop
 void ServerManager::run() {
 	Demultiplexer	reactor(serverFds_);
@@ -13,10 +14,10 @@ void ServerManager::run() {
 			TypeEvent	type = reactor.getEventType(i);
 			int 		fd = reactor.getSocketFd(i);
 
-			if (type == TypeEvent::EXCEPTION_EVENT) {
+			if (type == EXCEPTION_EVENT) {
 				// error response 전송 여부 판단 후 추가
 				removeClientInfo(fd, clientManager, reactor, timeoutHandler);
-			} else if (type == TypeEvent::READ_EVENT) {
+			} else if (type == READ_EVENT) {
 				if (isServer(fd)) {
 					int clientFd = eventHandler.handleServerReadEvent(fd);
 
@@ -27,25 +28,25 @@ void ServerManager::run() {
 				} else {
 					TypeSesStatus	status = eventHandler.handleClientReadEvent(clientManager.accessClientSession(fd));
 
-					if (status == TypeSesStatus::CONNECTION_CLOSED) {
+					if (status == CONNECTION_CLOSED) {
 						removeClientInfo(fd, clientManager, reactor, timeoutHandler);
-					} else if (status == TypeSesStatus::CONNECTION_ERROR) {
+					} else if (status == CONNECTION_ERROR) {
 						// connection error 처리 로직 추가
-					} else if (status == TypeSesStatus::WRITE_CONTINUE) {
+					} else if (status == WRITE_CONTINUE) {
 						timeoutHandler.updateActivity(fd);
 						reactor.addWriteEvent(fd);
 					} else {
 						timeoutHandler.updateActivity(fd);
 					}
-
+					
 				}
 
-			} else if (type == TypeEvent::WRITE_EVENT) {
+			} else if (type == WRITE_EVENT) {
 				TypeSesStatus	status = eventHandler.handleClientWriteEvent(clientManager.accessClientSession(fd));
 
-				if (status == TypeSesStatus::CONNECTION_CLOSED) {
+				if (status == CONNECTION_CLOSED) {
 					removeClientInfo(fd, clientManager, reactor, timeoutHandler);
-				} else if (status == TypeSesStatus::WRITE_COMPLETE) {
+				} else if (status == WRITE_COMPLETE) {
 					timeoutHandler.updateActivity(fd); // 지울지 여부 판단 필요
 					reactor.removeWriteEvent(fd);
 				} else {

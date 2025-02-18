@@ -9,8 +9,9 @@ typedef enum EnumSessionStatus {
 	CONNECTION_ERROR
 } EnumSesStatus;
 
-enum EnumEvent {
-	READ_EVENT,
-	WRITE_EVENT,
-	EXCEPTION_EVENT
-};
+typedef enum event {
+    READ_EVENT,
+    WRITE_EVENT,
+    EXCEPTION_EVENT,
+	UNKNOWN_EVENT
+} TypeEvent;

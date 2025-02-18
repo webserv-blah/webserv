@@ -34,3 +34,8 @@ ClientSession	ClientManager::accessClientSession(int fd) {
 	}
 	return *clientList_[fd];
 }
+
+//clientSessionMap 반환
+std::map<int, ClientSession*>	ClientManager::accessClientSessionMap() {
+	return clientList_;
+}

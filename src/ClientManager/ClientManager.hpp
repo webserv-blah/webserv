@@ -15,9 +15,10 @@ class ClientManager {
 		typedef std::map<int, ClientSession*>	ClientSessionMap;
 		ClientManager();
 		~ClientManager();
-		void			addClient(int fd);
-		void			removeClient(int fd);
-		ClientSession	accessClientSession(int fd);
+		void				addClient(int fd);
+		void				removeClient(int fd);
+		ClientSession		accessClientSession(int fd);
+		ClientSessionMap	accessClientSessionMap();
 
 	private:
 		ClientSessionMap	clientList_;

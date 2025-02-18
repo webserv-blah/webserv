@@ -64,7 +64,7 @@ void ServerManager::cleanUpConnections(ClientManager& clientManager, eventHandle
 	std::map<int, ClientSession*>::iterator	it;
 
 	for (it = clientList.begin(); it != clientList.end(); ) {
-		eventHandler.handleShutDown(*it->second);
+		eventHandler.handleServerShutDown(*it->second);
 		it = clientManager.removeClient(it->first);
 	}
 }

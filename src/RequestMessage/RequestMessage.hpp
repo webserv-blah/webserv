@@ -4,9 +4,9 @@
 #include <map>
 #include <vector>
 
-typedef enum Method { NONE, GET, POST, DELETE } TypeMethod;
-typedef enum connection { KEEP_ALIVE, CLOSE } TypeConnection;
-typedef enum requestStatus {
+enum EnumMethod { NONE, GET, POST, DELETE };
+enum EnumConnection { KEEP_ALIVE, CLOSE };
+typedef enum EnumRequestStatus {
 	REQ_INIT,
 	REQ_TOP_CRLF,		// CRLF(0,1)
 	REQ_METHOD,			// 완료(1)
@@ -17,30 +17,30 @@ typedef enum requestStatus {
 	REQ_BODY,			// 진행중(N)
 	REQ_DONE,
 	REQ_ERROR
-} TypeReqStatus;
+} EnumReqStatus;
 
 class RequestMessage {
 	public:
 		typedef std::map<std::string, std::vector<std::string> >	TypeField;
 
 		RequestMessage();
-		RequestMessage(TypeMethod method, std::string target);
+		RequestMessage(EnumMethod method, std::string target);
 		~RequestMessage();
 
-		TypeMethod		getMethod() const;
+		EnumMethod		getMethod() const;
 		std::string		getTargetURI() const;
 		TypeField		getFields() const;
 		std::string		getBody() const;
-		void			setMethod(const TypeMethod &method);
+		void			setMethod(const EnumMethod &method);
 		void			setTargetURI(const std::string &targetURI);
 		void			addFields(std::string field, std::vector<std::string> values);
 		void			addBody(std::string bodyData);
 		
-		TypeReqStatus	getStatus() const;
+		EnumReqStatus	getStatus() const;
 		std:: string	getMetaHost() const;
-		TypeConnection	getMetaConnection() const;
+		EnumConnection	getMetaConnection() const;
 		ssize_t			getMetaContentLength() const;
-		void			setStatus(const TypeReqStatus &status);
+		void			setStatus(const EnumReqStatus &status);
 		void			setMetaHost(const std::string &value);
 		void			setMetaConnection(const std::string &value);
 		void			setMetaContentLength(const std::string &value);
@@ -54,14 +54,14 @@ class RequestMessage {
 		// MUST TO DO: exception class 만드는게 유용할지도..
 
 	private:
-		TypeMethod		method_;
+		EnumMethod		method_;
 		std::string		targetURI_;
 		TypeField		fieldLines_;
 		std::string		body_;
 
 		// Header Field에 작성되어있던 메타데이터
-		TypeReqStatus	status_;
+		EnumReqStatus	status_;
 		std::string		metaHost_;
-		TypeConnection	metaConnection_;
+		EnumConnection	metaConnection_;
 		ssize_t			metaContentLength_;
 };

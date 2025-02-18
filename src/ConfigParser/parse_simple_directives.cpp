@@ -1,6 +1,6 @@
 #include "ConfigParser.hpp"
 
-// ReqHandleConf 파서를 위한 함수들
+// RequestConfig 파서를 위한 함수들
 
 // error_page 지시문을 파싱하는 함수
 void ConfigParser::parseErrorPage(std::ifstream& configFile, std::map<int, std::string> &errorPages) {

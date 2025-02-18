@@ -19,13 +19,13 @@ public:
 private:
 	static void	parseServerBlock(std::ifstream& configFile, ServerConfig& serverBlock);
 	static void	parseLocationBlock(std::ifstream& configFile, LocationConfig& locationBlock);
-	static void	parseReqHandleConf(std::ifstream& configFile, ReqHandleConf& reqHandling, const std::string& token);
+	static void	parseRequestConfig(std::ifstream& configFile, RequestConfig& reqConfig, const std::string& token);
 
 	// LocationBlock이 ServerBlock의 값을 상속받은 후 오버라이드
-	static void	getEffectiveReqHandling(const ReqHandleConf& serverReqHandling, \
-										ReqHandleConf& locationReqHandling);
+	static void	getEffectiveReqHandling(const RequestConfig& serverReqHandling, \
+										RequestConfig& locationReqHandling);
 	// 설정값이 없을 경우 기본값으로 초기화
-	static void	setDefaultReqHandling(ReqHandleConf& ReqHandling);
+	static void	setDefaultReqHandling(RequestConfig& ReqHandling);
 
 	// ServerBlock 파서
 	static void	parseHostPort(std::ifstream& configFile, std::string& host, unsigned int& port);
@@ -35,7 +35,7 @@ private:
 	static void	parsePath(std::ifstream& configFile, std::string& path);
 	static void	parseMethods(std::ifstream& configFile, std::vector<std::string>& methods);
 
-	// ReqHandleConf 파서
+	// RequestConfig 파서
 	static void	parseErrorPage(std::ifstream& configFile, std::map<int, std::string>& errorPages);
 	static void	parseReturn(std::ifstream& configFile, std::string& returnUrl, int& returnStatus);
 	static void	parseRoot(std::ifstream& configFile, std::string& root);

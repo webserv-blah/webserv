@@ -53,7 +53,7 @@ void	KqueueDemultiplexer::removeWriteEventImpl(int fd) {
 	changedEvents_.push_back(change);
 }
 
-int	KqueueDemultiplexer::getEventTypeImpl(int idx) {
+TypeEvent	KqueueDemultiplexer::getEventTypeImpl(int idx) {
 	if (eventList_[idx].filter == EVFILT_EXCEPT) {
 		return EXCEPTION_EVENT;
 	}

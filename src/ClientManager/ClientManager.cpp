@@ -16,7 +16,7 @@ void	ClientManager::addClient(int fd) {
 }
 
 //clientSession 제거 및 관리 목록에 추가
-void	ClientManager::removeClient(int fd) {
+std::map<int, ClientSession*>::iterator	ClientManager::removeClient(int fd) {
 	ClientSessionMap::iterator it = clientList_.find(fd);
 	if (it == clientList_.end()) {
 		perror("Client Fd Not Found");
@@ -24,7 +24,8 @@ void	ClientManager::removeClient(int fd) {
 	}
 	delete it->second;
 	close(fd); //여기서 close 할지 밖에서 할지, clientSession에서 할지..?
-	clientList_.erase(it);
+	ClientSessionMap::iterator nextIt = clientList_.erase(it);
+	return (nextIt);
 }
 
 //fd에 대응하는 clientSession 객체 반환

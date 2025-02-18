@@ -60,6 +60,7 @@ void ServerManager::run() {
 	cleanUpConnections(clientManager, eventHandler);
 }
 
+// 서버 종료 전, 연결된 클라이언트에 종료 응답 반환 + client fd 및 clientSession 리소스 제거
 void ServerManager::cleanUpConnections(ClientManager& clientManager, eventHandler& eventHandler) {
 	std::map<int, ClientSession*>			clientList = clientManager.accessClientSessionMap();
 	std::map<int, ClientSession*>::iterator	it;
@@ -71,12 +72,14 @@ void ServerManager::cleanUpConnections(ClientManager& clientManager, eventHandle
 }
 
 // ServerManager의 멤버 함수로 둘지, 별도의 함수로 둘지
+// client 정보 추가
 void ServerManager::addClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler) {
 	clientManager.addClient(clientFd);
 	timeoutHandler.addConnection(clientFd);
 	reactor.addSocket(clientFd);
 }
 
+// client 정보 삭제
 void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler) {
 	clientManager.removeClient(clientFd);
 	timeoutHandler.removeConnection(clientFd);

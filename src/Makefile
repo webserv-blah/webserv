@@ -12,9 +12,13 @@ SRCS := $(wildcard *.cpp)
 DIRS := utils \
 		GlobalConfig \
 		ConfigParser \
+		RequestMessage \
+		RequestParser \
 		ServerManager \
 		Demultiplexer \
-		TimeoutHandler
+#		TimeoutHandler \# RequestParser 테스트를 위해 임시로 주석처리
+
+
 SUBS := $(addsuffix .a,$(DIRS))
 
 include $(TOPDIR)/include_make/Variable.mk

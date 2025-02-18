@@ -1,5 +1,4 @@
 #include "ServerManager.hpp"
-
 // EventLoop
 void ServerManager::run() {
 	Demultiplexer	reactor(serverFds_);
@@ -38,6 +37,7 @@ void ServerManager::run() {
 					} else {
 						timeoutHandler.updateActivity(fd);
 					}
+
 				}
 
 			} else if (type == TypeEvent::WRITE_EVENT) {
@@ -71,4 +71,3 @@ void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager,
 	timeoutHandler.removeConnection(clientFd);
 	reactor.removeSocket(clientFd);
 }
-

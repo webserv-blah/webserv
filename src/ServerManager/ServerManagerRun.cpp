@@ -1,10 +1,6 @@
 #include "ServerManager.hpp"
-#include "../demultiplexer/KqueueDemultiplexer.hpp"
 
-//Event Loop
-// 읽기 혹은 쓰기 상태 관련 enum(혹은 매크로) 논의 필요
-// 아래 사용된 status 매크로는 임시
-
+// EventLoop
 void ServerManager::run() {
 	Demultiplexer	reactor(serverFds_);
 	EventHandler 	eventHandler();
@@ -20,8 +16,7 @@ void ServerManager::run() {
 
 			if (type == EXCEPTION_EVENT) {
 				// error response 전송 여부 판단 후 추가
-				timeoutHandler.removeConnection(fd);
-				reactor.removeSocket(fd);
+				removeClientInfo(fd, clientManager, reactor, timeoutHandler);
 			} else if (type == READ_EVENT) {
 				if (isServer(fd)) {
 					int clientFd = eventHandler.handleServerReadEvent(clientManager);
@@ -30,23 +25,27 @@ void ServerManager::run() {
 						timeoutHandler.addConnection(clientFd);
 					}
 				} else {
-					int status = eventHandler.handleClientReadEvent();
+					TypeSesStatus	status = eventHandler.handleClientReadEvent(clientManager.accessClientSession(fd));
+
 					if (status == CONNECTION_CLOSED) {
-						timeoutHandler.removeConnection(fd);
-						reactor.removeSocket(fd);
-					} else if (status == WRITE_ONGOING) {
+						removeClientInfo(fd, clientManager, reactor, timeoutHandler);
+					} else if (status == CONNECTION_ERROR) {
+						// connection error 처리 로직 추가
+					} else if (status == WRITE_CONTINUE) {
 						timeoutHandler.updateActivity(fd);
 						reactor.addWriteEvent(fd);
 					} else {
 						timeoutHandler.updateActivity(fd);
 					}
+					
 				}
-			} else if (type == WRITE_EVENT) 
-				int status = eventHandler.handleClientWriteEvent();
+
+			} else if (type == WRITE_EVENT) {
+				TypeSesStatus	status = eventHandler.handleClientWriteEvent(clientManager.accessClientSession(fd));
+
 				if (status == CONNECTION_CLOSED) {
-					timeoutHandler.removeConnection(fd);
-					reactor.removeSocket(fd);
-				} else if (status == DONE_WRITING) {
+					removeClientInfo(fd, clientManager, reactor, timeoutHandler);
+				} else if (status == WRITE_COMPLETE) {
 					timeoutHandler.updateActivity(fd); // 지울지 여부 판단 필요
 					reactor.removeWriteEvent(fd);
 				} else {
@@ -57,4 +56,17 @@ void ServerManager::run() {
 		timeoutHandler.checkTimeouts(eventHandler, reactor, clientManager);
 	}
 
+}
+
+// ServerManager의 멤버 함수로 둘지, 별도의 함수로 둘지
+void ServerManager::addClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, & timeoutHandler) {
+	clientManager.addClient(clientFd);
+	timeoutHandler.addConnection(clientFd);
+	reactor.addSocket(clientFd);
+}
+
+void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, & timeoutHandler) {
+	clientManager.removeClient(clientFd);
+	timeoutHandler.removeConnection(clientFd);
+	reactor.removeSocket(clientFd);
 }

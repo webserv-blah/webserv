@@ -31,7 +31,7 @@ class EventHandler {
 		CgiHandler		cgiHandler_;
 		ResponseBuilder	rspBuilder_;
 
-		int		readRequest(ClientSession& clientSession); //rcv()
+		int		readRequest(ClientSession& clientSession, RequestParser& parser); //rcv()
 		int		sendResponse(ClientSession& clientSession); //send()
 		int		sendErrorResponse(ClientSession& clientSession); 
 

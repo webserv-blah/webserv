@@ -25,7 +25,7 @@ int	EventHandler::handleServerReadEvent(int fd) {
 
 // 클라이언트 fd에서 발생한 Read 이벤트 처리
 int	EventHandler::handleClientReadEvent(ClientSession& clientSession) {
-    int status = readRequest(clientSession);
+    int status = readRequest(clientSession, parser_);
 
     if (status == TypeSesStatus::READ_COMPLETE) {
 		//cgi or static Handler 호출

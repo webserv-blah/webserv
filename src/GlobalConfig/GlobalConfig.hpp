@@ -26,7 +26,7 @@ public:
 class LocationConfig {
 public:
 	std::string					path_;				// 위치 경로 (예: "/images")
-	RequestConfig				reqConfig_;		// 이 위치의 요청 처리 구성
+	RequestConfig				reqConfig_;			// 이 위치의 요청 처리 구성
 };
 
 // ServerConfig는 특정 서버의 구성을 나타냅니다.
@@ -37,17 +37,17 @@ public:
 	std::string					host_;				// 호스트 이름 또는 IP 주소
 	unsigned int				port_;				// 수신 대기할 포트 번호
 	std::vector<std::string>	serverNames_;		// 서버 이름 별칭
-	RequestConfig				reqConfig_;		// 이 서버의 기본 요청 처리
+	RequestConfig				reqConfig_;			// 이 서버의 기본 요청 처리
 	std::vector<LocationConfig>	locations_;			// 위치별 구성 목록
 };
 
 // GlobalConfig는 웹 서버의 전체 구성을 나타냅니다.
 class GlobalConfig {
 public:
-	typedef std::map<int, std::vector<ServerConfig*> > ListenFdToServers;
+	typedef std::map<int, std::vector<ServerConfig*> > TypeListenFdToServers;
 
 	std::vector<ServerConfig>	servers_;			// 서버 구성 목록
-	ListenFdToServers			listenFdToServers_;	// 리스닝 소켓 디스크립터 별 서버 구성 목록
+	TypeListenFdToServers		listenFdToServers_;	// 리스닝 소켓 디스크립터 별 서버 구성 목록
 
 	// 리스닝 소켓 디스크립터, 도메인 이름, 대상 URL에 해당하는 요청 설정 찾기
 	const RequestConfig*		findRequestConfig(const int listenFd, \

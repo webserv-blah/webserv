@@ -16,7 +16,7 @@ RequestParser::~RequestParser() {}
 std::string RequestParser::parse(const std::string &readData, RequestMessage &reqMsg) {
 	std::istringstream iss(readData);
 	std::string buffer;
-	TypeReqStatus newStatus;
+	EnumReqStatus newStatus;
 
 	// MUST TO DO: 다시 마저 읽어오는 경우도 생각해봐야함
 	while (std::getline(iss, buffer, '\n')) {
@@ -46,7 +46,7 @@ std::string RequestParser::parse(const std::string &readData, RequestMessage &re
 
 
 void RequestParser::handleOneLine(const std::string &line, RequestMessage &reqMsg) {
-	const TypeReqStatus curStatus = reqMsg.getStatus();
+	const EnumReqStatus curStatus = reqMsg.getStatus();
 
 	if (curStatus == REQ_INIT
 	||  curStatus == REQ_TOP_CRLF)
@@ -60,7 +60,7 @@ void RequestParser::handleOneLine(const std::string &line, RequestMessage &reqMs
 	//}
 }
 
-TypeReqStatus RequestParser::setStatusCRLF(const TypeReqStatus &curStatus) {
+EnumReqStatus RequestParser::setStatusCRLF(const EnumReqStatus &curStatus) {
 	// 유효한 것으로 처리되는 두 위치의 CRLF외에는 전부 에러
 	if (curStatus == REQ_INIT)
 		return REQ_TOP_CRLF;

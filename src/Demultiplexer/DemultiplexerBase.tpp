@@ -26,7 +26,7 @@ void DemultiplexerBase<Derived>::removeWriteEvent(int fd) {
 }
 
 template <typename Derived>
-int	DemultiplexerBase<Derived>::getEventType(int idx) {
+TypeEvent	DemultiplexerBase<Derived>::getEventType(int idx) {
 	return static_cast<Derived&>(*this).getEventTypeImpl(idx);
 }
 

@@ -12,5 +12,6 @@ typedef enum sessionStatus {
 typedef enum event {
     READ_EVENT,
     WRITE_EVENT,
-    EXCEPTION_EVENT
+    EXCEPTION_EVENT,
+	UNKNOWN_EVENT
 } TypeEvent;

@@ -5,6 +5,7 @@ endif
 all clean fclean re:
 	$(MAKE) TOPDIR=`pwd` -C src $@
 
+SHELL = /bin/bash
 REQ_TEST_FILE=_request_msg_test.sh
 reqtest: $(REQ_TEST_FILE)
 	source $(REQ_TEST_FILE); ./webserv

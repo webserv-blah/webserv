@@ -22,12 +22,11 @@ int	EventHandler::handleServerReadEvent(int fd) {
     return clientFd;
 }
 
-
 // 클라이언트 fd에서 발생한 Read 이벤트 처리
 int	EventHandler::handleClientReadEvent(ClientSession& clientSession) {
     int status = readRequest(clientSession, parser_);
 
-    if (status == TypeSesStatus::READ_COMPLETE) {
+    if (status == READ_COMPLETE) {
 		std::string responseMsg;
 
 		if (cgiHandler_.isCGI(clientSession.getPath())) {
@@ -39,6 +38,7 @@ int	EventHandler::handleClientReadEvent(ClientSession& clientSession) {
 		
         status = sendResponse(clientSession);
     }
+
     return status;
 }
 
@@ -49,18 +49,10 @@ int EventHandler::handleClientWriteEvent(ClientSession& clientSession) {
     return status;
 }
 
-// 예외 이벤트 처리
-void    EventHandler::handleExceptionEvent(ClientSession& clientSession) {
-    // Q.Exception Event 발생 케이스 및 처리 내용 구체화
-}
+void	EventHandler::handleError(int statusCode, ClientSession& clientSession) {
+	clientSession.clearWriteBuffer(); // ClientSession 명세 확인 후 수정 예정
 
-// timeout 처리(408반환)
-void	EventHandler::handleTimeout(ClientSession& clientSession) {
-    // Q.error 핸들링 시에도 status 반환 필요할지
-    sendErrorResponse(clientSession, 408);
-}
+	std::string errorMsg = rspBuilder_.buildError(statusCode);
 
-// 서버 종료 전 연결되어 있는 client에 연결 종료 고지
-void	EventHandler::handleServerShutDown(ClientSession& clientSession) {
-    sendErrorResponse(clientSession, 503);
+	sendResponse(clientSession);
 }

@@ -6,6 +6,7 @@
 #define BUFFER_SIZE 8192 //== 8KB
 
 EnumSesStatus readRequest(ClientSession &curSession, RequestParser &parser) {
+	/* RECV 함수
 	std::string buffer;
 	buffer.resize(BUFFER_SIZE);
 
@@ -20,4 +21,15 @@ EnumSesStatus readRequest(ClientSession &curSession, RequestParser &parser) {
 			//handleAndResponse();
 		return requestResult;
 	}
+	*/
+	
+	const char* data = std::getenv("HTTP_REQUEST");
+	if (data == NULL) {
+		std::cerr << "환경변수 HTTP_REQUEST가 설정되지 않았습니다.\n";
+		exit(1);
+	}
+	EnumSesStatus requestResult = curSession.implementReqMsg(parser, std::string(data));
+	//if (requestResult == READ_COMPLETE)
+		//handleAndResponse();
+	return requestResult;
 }

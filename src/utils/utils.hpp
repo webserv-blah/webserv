@@ -7,6 +7,9 @@
 #include <csignal>
 #include <iostream>
 #include <limits>
+#include <csignal>
+#include <iostream>
+#include <limits>
 
 // 유틸리티 함수들을 담는 네임스페이스
 namespace utils {
@@ -30,5 +33,7 @@ namespace utils {
 
 }
 
+// 시그널 핸들러 함수
 void signalHandler(int signum);
+// 시그널 핸들러 설정 함수
 void setupSignalHandlers();

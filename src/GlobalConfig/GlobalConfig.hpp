@@ -32,7 +32,7 @@ public:
 // ServerConfig는 특정 서버의 구성을 나타냅니다.
 class ServerConfig {
 public:
-	ServerConfig() : port_(80) {}					// 포트를 80으로 기본 설정합니다.
+	ServerConfig() : host_("0.0.0.0"), port_(80) {}	// 포트를 80으로 기본 설정합니다.
 
 	std::string					host_;				// 호스트 이름 또는 IP 주소
 	unsigned int				port_;				// 수신 대기할 포트 번호

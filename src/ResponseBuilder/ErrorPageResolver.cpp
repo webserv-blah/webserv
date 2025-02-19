@@ -27,18 +27,6 @@ namespace ErrorPageResolver {
 
 		return bodyContent; // 최종적으로 에러 페이지의 내용을 반환
 	}
-
-	std::string getReasonPhrase(int errorCode) {
-		switch (errorCode) {
-			case 200: return "OK";                    // 200: OK
-			case 400: return "Bad Request";           // 400: 잘못된 요청
-			case 403: return "Forbidden";             // 403: 접근 금지
-			case 404: return "Not Found";             // 404: 찾을 수 없음
-			case 405: return "Method Not Allowed";    // 405: 허용되지 않은 메소드
-			case 500: return "Internal Server Error"; // 500: 내부 서버 오류
-			default:  return "Error";                 // 그 외: 일반 에러
-		}
-	}
 }
 
 

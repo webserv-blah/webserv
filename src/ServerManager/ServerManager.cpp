@@ -8,8 +8,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <cstring>
 
-void ServerManager::~ServerManager() {
+ServerManager::~ServerManager() {
     for (std::set<int>::iterator it = listenFds_.begin(); it != listenFds_.end(); ++it) {
         close(*it);
     }
@@ -18,7 +20,7 @@ void ServerManager::~ServerManager() {
 
 void ServerManager::setupListeningSockets() {
 	// Get the global configuration instance.
-	const GlobalConfig& globalConfig = GlobalConfig::getInstance();
+	GlobalConfig& globalConfig = const_cast<GlobalConfig&>(GlobalConfig::getInstance());
     // Map to associate a host/port pair with its corresponding socket file descriptor.
     std::map<std::pair<std::string, int>, int> addressToSocket;
 
@@ -68,7 +70,7 @@ void ServerManager::setupListeningSockets() {
                 addr.sin_addr.s_addr = INADDR_ANY;       // Bind to all available interfaces.
             } else {
                 // Convert the IP address from text to binary form.
-                if (inet_aton(host.c_str(), &addr.sin_addr) == 0) {
+                if (inet_aton(server.host_.c_str(), &addr.sin_addr) == 0) {
                     close(sockFd);
 					throw std::runtime_error("Invalid IP address");
                 }
@@ -77,7 +79,8 @@ void ServerManager::setupListeningSockets() {
             // Bind the socket to the specified IP address and port.
             if (bind(sockFd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr)) < 0) {
                 close(sockFd);
-				throw std::runtime_error("Failed to bind socket");
+				std::string errorMsg = "Failed to bind socket to " + server.host_ + ":" + std::to_string(server.port_) + " - " + strerror(errno);
+    			throw std::runtime_error(errorMsg);
             }
 
             // Begin listening for incoming connections on the socket.
@@ -95,5 +98,29 @@ void ServerManager::setupListeningSockets() {
         // Map this server configuration to the corresponding listening socket.
         // This allows multiple server configurations to share the same socket.
         globalConfig.listenFdToServers_[sockFd].push_back(&server);
+    }
+}
+
+extern volatile bool globalServerRunning;
+
+bool ServerManager::isServerRunning() {
+    return globalServerRunning;
+}
+
+// print listenFds, listenFdToServers_
+void ServerManager::print() {
+    std::cout << "listenFds: ";
+    for (std::set<int>::iterator it = listenFds_.begin(); it != listenFds_.end(); ++it) {
+        std::cout << *it << ", ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "listenFdToServers_: " << std::endl;
+    for (std::map<int, std::vector<ServerConfig*> >::const_iterator it = GlobalConfig::getInstance().listenFdToServers_.begin();
+         it != GlobalConfig::getInstance().listenFdToServers_.end(); ++it) {
+        std::cout << "listenFd: " << it->first << std::endl;
+        for (size_t i = 0; i < it->second.size(); ++i) {
+            std::cout << "server: " << it->second[i]->host_ << ":" << it->second[i]->port_ << std::endl;
+        }
     }
 }

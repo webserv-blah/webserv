@@ -12,9 +12,9 @@ class ServerManager {
 		~ServerManager();
 
 		void			setupListeningSockets();
-
 		void			run();
 		bool			isServerRunning();
+		void			print();
 		
 		private:
 		std::set<int>	listenFds_;

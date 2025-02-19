@@ -7,7 +7,7 @@ void ServerManager::run() {
 	TimeoutHandler	timeoutHandler; // 클라이언트 타임아웃 관리 객체
 	ClientManager	clientManager; // 클라이언트 세션 관리 객체
 
-	while (isRunning()) { // isRunning() 함수로 서버 실행 여부 확인 (g_signal을 대체 가능)
+	while (isServerRunning()) { // isServerRunning() 함수로 서버 실행 여부 확인 (전역변수 플래그 대체 가능)
 		int	numEvents = reactor.waitForEvent(); // 발생한 이벤트 개수 확인
 
 		for (int i = 0; i < numEvents; ++i) {

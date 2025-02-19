@@ -4,6 +4,9 @@
 #include <stdexcept>    // std::invalid_argument, std::overflow_error
 #include <cerrno>       // errno
 #include <climits>      // INT_MAX, INT_MIN
+#include <csignal>
+#include <iostream>
+#include <limits>
 
 // 유틸리티 함수들을 담는 네임스페이스
 namespace utils {
@@ -26,3 +29,6 @@ namespace utils {
 	}
 
 }
+
+void signalHandler(int signum);
+void setupSignalHandlers();

@@ -18,7 +18,7 @@ void ServerManager::run() {
 				// ((error response 전송 여부 판단 후 추가 가능))
 				removeClientInfo(fd, clientManager, reactor, timeoutHandler);
 			} else if (type == READ_EVENT) { // 읽기(수신) 이벤트 발생 시
-				if (isServer(fd)) { // 서버 소켓이라면 새 클라이언트 연결 처리
+				if (isListeningSocket(fd)) { // 서버 소켓이라면 새 클라이언트 연결 처리
 					int clientFd = eventHandler.handleServerReadEvent(fd);
 
 					if (clientFd > 0) { // 새로운 클라이언트가 정상적으로 연결됨

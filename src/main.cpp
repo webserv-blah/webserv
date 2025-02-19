@@ -1,10 +1,8 @@
-/*
+#include <iostream>
 #include "GlobalConfig.hpp"
-#include "ConfigParser.hpp"
-*/
-
 #include "ClientSession.hpp"
 EnumSesStatus readRequest(ClientSession &curSession, RequestParser &parser);
+// #include "ServerManager.hpp"
 
 int main(int argc, char** argv) {
 	/*

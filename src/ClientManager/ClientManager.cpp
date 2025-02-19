@@ -17,7 +17,7 @@ void	ClientManager::addClient(int fd) {
 
 //clientSession 제거 및 관리 목록에 추가
 std::map<int, ClientSession*>::iterator	ClientManager::removeClient(int fd) {
-	ClientSessionMap::iterator it = clientList_.find(fd);
+	TypeClientSessionMap::iterator it = clientList_.find(fd);
 	if (it == clientList_.end()) {
 		perror("Client Fd Not Found");
 		return ;

@@ -6,12 +6,17 @@
 #include <unistd.h>
 #include <cstdio>
 
-//임시
+//임시 인클루드
 #include "../include/commonEnums.hpp"
 #include "../ClientManager/ClientManager.hpp"
-
+#include "../RequestMessage/RequestMessage.hpp"
+//임시 클래스
 class RequestParser {};
-class StaticHandler {};
+class StaticHandler { 
+	public:
+		StaticHandler(ResponseBuilder& rspBuilder_);
+		~StaticHandler();
+};
 class CgiHandler {};
 class ResponseBuilder {};
 
@@ -26,11 +31,11 @@ class EventHandler {
 		
 	private:
 		RequestParser	parser_;
+		ResponseBuilder	rspBuilder_;
 		StaticHandler	staticHandler_;
 		CgiHandler		cgiHandler_;
-		ResponseBuilder	rspBuilder_;
 
-		int		readRequest(ClientSession& clientSession, RequestParser& parser); //rcv()
+		int		readRequest(ClientSession& clientSession); //rcv()
 		int		sendResponse(ClientSession& clientSession); //send()
 
 };

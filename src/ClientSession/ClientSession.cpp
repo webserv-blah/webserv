@@ -26,6 +26,14 @@ std::string ClientSession::getWriteBuffer() const {
 	return this->writeBuffer_;
 }
 
+const RequestMessage *ClientSession::getReqMsg() const {
+	return this->reqMsg_;
+}
+
+const RequestConfig *ClientSession::getConfig() const {
+	return this->config_;
+}
+
 void ClientSession::setListenFd(const int &listenFd) {
 	this->listenFd_ = listenFd;
 }

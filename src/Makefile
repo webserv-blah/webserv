@@ -12,11 +12,11 @@ SRCS := $(wildcard *.cpp)
 DIRS := utils \
 		GlobalConfig \
 		ConfigParser \
-		# RequestMessage \
-		# RequestParser \
-		# ServerManager \
-		# Demultiplexer \
-		# TimeoutHandler
+		RequestMessage \
+		RequestParser \
+		ServerManager \
+		Demultiplexer \
+		TimeoutHandler
 
 
 SUBS := $(addsuffix .a,$(DIRS))

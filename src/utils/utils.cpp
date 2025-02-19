@@ -1,5 +1,18 @@
 #include "utils.hpp"
 
+extern volatile bool globalServerRunning;
+
+void signalHandler(int signum) {
+    std::cout << "Received signal " << signum << ", shutting down..." << std::endl;
+    globalServerRunning = false;
+}
+
+void setupSignalHandlers() {
+	std::signal(SIGINT, signalHandler);
+    std::signal(SIGTERM, signalHandler);
+    std::signal(SIGQUIT, signalHandler);
+}
+
 namespace utils {
 	// 문자열을 int로 변환하는 함수
 	int stoi(const std::string& str) {

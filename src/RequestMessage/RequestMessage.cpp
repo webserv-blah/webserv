@@ -75,7 +75,7 @@ void RequestMessage::setMetaConnection(const std::string &value) {
 }
 
 void RequestMessage::setMetaContentLength(const std::string &value) {
-	this->metaContentLength_ = utils::stosizet(value);
+	this->metaContentLength_ = utils::sto_size_t(value);
 }
 
 // Parser 구현 후, 파싱 테스트용 함수, C++98 X

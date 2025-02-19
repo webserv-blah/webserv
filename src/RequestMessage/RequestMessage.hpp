@@ -40,7 +40,7 @@ class RequestMessage {
 		EnumReqStatus	getStatus() const;
 		std:: string	getMetaHost() const;
 		EnumConnection	getMetaConnection() const;
-		ssize_t			getMetaContentLength() const;
+		size_t			getMetaContentLength() const;
 		void			setStatus(const EnumReqStatus &status);
 		void			setMetaHost(const std::string &value);
 		void			setMetaConnection(const std::string &value);
@@ -65,5 +65,5 @@ class RequestMessage {
 		EnumReqStatus	status_;
 		std::string		metaHost_;
 		EnumConnection	metaConnection_;
-		ssize_t			metaContentLength_;
+		size_t			metaContentLength_;
 };

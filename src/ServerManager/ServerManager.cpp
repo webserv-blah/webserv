@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <cstring>
 
+// 프로그램을 종료할 때 소켓을 닫기 위해 소멸자를 사용합니다.
 ServerManager::~ServerManager() {
     for (std::set<int>::iterator it = listenFds_.begin(); it != listenFds_.end(); ++it) {
         close(*it);
@@ -20,9 +21,9 @@ ServerManager::~ServerManager() {
 
 // 서버 매니저를 초기화하고 수신 소켓을 설정합니다.
 void ServerManager::setupListeningSockets() {
-	// Get the global configuration instance.
+	// 전역 설정을 가져와서 수정할 수 있도록 const_cast를 사용합니다.
 	GlobalConfig& globalConfig = const_cast<GlobalConfig&>(GlobalConfig::getInstance());
-    // Map to associate a host/port pair with its corresponding socket file descriptor.
+    // 주소와 포트를 소켓 파일 디스크립터에 매핑하는 맵을 생성합니다.
     std::map<std::pair<std::string, int>, int> addressToSocket;
 
     // 전역 설정에 정의된 각 가상 서버 구성을 반복합니다.
@@ -104,11 +105,12 @@ void ServerManager::setupListeningSockets() {
 
 extern volatile bool globalServerRunning;
 
+// 서버를 종료해야 하는지 확인하는 함수입니다.
 bool ServerManager::isServerRunning() {
     return globalServerRunning;
 }
 
-// print listenFds, listenFdToServers_
+// 디버깅을 위해 현재 수신 소켓 정보를 출력합니다.
 void ServerManager::print() {
     std::cout << "listenFds: ";
     for (std::set<int>::iterator it = listenFds_.begin(); it != listenFds_.end(); ++it) {

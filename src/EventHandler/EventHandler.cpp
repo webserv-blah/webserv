@@ -38,11 +38,11 @@ int	EventHandler::handleClientReadEvent(ClientSession& clientSession) {
 		
         status = sendResponse(clientSession);
     }
-
     return status;
 }
 
 // 클라이언트 fd에서 발생한 Write 이벤트 처리
+<<<<<<< HEAD
 int EventHandler::handleClientWriteEvent(ClientSession& clientSession) {
     int status = sendResponse(clientSession);
     

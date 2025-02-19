@@ -22,9 +22,7 @@ class EventHandler {
 		int		handleServerReadEvent(int fd);
 		int		handleClientReadEvent(ClientSession& clientSession);
 		int 	handleClientWriteEvent(ClientSession& clientSession);
-		void	handleExceptionEvent(ClientSession& clientSession);
-		void	handleTimeout(ClientSession& clientSession);
-		void	handleServerShutDown(ClientSession& clientSession);
+		void	handleError(int statusCode, ClientSession& clientSession);
 		
 	private:
 		RequestParser	parser_;
@@ -34,6 +32,5 @@ class EventHandler {
 
 		int		readRequest(ClientSession& clientSession, RequestParser& parser); //rcv()
 		int		sendResponse(ClientSession& clientSession); //send()
-		int		sendErrorResponse(ClientSession& clientSession); 
 
 };

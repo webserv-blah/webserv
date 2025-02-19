@@ -16,32 +16,39 @@ RequestParser::~RequestParser() {}
 std::string RequestParser::parse(const std::string &readData, RequestMessage &reqMsg) {
 	std::istringstream iss(readData);
 	std::string buffer;
-	EnumReqStatus newStatus;
-
-	// MUST TO DO: 다시 마저 읽어오는 경우도 생각해봐야함
-	while (std::getline(iss, buffer, '\n')) {
-		//std::cout << "WHILE: " << buffer <<std::endl;
-		if (!buffer.empty() && buffer[buffer.size() - 1] == '\r') {
-			if (buffer.size() == 1) {
-				newStatus = this->setStatusCRLF(reqMsg.getStatus());
-				reqMsg.setStatus(newStatus);
-				if (newStatus == REQ_HEADER_CRLF)
-					break ;// == body
-				if (newStatus == REQ_ERROR)
-					throw std::logic_error("Error: invalid CLRF location error");
-				continue ;
+	EnumReqStatus status = reqMsg.getStatus();
+	
+	//std::cout << "SPLIT: " << readData <<";"<<std::endl;
+	//std::cout << "STATUS: " << status <<";"<<std::endl;
+	if (status != REQ_HEADER_CRLF
+	&&  status != REQ_BODY) {
+		while (std::getline(iss, buffer, '\n')) {
+			//std::cout << "BUFFER: " << buffer.substr(0, buffer.size()-1) <<";"<<std::endl;
+			if (iss.eof())// \n이 나오지 않고 readData가 끝난 상태. 다음 loop로 넘어감 
+				return buffer;
+			if (!buffer.empty() && buffer[buffer.size() - 1] == '\r') {
+				if (buffer.size() == 1) {
+					status = this->handleCRLFLine(reqMsg.getStatus());
+					reqMsg.setStatus(status);
+					if (status == REQ_HEADER_CRLF) {
+						// MUST TO DO: meta data 기본값 설정
+						std::cout << "CRLF && HEADER_CRLF\n";
+						iss >> buffer;
+						break ;// == body
+					}
+					if (status == REQ_ERROR)
+						throw std::logic_error("Error: invalid CLRF location error");
+				} else {
+					this->handleOneLine(buffer.erase(buffer.size() - 1), reqMsg);
+				}
+			} else {
+				throw std::logic_error("Error: single \\n error");
 			}
-			this->handleOneLine(buffer.erase(buffer.size() - 1), reqMsg);
-			if (iss.peek() == EOF)// MUST TO DO: 덜 읽어들인 케이스 // ?????MUST TO DO: 완료 이전 판단중에 iss.peek() == EOF라면 기다려봐야함
-				return buffer;// == remain data
-		} else {
-			throw std::logic_error("Error: single \\n error");
 		}
-		// MUST TO DO: 정상종료시에 connenction & content length 디폴트값설정 해줘야함
+	} else {
+		buffer = readData;
 	}
-	iss >> buffer;
-	this->parseBody(buffer, reqMsg);// MUST TO DO: body는 content length만큼 그대로 읽어들임 
-	return "";
+	return this->parseBody(buffer, reqMsg);
 }
 
 
@@ -60,7 +67,8 @@ void RequestParser::handleOneLine(const std::string &line, RequestMessage &reqMs
 	//}
 }
 
-EnumReqStatus RequestParser::setStatusCRLF(const EnumReqStatus &curStatus) {
+//현재 RequestMessage 상태에서 CRLF줄이 유효한지 검증하고, 다음 상태를 지정해주는 함수
+EnumReqStatus RequestParser::handleCRLFLine(const EnumReqStatus &curStatus) {
 	// 유효한 것으로 처리되는 두 위치의 CRLF외에는 전부 에러
 	if (curStatus == REQ_INIT)
 		return REQ_TOP_CRLF;
@@ -71,6 +79,7 @@ EnumReqStatus RequestParser::setStatusCRLF(const EnumReqStatus &curStatus) {
 }
 
 void RequestParser::parseStartLine(const std::string &line, RequestMessage &reqMsg) {
+	EnumReqStatus status = reqMsg.getStatus();
 	std::istringstream iss(line);
 	std::string buffer;
 
@@ -86,8 +95,12 @@ void RequestParser::parseStartLine(const std::string &line, RequestMessage &reqM
 			throw std::logic_error("not allow method");
 		}
 	}
+
 	if (std::getline(iss, buffer, ' '))
 		reqMsg.setTargetURI(buffer);
+	else
+		throw std::logic_error("none target uri");
+
 	iss >> buffer;
 	if (buffer == "HTTP/1.1")
 		reqMsg.setStatus(REQ_STARTLINE);
@@ -123,13 +136,47 @@ void RequestParser::parseFieldLine(const std::string &line, RequestMessage &reqM
 	reqMsg.setStatus(REQ_HEADER_FIELD);
 }
 
-void RequestParser::parseBody(const std::string &line, RequestMessage &reqMsg) {
-	//if (reqMsg.getMetaContentLength())
+// Content-Length의 길이에 따라 예외 처리됨. 유효한 문자열은 기존의 Body의 추가함
+std::string RequestParser::parseBody(const std::string &line, RequestMessage &reqMsg) {
+	const size_t contentLength = reqMsg.getMetaContentLength();
 
-	reqMsg.addBody(line);
+	if (contentLength >= reqMsg.getBodyLength() + line.length()) {
+		reqMsg.addBody(line);
+		if (contentLength == reqMsg.getBodyLength())
+			reqMsg.setStatus(REQ_DONE);
+		else
+			reqMsg.setStatus(REQ_BODY);
+		return "";
+	}
 
-	//reqMsg.setStatus(REQ_BODY_ING);
-	reqMsg.setStatus(REQ_DONE);// MUST TO DO: 우선 종료가 아닌, 추가적인 로직이 많이 필요함
+	size_t substrSize = contentLength - reqMsg.getBodyLength();
+	reqMsg.addBody(line.substr(0, substrSize));
+	std::string remainData = line.substr(substrSize);
+	
+	// 일차적으로 완성된 request이지만, 두 가지 우려사항을 검증해야함
+	const std::string methods[3] = {"GET", "POST", "DELETE"};
+	bool suspicious = true;
+	// 1) 남은 데이터가 유효한 메서드로 시작하면 -> 정상 요청 가능성
+	for (size_t i = 0; i < 3; ++i) {
+		if (remainData[0] == methods[i][0]) {
+			suspicious = false;
+			break;
+		}
+	}
+	// 2) body 안에 메서드가 들어있으면 → 의심스러운 요청
+	for (size_t i = 0; i < 3; ++i) {
+		if (reqMsg.getBody().find(methods[i]) != std::string::npos) {
+			suspicious = true;
+			break;
+		}
+	}
+
+	if (suspicious) {
+		reqMsg.setStatus(REQ_ERROR);
+		throw std::logic_error("body -> suspicious request");
+	}
+	reqMsg.setStatus(REQ_DONE);
+	return remainData;
 }
 
 //void RequestParser::cleanUpChunkedBody() {

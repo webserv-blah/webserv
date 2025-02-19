@@ -2,8 +2,8 @@
 #include "utils.hpp"
 #include <stdexcept>
 
-RequestMessage::RequestMessage() : method_(NONE), status_(REQ_INIT) {}
-RequestMessage::RequestMessage(EnumMethod method, std::string targetURI) : method_(method), targetURI_(targetURI) {}
+RequestMessage::RequestMessage() : method_(NONE), status_(REQ_INIT), bodyLength_(0) {}
+RequestMessage::RequestMessage(EnumMethod method, std::string targetURI) : method_(method), targetURI_(targetURI), bodyLength_(0) {}
 RequestMessage::~RequestMessage() {}
 
 EnumMethod RequestMessage::getMethod() const {
@@ -22,6 +22,10 @@ std::string RequestMessage::getBody() const {
 	return this->body_;
 }
 
+size_t RequestMessage::getBodyLength() const {
+	return this->bodyLength_;
+}
+
 void RequestMessage::setMethod(const EnumMethod &method) {
 	this->method_ = method;
 }
@@ -30,16 +34,16 @@ void RequestMessage::setTargetURI(const std::string &targetURI) {
 	this->targetURI_ = targetURI;
 }
 
-void RequestMessage::addFields(std::string field, std::vector<std::string> values) {
+void RequestMessage::addFields(const std::string &field, const std::vector<std::string> &values) {
 	if (this->fieldLines_.find(field) == this->fieldLines_.end())
 		this->fieldLines_[field] = values;
 	else
 		throw std::exception();//already exist Header Field
 }
 
-void RequestMessage::addBody(std::string bodyData) {
+void RequestMessage::addBody(const std::string &bodyData) {
 	this->body_.append(bodyData);
-	this->body_.append("\r\n");
+	this->bodyLength_ += bodyData.length();
 }
 
 EnumReqStatus RequestMessage::getStatus() const {

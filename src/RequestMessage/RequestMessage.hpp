@@ -31,10 +31,11 @@ class RequestMessage {
 		std::string		getTargetURI() const;
 		TypeField		getFields() const;
 		std::string		getBody() const;
+		size_t			getBodyLength() const;
 		void			setMethod(const EnumMethod &method);
 		void			setTargetURI(const std::string &targetURI);
-		void			addFields(std::string field, std::vector<std::string> values);
-		void			addBody(std::string bodyData);
+		void			addFields(const std::string &field, const std::vector<std::string> &values);
+		void			addBody(const std::string &bodyData);
 		
 		EnumReqStatus	getStatus() const;
 		std:: string	getMetaHost() const;
@@ -58,6 +59,7 @@ class RequestMessage {
 		std::string		targetURI_;
 		TypeField		fieldLines_;
 		std::string		body_;
+		size_t			bodyLength_;
 
 		// Header Field에 작성되어있던 메타데이터
 		EnumReqStatus	status_;

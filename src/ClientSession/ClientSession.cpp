@@ -54,10 +54,10 @@ void ClientSession::setWriteBuffer(const std::string &remainData) {
 	this->writeBuffer_ = remainData;
 }
 
-//Optional<ssize_t> ClientSession::getConfBodyMax() const {
+//Optional<size_t> ClientSession::getConfBodyMax() const {
 //	if (this->config_ == NULL)
-//		return Optional<ssize_t>();
-//	return this->config_->clientMaxBodySize_;//size_t & ssize_t는 맞춰봐야함
+//		return Optional<size_t>();
+//	return this->config_->clientMaxBodySize_;
 //}
 
 #include <iostream>

@@ -58,7 +58,7 @@ EnumConnection RequestMessage::getMetaConnection() const {
 	return this->metaConnection_;
 }
 
-ssize_t RequestMessage::getMetaContentLength() const {
+size_t RequestMessage::getMetaContentLength() const {
 	return this->metaContentLength_;
 }
 

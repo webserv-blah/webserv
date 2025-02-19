@@ -64,7 +64,7 @@ void ServerManager::cleanUpConnections(ClientManager& clientManager, EventHandle
 	std::map<int, ClientSession*>::iterator	it;
 
 	for (it = clientList.begin(); it != clientList.end(); ) {
-		eventHandler.handleServerShutDown(*it->second); // 클라이언트에게 서버 종료 알림
+		eventHandler.handleError(503, *it->second); // 클라이언트에게 서버 종료 알림
 		it = clientManager.removeClient(it->first); // 클라이언트 세션 삭제
 	}
 }

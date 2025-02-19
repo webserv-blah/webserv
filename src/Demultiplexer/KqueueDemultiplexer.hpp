@@ -10,7 +10,7 @@
 
 class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 	public:
-		KqueueDemultiplexer(std::set<int>& serverFds);
+		KqueueDemultiplexer(std::set<int>& listenFds);
 		~KqueueDemultiplexer();
 		int			waitForEventImpl();
 		void		addSocketImpl(int fd);

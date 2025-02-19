@@ -1,5 +1,6 @@
 #pragma once
 #include <set>
+#include "../GlobalConfig/GlobalConfig.hpp"
 #include "../Demultiplexer/KqueueDemultiplexer.hpp"
 #include "../TimeoutHandler/TimeoutHandler.hpp"
 #include "../EventHandler/EventHandler.hpp"
@@ -11,16 +12,21 @@ class ServerManager {
 		ServerManager();
 		~ServerManager();
 
-		void	run();
-		bool	isServer(int fd);
-		bool	isRunning();
+		void			setupListeningSockets(GlobalConfig& globalConfig);
+		void			cleanUpListeningSockets();
 
-	private:
-		std::set<int>	serverFds_;
-		bool			serverStatus_; //signal 핸들링과 관련 있으므로 논의 필요
+		void			run();
+		bool			isServerRunning();
 
-		void addClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler);
-		void removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler);
-		void cleanUpConnections(ClientManager& clientManager, eventHandler& eventHandler);
+		
+		private:
+		std::set<int>	listenFds_;
+		// bool			listenFdStatus_; //signal 핸들링과 관련 있으므로 논의 필요
+		
+		bool			isServer(int fd);
+		void			addClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler);
+		void 			removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler);
+		void 			cleanUpConnections(ClientManager& clientManager, eventHandler& eventHandler);
+
 
 };

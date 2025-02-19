@@ -2,7 +2,7 @@
 
 // EventLoop 실행 함수
 void ServerManager::run() {
-	Demultiplexer	reactor(serverFds_); // I/O 멀티플렉싱을 위한 리액터 객체
+	Demultiplexer	reactor(listenFds_); // I/O 멀티플렉싱을 위한 리액터 객체
 	EventHandler 	eventHandler; // 이벤트 처리 담당 객체
 	TimeoutHandler	timeoutHandler; // 클라이언트 타임아웃 관리 객체
 	ClientManager	clientManager; // 클라이언트 세션 관리 객체

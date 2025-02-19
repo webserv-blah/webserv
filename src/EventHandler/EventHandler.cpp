@@ -28,11 +28,15 @@ int	EventHandler::handleClientReadEvent(ClientSession& clientSession) {
     int status = readRequest(clientSession, parser_);
 
     if (status == TypeSesStatus::READ_COMPLETE) {
-		//cgi or static Handler 호출
+		std::string responseMsg;
 
-		//if (static) build response
-
-		//send response
+		if (cgiHandler_.isCGI(clientSession.getPath())) {
+			responseMsg = cgiHandler.handleRequest(clientSession.getReqMsg(), clientSession.getConfig());
+		} else {
+			responseMsg = staticHandler.handleRequest(clientSession.getReqMsg(), clientSession.getConfig());
+		}
+		clientSession.setWriteBuffer(responseMsg);
+		
         status = sendResponse(clientSession);
     }
     return status;

@@ -25,17 +25,22 @@ void ConfigParser::parse(GlobalConfig& globalConfig, const char* path) {
 		}
 	}
 
+	// server 블록이 없으면 예외 발생
+    if (globalConfig.servers_.empty()) {
+        throw std::runtime_error("No server blocks found in config file");
+    }
+
 	// 각 location 블록에 대해 server의 request handling을 적용
 	for (std::vector<ServerConfig>::iterator server = globalConfig.servers_.begin(); server != globalConfig.servers_.end(); ++server) {
 		for (std::vector<LocationConfig>::iterator location = server->locations_.begin(); location != server->locations_.end(); ++location) {
-			getEffectiveReqHandling(server->reqHandling_, location->reqHandling_);
+			getEffectiveReqHandling(server->reqConfig_, location->reqConfig_);
 		}
 	}
 	// 각 request handling에 대해 기본값을 설정
 	for (std::vector<ServerConfig>::iterator server = globalConfig.servers_.begin(); server != globalConfig.servers_.end(); ++server) {
-		setDefaultReqHandling(server->reqHandling_);
+		setDefaultReqHandling(server->reqConfig_);
 		for (std::vector<LocationConfig>::iterator location = server->locations_.begin(); location != server->locations_.end(); ++location) {
-			setDefaultReqHandling(location->reqHandling_);
+			setDefaultReqHandling(location->reqConfig_);
 		}
 	}
 }
@@ -74,7 +79,7 @@ void ConfigParser::parseServerBlock(std::ifstream& configFile, ServerConfig& ser
 		}
 		else {
 			// 그 외의 경우 request handling 관련 설정을 파싱함
-			parseReqHandleConf(configFile, serverBlock.reqHandling_, token);
+			parseRequestConfig(configFile, serverBlock.reqConfig_, token);
 		}
 
 		// 각 지시문이 끝난 후 ';'가 있어야 함
@@ -109,10 +114,10 @@ void ConfigParser::parseLocationBlock(std::ifstream& configFile, LocationConfig&
 		}
 
 		if (token == "methods") {
-			parseMethods(configFile, locationBlock.reqHandling_.methods_);
+			parseMethods(configFile, locationBlock.reqConfig_.methods_);
 		} else {
 			// request handling 관련 설정을 파싱함
-			parseReqHandleConf(configFile, locationBlock.reqHandling_, token);
+			parseRequestConfig(configFile, locationBlock.reqConfig_, token);
 		}
 
 		// 각 지시문이 끝난 후 ';'가 있어야 함
@@ -124,23 +129,23 @@ void ConfigParser::parseLocationBlock(std::ifstream& configFile, LocationConfig&
 }
 
 // request handling 설정을 파싱하는 함수
-void ConfigParser::parseReqHandleConf(std::ifstream& configFile, ReqHandleConf& reqHandling, const std::string& token) {
+void ConfigParser::parseRequestConfig(std::ifstream& configFile, RequestConfig& reqConfig, const std::string& token) {
 	if (token == "error_page") {
-		parseErrorPage(configFile, reqHandling.errorPages_);
+		parseErrorPage(configFile, reqConfig.errorPages_);
 	} else if (token == "return") {
-		parseReturn(configFile, reqHandling.returnUrl_, reqHandling.returnStatus_);
+		parseReturn(configFile, reqConfig.returnUrl_, reqConfig.returnStatus_);
 	} else if (token == "root") {
-		parseRoot(configFile, reqHandling.root_);
+		parseRoot(configFile, reqConfig.root_);
 	} else if (token == "index") {
-		parseIndexFile(configFile, reqHandling.indexFile_);
+		parseIndexFile(configFile, reqConfig.indexFile_);
 	} else if (token == "upload_path") {
-		parseUploadPath(configFile, reqHandling.uploadPath_);
+		parseUploadPath(configFile, reqConfig.uploadPath_);
 	} else if (token == "cgi_extension") {
-		parseCgiExtension(configFile, reqHandling.cgiExtension_);
+		parseCgiExtension(configFile, reqConfig.cgiExtension_);
 	} else if (token == "client_max_body_size") {
-		parseClientMaxBodySize(configFile, reqHandling.clientMaxBodySize_);
+		parseClientMaxBodySize(configFile, reqConfig.clientMaxBodySize_);
 	} else if (token == "autoindex") {
-		parseAutoIndex(configFile, reqHandling.autoIndex_);
+		parseAutoIndex(configFile, reqConfig.autoIndex_);
 	} else {
 		// 예상하지 못한 토큰이면 예외 발생
 		throw std::runtime_error("Unexpected token: " + token);
@@ -148,7 +153,7 @@ void ConfigParser::parseReqHandleConf(std::ifstream& configFile, ReqHandleConf& 
 }
 
 // 서버 설정의 request handling을 location 설정에 적용하는 함수
-void ConfigParser::getEffectiveReqHandling(const ReqHandleConf& serverReqHandling, ReqHandleConf& locationReqHandling) {
+void ConfigParser::getEffectiveReqHandling(const RequestConfig& serverReqHandling, RequestConfig& locationReqHandling) {
 	if (locationReqHandling.methods_.empty()) {
 		locationReqHandling.methods_ = serverReqHandling.methods_;
 	}
@@ -182,23 +187,23 @@ void ConfigParser::getEffectiveReqHandling(const ReqHandleConf& serverReqHandlin
 }
 
 // request handling에 기본값을 설정하는 함수
-void ConfigParser::setDefaultReqHandling(ReqHandleConf& reqHandling) {
-	if (reqHandling.methods_.empty()) {
+void ConfigParser::setDefaultReqHandling(RequestConfig& reqConfig) {
+	if (reqConfig.methods_.empty()) {
 		// 기본 메서드는 GET, POST, DELETE
-		reqHandling.methods_.push_back("GET");
-		reqHandling.methods_.push_back("POST");
-		reqHandling.methods_.push_back("DELETE");
+		reqConfig.methods_.push_back("GET");
+		reqConfig.methods_.push_back("POST");
+		reqConfig.methods_.push_back("DELETE");
 	}
-	if (reqHandling.indexFile_.empty()) {
+	if (reqConfig.indexFile_.empty()) {
 		// 기본 인덱스 파일은 "index.html"
-		reqHandling.indexFile_ = "index.html";
+		reqConfig.indexFile_ = "index.html";
 	}
-	if (!reqHandling.clientMaxBodySize_.isSet()) {
+	if (!reqConfig.clientMaxBodySize_.isSet()) {
 		// 기본 최대 본문 크기는 1MB
-		reqHandling.clientMaxBodySize_ = 1048576;  // 1MB
+		reqConfig.clientMaxBodySize_ = 1048576;  // 1MB
 	}
-	if (!reqHandling.autoIndex_.isSet()) {
+	if (!reqConfig.autoIndex_.isSet()) {
 		// 기본 autoindex 값은 false
-		reqHandling.autoIndex_ = false;
+		reqConfig.autoIndex_ = false;
 	}
 }

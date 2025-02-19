@@ -12,7 +12,7 @@ class ClientSession {
 
 class ClientManager {
 	public:
-		typedef std::map<int, ClientSession*>	ClientSessionMap;
+		typedef std::map<int, ClientSession*>	TypeClientSessionMap;
 		ClientManager();
 		~ClientManager();
 		void						addClient(int fd);
@@ -21,6 +21,6 @@ class ClientManager {
 		ClientSessionMap			accessClientSessionMap();
 
 	private:
-		ClientSessionMap	clientList_;
+		TypeClientSessionMap	clientList_;
 
 };

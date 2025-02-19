@@ -6,7 +6,7 @@
 #include <fstream>
 #include <vector>
 
-namespace fileUtilities {
+namespace FileUtilities {
 	enum EnumValidationResult {
 		VALID_PATH,         // 유효한 경로 (디렉터리) 이며 권한 OK
 		PATH_NOT_FOUND,     // 디렉터리로 볼 수 있는 경로가 없음

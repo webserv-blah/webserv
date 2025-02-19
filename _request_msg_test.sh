@@ -1,7 +1,5 @@
 #!/bin/bash
 
-export HTTP_REQUEST=$(echo -e $ERROR)
-
 BASIC="\
 GET /index.html HTTP/1.1\r\n\
 Host: localhost\r\n\
@@ -32,3 +30,5 @@ Content-Length: 4\r\n\
 \r\n\
 hi\r\n\
 "
+
+export HTTP_REQUEST=$(printf "%b" "$BASIC")

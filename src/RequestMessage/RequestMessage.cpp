@@ -88,12 +88,16 @@ void RequestMessage::printResult() const {
 	switch (this->method_) {
 		case NONE:
 			method = "NONE";
+			break;
 		case GET:
 			method = "GET";
+			break;
 		case POST:
 			method = "POST";
+			break;
 		case DELETE:
 			method = "DELETE";
+			break;
 	}
 	std::cout <<method<<";"<<std::endl;
 	
@@ -121,12 +125,12 @@ void RequestMessage::printBody(void) const {
 	std::cout << "\033[32;7m Body :\033[0m"<<std::endl;
 	std::cout <<"\033[37;2mcount: "<<this->body_.length()<<"\033[0m\n";
 	for (auto it = this->body_.begin(); it != this->body_.end(); ++it) {
-        if (*it == '\n')
-            std::cout << "\\n" << std::endl;
-        else if (*it == '\r')
-            std::cout << "\\r";
-        else
-            std::cout << *it;
+		if (*it == '\n')
+			std::cout << "\\n" << std::endl;
+		else if (*it == '\r')
+			std::cout << "\\r";
+		else
+			std::cout << *it;
 	}
 }
 void RequestMessage::printMetaData(void) const {

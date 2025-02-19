@@ -19,10 +19,10 @@ class RequestParser {
 		//Optional<ssize_t>	bodyMaxLength_;//Client마다 바뀌는 설정 값
 		
 		void			handleOneLine(const std::string &line, RequestMessage &reqMsg);
-		EnumReqStatus	setStatusCRLF(const EnumReqStatus &curStatus);
+		EnumReqStatus	handleCRLFLine(const EnumReqStatus &curStatus);
 		void			parseStartLine(const std::string &line, RequestMessage &reqMsg);
 		void			parseFieldLine(const std::string &line, RequestMessage &reqMsg);
-		void			parseBody(const std::string &line, RequestMessage &reqMsg);
+		std::string 	parseBody(const std::string &line, RequestMessage &reqMsg);
 		//void				cleanUpChunkedBody(const std::string &line);
 };
 

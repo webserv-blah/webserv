@@ -18,85 +18,86 @@ ServerManager::~ServerManager() {
     listenFds_.clear();
 }
 
+// 서버 매니저를 초기화하고 수신 소켓을 설정합니다.
 void ServerManager::setupListeningSockets() {
 	// Get the global configuration instance.
 	GlobalConfig& globalConfig = const_cast<GlobalConfig&>(GlobalConfig::getInstance());
     // Map to associate a host/port pair with its corresponding socket file descriptor.
     std::map<std::pair<std::string, int>, int> addressToSocket;
 
-    // Iterate over each virtual server configuration defined in the globalConfig.
+    // 전역 설정에 정의된 각 가상 서버 구성을 반복합니다.
     for (size_t i = 0; i < globalConfig.servers_.size(); ++i) {
         ServerConfig& server = globalConfig.servers_[i];
 
-        // Get the host and port for this server.
+        // 이 서버의 호스트와 포트를 가져옵니다.
         std::pair<std::string, int> key = std::make_pair(server.host_, server.port_);
 
         int sockFd;
-        // Check if a socket for this host/port combination has already been created.
+        // 이 호스트/포트 조합에 대한 소켓이 이미 생성되었는지 확인합니다.
         if (addressToSocket.find(key) != addressToSocket.end()) {
             sockFd = addressToSocket[key];
         } else {
-            // Create a new TCP socket.
+            // 새 TCP 소켓을 생성합니다.
             sockFd = socket(AF_INET, SOCK_STREAM, 0);
             if (sockFd < 0) {
 				throw std::runtime_error("Failed to create socket");
             }
 
-            // Set the socket to non-blocking mode.
-            // Retrieve the current flags for the socket.
+            // 소켓을 논블로킹 모드로 설정합니다.
+            // 소켓의 현재 플래그를 가져옵니다.
             int flags = fcntl(sockFd, F_GETFL, 0);
             if (flags == -1) {
                 close(sockFd);
                 throw std::runtime_error("Failed to get socket flags");
             }
-            // Add the O_NONBLOCK flag to ensure non-blocking operations.
+            // 논블로킹 작업을 위해 O_NONBLOCK 플래그를 추가합니다.
             if (fcntl(sockFd, F_SETFL, flags | O_NONBLOCK) == -1) {
                 close(sockFd);
                 throw std::runtime_error("Failed to set socket flags");
             }
 
-            // Set socket option to allow the reuse of local addresses.
+            // 로컬 주소의 재사용을 허용하도록 소켓 옵션을 설정합니다.
             int opt = 1;
             if (setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
                 close(sockFd);
                 throw std::runtime_error("Failed to set socket options");
             }
 
-            // Initialize the sockaddr_in structure to define the server's address.
+            // 서버의 주소를 정의하기 위해 sockaddr_in 구조체를 초기화합니다.
             sockaddr_in addr;
-            addr.sin_family = AF_INET;                 // Use IPv4.
-            addr.sin_port = htons(server.port_);       // Set the port, converting to network byte order.
+            addr.sin_family = AF_INET;                 // IPv4 사용.
+            addr.sin_port = htons(server.port_);       // 포트를 설정하며, 네트워크 바이트 순서로 변환.
             if (server.host_ == "0.0.0.0") {
-                addr.sin_addr.s_addr = INADDR_ANY;       // Bind to all available interfaces.
+                addr.sin_addr.s_addr = INADDR_ANY;       // 모든 사용 가능한 인터페이스에 바인딩.
             } else {
-                // Convert the IP address from text to binary form.
+                // 텍스트 형태의 IP 주소를 바이너리 형태로 변환합니다.
                 if (inet_aton(server.host_.c_str(), &addr.sin_addr) == 0) {
                     close(sockFd);
 					throw std::runtime_error("Invalid IP address");
                 }
             }
 
-            // Bind the socket to the specified IP address and port.
+            // 지정된 IP 주소와 포트에 소켓을 바인딩합니다.
             if (bind(sockFd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr)) < 0) {
                 close(sockFd);
 				std::string errorMsg = "Failed to bind socket to " + server.host_ + ":" + std::to_string(server.port_) + " - " + strerror(errno);
     			throw std::runtime_error(errorMsg);
             }
 
-            // Begin listening for incoming connections on the socket.
+            // 소켓에서 들어오는 연결 요청을 수신하기 시작합니다.
             if (listen(sockFd, SOMAXCONN) < 0) {
                 close(sockFd);
                 throw std::runtime_error("Failed to listen on socket");
             }
 
-            // Store the new socket in our mapping so we don't create duplicate sockets.
+            // 중복된 소켓 생성을 방지하기 위해 새로운 소켓을 맵에 저장합니다.
             addressToSocket[key] = sockFd;
-            // Add the socket to the set of listening file descriptors.
+            // 소켓을 수신 대기 파일 디스크립터 집합에 추가합니다.
             listenFds_.insert(sockFd);
         }
 
-        // Map this server configuration to the corresponding listening socket.
-        // This allows multiple server configurations to share the same socket.
+        // 이 서버 구성을 해당 수신 소켓에 매핑합니다.
+        // 이를 통해 여러 서버 구성이 동일한 소켓을 공유할 수 있습니다.
         globalConfig.listenFdToServers_[sockFd].push_back(&server);
     }
 }

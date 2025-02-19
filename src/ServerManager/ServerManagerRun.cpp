@@ -11,12 +11,11 @@ void ServerManager::run() {
 		int	numEvents = reactor.waitForEvent(); // 발생한 이벤트 개수 확인
 
 		for (int i = 0; i < numEvents; ++i) {
-			TypeEvent	type = reactor.getEventType(i); // 이벤트 타입 확인
+			EnumEvent	type = reactor.getEventType(i); // 이벤트 타입 확인
 			int 		fd = reactor.getSocketFd(i); // 이벤트가 발생한 소켓 FD 확인
 
 			if (type == EXCEPTION_EVENT) { // 예외(오류) 이벤트 발생 시
-				// ((error response 전송 여부 판단 후 추가 가능))
-				removeClientInfo(fd, clientManager, reactor, timeoutHandler);
+				removeClientInfo(fd, clientManager, reactor, timeoutHandler); // 클라이언트 제거
 			} else if (type == READ_EVENT) { // 읽기(수신) 이벤트 발생 시
 				if (isServer(fd)) { // 서버 소켓이라면 새 클라이언트 연결 처리
 					int clientFd = eventHandler.handleServerReadEvent(fd);
@@ -26,12 +25,10 @@ void ServerManager::run() {
 					}
 
 				} else { // 클라이언트 소켓에서 데이터 수신 처리
-					TypeSesStatus	status = eventHandler.handleClientReadEvent(clientManager.accessClientSession(fd));
+					EnumSesStatus	status = eventHandler.handleClientReadEvent(clientManager.accessClientSession(fd));
 
 					if (status == CONNECTION_CLOSED) { // 클라이언트가 연결 종료
 						removeClientInfo(fd, clientManager, reactor, timeoutHandler);
-					} else if (status == CONNECTION_ERROR) { // 클라이언트 오류 발생
-						// ((connection error 처리 로직 추가 필요))
 					} else if (status == WRITE_CONTINUE) { // 추가적인 쓰기 작업 필요
 						timeoutHandler.updateActivity(fd); // 타임아웃 갱신
 						reactor.addWriteEvent(fd); // 쓰기 이벤트 추가
@@ -41,7 +38,7 @@ void ServerManager::run() {
 				}
 
 			} else if (type == WRITE_EVENT) { // 쓰기(송신) 이벤트 발생 시
-				TypeSesStatus	status = eventHandler.handleClientWriteEvent(clientManager.accessClientSession(fd));
+				EnumSesStatus	status = eventHandler.handleClientWriteEvent(clientManager.accessClientSession(fd));
 
 				if (status == CONNECTION_CLOSED) { // 클라이언트가 연결 종료
 					removeClientInfo(fd, clientManager, reactor, timeoutHandler);
@@ -67,7 +64,7 @@ void ServerManager::cleanUpConnections(ClientManager& clientManager, EventHandle
 	std::map<int, ClientSession*>::iterator	it;
 
 	for (it = clientList.begin(); it != clientList.end(); ) {
-		eventHandler.handleServerShutDown(*it->second); // 클라이언트에게 서버 종료 알림
+		eventHandler.handleError(503, *it->second); // 클라이언트에게 서버 종료 알림
 		it = clientManager.removeClient(it->first); // 클라이언트 세션 삭제
 	}
 }

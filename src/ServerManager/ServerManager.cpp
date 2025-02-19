@@ -9,7 +9,16 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-void ServerManager::setupListeningSockets(GlobalConfig& globalConfig) {
+void ServerManager::~ServerManager() {
+    for (std::set<int>::iterator it = listenFds_.begin(); it != listenFds_.end(); ++it) {
+        close(*it);
+    }
+    listenFds_.clear();
+}
+
+void ServerManager::setupListeningSockets() {
+	// Get the global configuration instance.
+	const GlobalConfig& globalConfig = GlobalConfig::getInstance();
     // Map to associate a host/port pair with its corresponding socket file descriptor.
     std::map<std::pair<std::string, int>, int> addressToSocket;
 

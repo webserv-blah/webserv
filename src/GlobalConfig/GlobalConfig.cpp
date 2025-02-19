@@ -1,9 +1,35 @@
 #include "GlobalConfig.hpp"
 
-#include <iostream>
-#include <vector>
-#include <string>
-#include <map>
+// 정적 멤버 변수 초기화
+GlobalConfig* GlobalConfig::instance_ = NULL;
+bool GlobalConfig::isInitialized_ = false;
+
+// 싱글톤 인스턴스를 반환
+const GlobalConfig& GlobalConfig::getInstance() {
+	if (!isInitialized_) {
+		throw std::logic_error("GlobalConfig is not initialized. Please initialize it by calling initGlobalConfig().");
+	}
+	return *instance_;
+}
+
+// 설정 파일을 이용해 GlobalConfig를 초기화 (단 한 번만 호출 가능)
+void GlobalConfig::initGlobalConfig(const char* path) {
+	if (isInitialized_) {
+		throw std::logic_error("GlobalConfig has already been initialized. You cannot initialize it more than once.");
+	}
+	instance_ = new GlobalConfig();
+	ConfigParser::parse(*instance_, path);  // 설정 파일을 파싱하고 초기화 수행
+	isInitialized_ = true;
+	// 프로그램 종료 시 싱글톤 인스턴스 파괴를 위해 atexit에 등록
+	std::atexit(&GlobalConfig::destroyInstance);
+}
+
+// 싱글톤 인스턴스를 파괴
+void GlobalConfig::destroyInstance() {
+	delete instance_;
+	instance_ = NULL;
+	isInitialized_ = false;
+}
 
 // GlobalConfig 클래스 내의 findRequestConfig 함수: 
 // listenFd, 도메인 이름, 그리고 target URL에 해당하는 RequestConfig를 찾는다.
@@ -62,7 +88,7 @@ const std::string& targetUrl) const {
 	}
 }
 
-void GlobalConfig::print() {
+void GlobalConfig::print() const {
 	for (size_t i = 0; i < servers_.size(); i++) {
 		std::cout << "Server " << i + 1 << ":\n";
 		std::cout << "  Host: " << servers_[i].host_ << "\n";
@@ -78,7 +104,7 @@ void GlobalConfig::print() {
 		std::cout << "  Request Handling:\n";
 
 		std::cout << "    Error Pages:\n";
-		for (std::map<int, std::string>::iterator it = servers_[i].reqConfig_.errorPages_.begin();
+		for (std::map<int, std::string>::const_iterator it = servers_[i].reqConfig_.errorPages_.begin();
 			 it != servers_[i].reqConfig_.errorPages_.end(); ++it) {
 			std::cout << "      " << it->first << " -> " << it->second << "\n";
 		}
@@ -118,7 +144,7 @@ void GlobalConfig::print() {
 				std::cout << "\n";
 
 				std::cout << "        Error Pages:\n";
-				for (std::map<int, std::string>::iterator it = servers_[i].locations_[j].reqConfig_.errorPages_.begin();
+				for (std::map<int, std::string>::const_iterator it = servers_[i].locations_[j].reqConfig_.errorPages_.begin();
 					 it != servers_[i].locations_[j].reqConfig_.errorPages_.end(); ++it) {
 					std::cout << "          " << it->first << " -> " << it->second << "\n";
 				}

@@ -60,6 +60,3 @@ void	EventHandler::handleTimeout(ClientSession& clientSession) {
 void	EventHandler::handleServerShutDown(ClientSession& clientSession) {
     sendErrorResponse(clientSession, 503);
 }
-
-
-

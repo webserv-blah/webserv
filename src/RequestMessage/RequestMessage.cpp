@@ -2,8 +2,7 @@
 #include "utils.hpp"
 #include <stdexcept>
 
-RequestMessage::RequestMessage() : method_(NONE), status_(REQ_INIT), bodyLength_(0), metaTransferEncoding_(NONE_ENCODING) {}
-RequestMessage::RequestMessage(EnumMethod method, std::string targetURI) : method_(method), targetURI_(targetURI), bodyLength_(0), metaTransferEncoding_(NONE_ENCODING) {}
+RequestMessage::RequestMessage() : method_(NONE), bodyLength_(0), status_(REQ_INIT), metaConnection_(KEEP_ALIVE), metaContentLength_(0), metaTransferEncoding_(NONE_ENCODING) {}
 RequestMessage::~RequestMessage() {}
 
 EnumMethod RequestMessage::getMethod() const {
@@ -34,11 +33,13 @@ void RequestMessage::setTargetURI(const std::string &targetURI) {
 	this->targetURI_ = targetURI;
 }
 
-void RequestMessage::addFields(const std::string &field, const std::vector<std::string> &values) {
-	if (this->fieldLines_.find(field) == this->fieldLines_.end())
-		this->fieldLines_[field] = values;
-	else
-		throw std::exception();//already exist Header Field
+void RequestMessage::addFieldLine(const std::string &name, const std::vector<std::string> &values) {
+	if (this->fieldLines_.find(name) == this->fieldLines_.end())
+		this->fieldLines_[name] = values;
+	else {
+		std::vector<std::string> &finded = this->fieldLines_[name];
+		finded.insert(finded.end(), values.begin(), values.end());
+	}
 }
 
 void RequestMessage::addBody(const std::string &bodyData) {
@@ -66,6 +67,10 @@ EnumTransEnc RequestMessage::getMetaTransferEncoding() const {
 	return this->metaTransferEncoding_;
 }
 
+std::string RequestMessage::getMetaContentType() const {
+	return this->metaContentType_;
+}
+
 void RequestMessage::setStatus(const EnumReqStatus &status) {
 	this->status_ = status;
 }
@@ -84,6 +89,10 @@ void RequestMessage::setMetaContentLength(const size_t &value) {
 
 void RequestMessage::setMetaTransferEncoding(const EnumTransEnc &value) {
 	this->metaTransferEncoding_ = value;
+}
+
+void RequestMessage::setMetaContentType(const std::string &value) {
+	this->metaContentType_ = value;
 }
 
 // Parser 구현 후, 파싱 테스트용 함수, C++98 X

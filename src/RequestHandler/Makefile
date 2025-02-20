@@ -6,7 +6,8 @@ ifndef SRCDIR
 endif
 
 NAME := RequestHandler.a
-HEAD := StaticHandler.hpp
+HEAD := StaticHandler.hpp \
+
 SRCS := $(wildcard *.cpp)
 
 include $(TOPDIR)/include_make/Variable.mk

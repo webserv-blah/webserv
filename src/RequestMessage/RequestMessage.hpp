@@ -5,7 +5,8 @@
 #include <vector>
 
 enum EnumMethod { NONE, GET, POST, DELETE };
-enum EnumConnection { KEEP_ALIVE, CLOSE };
+typedef enum EnumConnection { KEEP_ALIVE, CLOSE } EnumConnect;
+typedef enum EnumTransferEncoding { NONE_ENCODING, CHUNK } EnumTransEnc;
 typedef enum EnumRequestStatus {
 	REQ_INIT,
 	REQ_TOP_CRLF,		// CRLF(0,1)
@@ -41,10 +42,12 @@ class RequestMessage {
 		std:: string	getMetaHost() const;
 		EnumConnection	getMetaConnection() const;
 		size_t			getMetaContentLength() const;
+		EnumTransEnc	getMetaTransferEncoding() const;
 		void			setStatus(const EnumReqStatus &status);
 		void			setMetaHost(const std::string &value);
-		void			setMetaConnection(const std::string &value);
-		void			setMetaContentLength(const std::string &value);
+		void			setMetaConnection(const EnumConnection &value);
+		void			setMetaContentLength(const size_t &value);
+		void			setMetaTransferEncoding(const EnumTransEnc &value);
 
 		// 파싱 후, 결과 출력을 위한 함수
 		void printResult() const;
@@ -64,6 +67,7 @@ class RequestMessage {
 		// Header Field에 작성되어있던 메타데이터
 		EnumReqStatus	status_;
 		std::string		metaHost_;
-		EnumConnection	metaConnection_;
+		EnumConnect		metaConnection_;
 		size_t			metaContentLength_;
+		EnumTransEnc	metaTransferEncoding_;
 };

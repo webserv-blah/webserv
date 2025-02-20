@@ -14,10 +14,10 @@ DIRS := utils \
 		ConfigParser \
 		RequestMessage \
 		RequestParser \
+		ClientSession \
 		ServerManager \
 		Demultiplexer \
 		TimeoutHandler
-
 
 SUBS := $(addsuffix .a,$(DIRS))
 

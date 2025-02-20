@@ -52,8 +52,8 @@ void    TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer&
         int fd = it->second;
         
 		//send 408 error
-		//실제 handleError 구현 후 인자 수정 예정
-		eventHandler.handleError(408); 
+		ClientSession clientSession = clientManager.accessClientSession(fd);
+		eventHandler.handleError(408, clientSession); 
 
 		//client 정보 삭제
         removeConnection(fd, it);

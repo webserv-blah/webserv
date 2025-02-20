@@ -5,8 +5,8 @@ ifndef SRCDIR
 	SRCDIR = $(abspath ../)
 endif
 
-NAME := RequestHandler.a
-HEAD := StaticHandler.hpp \
+NAME := EventHandler.a
+HEAD := EventHandler.hpp \
 
 SRCS := $(wildcard *.cpp)
 

@@ -1,21 +1,43 @@
-#pragma once
+#ifndef STATICHANDLER_HPP
+#define STATICHANDLER_HPP
 
-#include "ResponseBuilder.hpp"
-#include "FileUtilities.hpp"
 #include "GlobalConfig.hpp"
-#include "Request.hpp"
-#include <string>
-#include <fstream>
+#include "ClientSession.hpp"
+#include "RequestMessage.hpp"
+#include "ResponseBuilder.hpp"
+#include "file_utils.hpp"
 #include <sstream>
 #include <vector>
+#include <string>
+#include <map>
 
 class StaticHandler {
 public:
-	std::string handleRequest(const Request& req, const ReqHandleConf& currConf);
+    StaticHandler(const ResponseBuilder& responseBuilder);
+    ~StaticHandler();
+
+    // 요청 처리의 메인 진입점
+    std::string handleRequest(const RequestMessage& reqMsg, const RequestConfig& conf);
 
 private:
-	// 파일 로딩
-	std::string readFile(const std::string &filePath) const;
-	// MIME 결정
-	std::string determineContentType(const std::string &filePath) const;
+    const ResponseBuilder& responseBuilder_;
+
+    // 디렉토리 처리
+    std::string handleDirectory(const std::string &dirPath,
+                                const std::string &uri,
+                                const RequestConfig &conf);
+
+    // 파일 처리
+    std::string handleFile(const std::string &filePath, const RequestConfig& conf);
+
+    // index.html 등 특정 파일 응답
+    std::string serveFile(const std::string &filePath, const std::string &contentType, const RequestConfig& conf);
+
+    // autoindex 응답(디렉토리 목록)
+    std::string buildAutoIndexResponse(const std::string &dirPath, const std::string &uri);
+
+    // MIME 타입 결정
+    std::string determineContentType(const std::string &filePath) const;
 };
+
+#endif

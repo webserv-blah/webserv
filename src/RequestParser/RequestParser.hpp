@@ -23,6 +23,7 @@ class RequestParser {
 		void			parseStartLine(const std::string &line, RequestMessage &reqMsg);
 		void			parseFieldLine(const std::string &line, RequestMessage &reqMsg);
 		std::string 	parseBody(const std::string &line, RequestMessage &reqMsg);
-		//void				cleanUpChunkedBody(const std::string &line);
+		void			handleFieldValue(const std::string &name, const std::string &value, RequestMessage &reqMsg);
+		std::string		cleanUpChunkedBody(const std::string &data, RequestMessage &reqMsg);
 };
 

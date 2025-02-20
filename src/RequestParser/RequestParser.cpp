@@ -32,8 +32,7 @@ std::string RequestParser::parse(const std::string &readData, RequestMessage &re
 					reqMsg.setStatus(status);
 					if (status == REQ_HEADER_CRLF) {
 						// MUST TO DO: meta data 기본값 설정
-						std::cout << "CRLF && HEADER_CRLF\n";
-						iss >> buffer;
+						std:getline(iss, buffer, '\0');
 						break ;// == body
 					}
 					if (status == REQ_ERROR)
@@ -42,13 +41,20 @@ std::string RequestParser::parse(const std::string &readData, RequestMessage &re
 					this->handleOneLine(buffer.erase(buffer.size() - 1), reqMsg);
 				}
 			} else {
+
 				throw std::logic_error("Error: single \\n error");
 			}
 		}
 	} else {
 		buffer = readData;
 	}
-	return this->parseBody(buffer, reqMsg);
+
+	if (buffer.length() == 0)
+		return "";
+	if (reqMsg.getMetaTransferEncoding() == CHUNK)
+		return this->cleanUpChunkedBody(buffer, reqMsg);
+	else
+		return this->parseBody(buffer, reqMsg);
 }
 
 
@@ -123,17 +129,37 @@ void RequestParser::parseFieldLine(const std::string &line, RequestMessage &reqM
 	reqMsg.addFields(name, values);
 
 	try {
-		if (name == "Host")
-			reqMsg.setMetaHost(value);
-		if (name == "Content-Length")
-			reqMsg.setMetaContentLength(value);
-		if (name == "Connection")
-			reqMsg.setMetaConnection(value);
+		handleFieldValue(name, value, reqMsg);
 	} catch (const std::exception &e) {
-		// MUST TO DO: Header Field value오류 처리
+		std::cerr << e.what() << "\033[37;2m//in Fieldline()\033[0m" << std::endl;
 	}
 
 	reqMsg.setStatus(REQ_HEADER_FIELD);
+}
+
+void RequestParser::handleFieldValue(const std::string &name, const std::string &value, RequestMessage &reqMsg) {
+	if (name == "Host") {
+		reqMsg.setMetaHost(value);
+	} else if (name == "Connection") {
+		EnumConnect connection;
+		if (value == "keep-alive")
+			connection = KEEP_ALIVE;
+		else if (value == "close")
+			connection = CLOSE;
+		else
+			throw std::logic_error("invalid field value: Connection");
+		reqMsg.setMetaConnection(connection);
+	} else if (name == "Content-Length") {
+		size_t contentLength = utils::sto_size_t(value);
+		reqMsg.setMetaContentLength(contentLength);
+	} else if (name == "Transfer-Encoding") {
+		EnumTransEnc transferEncoding;
+		if (value == "chunked")
+			transferEncoding = CHUNK;
+		else
+			throw std::logic_error("invalid field value: Connection");
+		reqMsg.setMetaTransferEncoding(transferEncoding);
+	}
 }
 
 // Content-Length의 길이에 따라 예외 처리됨. 유효한 문자열은 기존의 Body의 추가함
@@ -179,6 +205,43 @@ std::string RequestParser::parseBody(const std::string &line, RequestMessage &re
 	return remainData;
 }
 
-//void RequestParser::cleanUpChunkedBody() {
-	// MUST TO DO: 청크 전송 파싱
-//}
+std::string RequestParser::cleanUpChunkedBody(const std::string &data, RequestMessage &reqMsg) {
+	std::istringstream iss(data);
+	std::string buffer;
+	std::string tmp;
+	size_t chunkSize;
+
+	while (std::getline(iss, buffer, '\n')) {
+		if (iss.eof())
+			return buffer;
+		if (!buffer.empty() && buffer[buffer.size() - 1] == '\r') {
+			// iss에 남은 길이 측정
+			std::streampos currentPos = iss.tellg();
+			iss.seekg(0, std::ios::end);
+			std::streampos remainISS = iss.tellg() - currentPos;
+			iss.seekg(currentPos);
+
+			chunkSize = utils::sto_size_t(buffer.erase(buffer.size() - 1));
+			//std::cout << "CHUNKSIZE: " << chunkSize<<";"<<std::endl;
+			if (chunkSize == 0) {
+				reqMsg.setStatus(REQ_DONE);
+				reqMsg.setMetaContentLength(reqMsg.getBodyLength());
+				return iss.str().substr(static_cast<std::string::size_type>(currentPos)); 
+			}
+			
+			tmp = buffer + "\r\n";
+			
+			if (remainISS < chunkSize + 2)
+				return tmp + iss.str().substr(static_cast<std::string::size_type>(currentPos));
+
+			buffer.resize(chunkSize + 2);
+			iss.read(&buffer[0], chunkSize + 2);
+
+			if (buffer.compare(buffer.size() - 2, 2, "\r\n") != 0)
+				throw std::logic_error("chunk format error: chunk data");
+			reqMsg.addBody(buffer.substr(0, buffer.size() - 2));
+		} else {
+			throw std::logic_error("chunk format error: chunk size");
+		}
+	}
+}

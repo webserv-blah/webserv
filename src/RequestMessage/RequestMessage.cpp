@@ -2,8 +2,8 @@
 #include "utils.hpp"
 #include <stdexcept>
 
-RequestMessage::RequestMessage() : method_(NONE), status_(REQ_INIT), bodyLength_(0) {}
-RequestMessage::RequestMessage(EnumMethod method, std::string targetURI) : method_(method), targetURI_(targetURI), bodyLength_(0) {}
+RequestMessage::RequestMessage() : method_(NONE), status_(REQ_INIT), bodyLength_(0), metaTransferEncoding_(NONE_ENCODING) {}
+RequestMessage::RequestMessage(EnumMethod method, std::string targetURI) : method_(method), targetURI_(targetURI), bodyLength_(0), metaTransferEncoding_(NONE_ENCODING) {}
 RequestMessage::~RequestMessage() {}
 
 EnumMethod RequestMessage::getMethod() const {
@@ -62,6 +62,10 @@ size_t RequestMessage::getMetaContentLength() const {
 	return this->metaContentLength_;
 }
 
+EnumTransEnc RequestMessage::getMetaTransferEncoding() const {
+	return this->metaTransferEncoding_;
+}
+
 void RequestMessage::setStatus(const EnumReqStatus &status) {
 	this->status_ = status;
 }
@@ -70,16 +74,16 @@ void RequestMessage::setMetaHost(const std::string &value) {
 	this->metaHost_ = value;
 }
 
-void RequestMessage::setMetaConnection(const std::string &value) {
-	if (value == "keep-alive")
-		this->metaConnection_ = KEEP_ALIVE;
-	if (value == "close")
-		this->metaConnection_ = CLOSE;
-	throw std::logic_error("Error: connection value");
+void RequestMessage::setMetaConnection(const EnumConnection &value) {
+	this->metaConnection_ = value;
 }
 
-void RequestMessage::setMetaContentLength(const std::string &value) {
-	this->metaContentLength_ = utils::sto_size_t(value);
+void RequestMessage::setMetaContentLength(const size_t &value) {
+	this->metaContentLength_ = value;
+}
+
+void RequestMessage::setMetaTransferEncoding(const EnumTransEnc &value) {
+	this->metaTransferEncoding_ = value;
 }
 
 // Parser 구현 후, 파싱 테스트용 함수, C++98 X

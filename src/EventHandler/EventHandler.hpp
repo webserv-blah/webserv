@@ -35,7 +35,7 @@ class EventHandler {
 		StaticHandler	staticHandler_;
 		CgiHandler		cgiHandler_;
 
-		int		readRequest(ClientSession& clientSession); //rcv()
-		int		sendResponse(ClientSession& clientSession); //send()
+		int					readRequest(ClientSession& clientSession); //rcv()
+		EnumSesStatus		sendResponse(ClientSession& clientSession); //send()
 
 };

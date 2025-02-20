@@ -1,5 +1,20 @@
 #include "utils.hpp"
 
+extern volatile bool globalServerRunning;
+
+// 시그널을 받으면 서버를 종료하도록 플래그를 설정하는 시그널 핸들러
+void signalHandler(int signum) {
+    std::cout << "Received signal " << signum << ", shutting down..." << std::endl;
+    globalServerRunning = false;
+}
+
+// 시그널 핸들러 설정 함수
+void setupSignalHandlers() {
+	std::signal(SIGINT, signalHandler);
+    std::signal(SIGTERM, signalHandler);
+    std::signal(SIGQUIT, signalHandler);
+}
+
 namespace utils {
 	// 문자열을 int로 변환하는 함수
 	int stoi(const std::string& str) {

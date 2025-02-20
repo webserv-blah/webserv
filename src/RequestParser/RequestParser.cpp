@@ -116,50 +116,80 @@ void RequestParser::parseStartLine(const std::string &line, RequestMessage &reqM
 	}
 }
 
+// field-line 한 줄 파싱
 void RequestParser::parseFieldLine(const std::string &line, RequestMessage &reqMsg) {
 	std::istringstream iss(line);
 	std::string name;
 	std::string value;
+	std::vector<std::string> values;
 
+	// 1. field-line의 기본 파싱 (name: value, ...)
 	std::getline(iss, name, ':');
-	iss.get();//trim 임시
-	iss >> value;
-
-	std::vector<std::string> values(1, value);// MUST TO DO: 여러 value를 처리하는 로직
-	reqMsg.addFields(name, values);
-
-	try {
-		handleFieldValue(name, value, reqMsg);
-	} catch (const std::exception &e) {
-		std::cerr << e.what() << "\033[37;2m//in Fieldline()\033[0m" << std::endl;
+	while (std::getline(iss, value, ',')) {
+		value = utils::strtrim(value);
+		values.push_back(value);
 	}
-
+	// map<string, vector> 형태의 멤버변수 데이터에 저장
+	reqMsg.addFieldLine(name, values);
+	
+	// 2. field value 갯수 검증
+	if (validateFieldValue(name, values.size()))
+		throw std::logic_error("invalid field-value");
+	
+	// 3. field value중 RequestMessage의 메타데이터 처리
+	if (handleFieldValue(name, value, reqMsg))
+		throw std::logic_error("invalid field-value");
+		
+	// 4. RequestMessage가 하나 이상의 field-line를 갖고 있으며, 아직 CRLF가 나오지 않음을 뜻함
 	reqMsg.setStatus(REQ_HEADER_FIELD);
 }
 
-void RequestParser::handleFieldValue(const std::string &name, const std::string &value, RequestMessage &reqMsg) {
-	if (name == "Host") {
+bool RequestParser::validateFieldValue(const std::string &name, const int count) {
+	if (count < 1)
+		return false;
+	if (count > 1
+	&& (name == "Host" || name == "Content-Length"
+	||  name == "Connection" || name == "Transfer-Encoding"
+	||  name == "User-Agent" ||  name == "Authorization"
+	||  name == "Referer" ||  name == "Range"
+	||  name == "If-Modified-Since" ||  name == "If-Unmodified-Since"
+	||  name == "If-Match" ||  name == "If-None-Match"
+	||  name == "Content-Location"))
+		return false;
+	return true;
+}
+
+bool RequestParser::handleFieldValue(const std::string &name, const std::string &value, RequestMessage &reqMsg) {
+	if (name == "Host") {//									1. Host
 		reqMsg.setMetaHost(value);
-	} else if (name == "Connection") {
+	} else if (name == "Connection") {//					2. Connection
 		EnumConnect connection;
 		if (value == "keep-alive")
 			connection = KEEP_ALIVE;
 		else if (value == "close")
 			connection = CLOSE;
 		else
-			throw std::logic_error("invalid field value: Connection");
+			return false;
 		reqMsg.setMetaConnection(connection);
-	} else if (name == "Content-Length") {
-		size_t contentLength = utils::sto_size_t(value);
+	} else if (name == "Content-Length") {//				3. Content-Length
+		size_t contentLength;
+		try {
+			contentLength = utils::sto_size_t(value);
+		} catch (const std::exception & e) {
+			return false;
+		}
 		reqMsg.setMetaContentLength(contentLength);
-	} else if (name == "Transfer-Encoding") {
+	} else if (name == "Transfer-Encoding") {//				4.Transfer-Encoding
 		EnumTransEnc transferEncoding;
 		if (value == "chunked")
 			transferEncoding = CHUNK;
 		else
-			throw std::logic_error("invalid field value: Connection");
+			return false;
 		reqMsg.setMetaTransferEncoding(transferEncoding);
+	} else if (name == "Content-Type") {//					5. Content-Type
+		reqMsg.setMetaContentType(value);
 	}
+	return true;
 }
 
 // Content-Length의 길이에 따라 예외 처리됨. 유효한 문자열은 기존의 Body의 추가함

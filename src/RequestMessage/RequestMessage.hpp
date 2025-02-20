@@ -25,7 +25,6 @@ class RequestMessage {
 		typedef std::map<std::string, std::vector<std::string> >	TypeField;
 
 		RequestMessage();
-		RequestMessage(EnumMethod method, std::string target);
 		~RequestMessage();
 
 		EnumMethod		getMethod() const;
@@ -35,7 +34,7 @@ class RequestMessage {
 		size_t			getBodyLength() const;
 		void			setMethod(const EnumMethod &method);
 		void			setTargetURI(const std::string &targetURI);
-		void			addFields(const std::string &field, const std::vector<std::string> &values);
+		void			addFieldLine(const std::string &name, const std::vector<std::string> &values);
 		void			addBody(const std::string &bodyData);
 		
 		EnumReqStatus	getStatus() const;
@@ -43,11 +42,13 @@ class RequestMessage {
 		EnumConnection	getMetaConnection() const;
 		size_t			getMetaContentLength() const;
 		EnumTransEnc	getMetaTransferEncoding() const;
+		std:: string	getMetaContentType() const;
 		void			setStatus(const EnumReqStatus &status);
 		void			setMetaHost(const std::string &value);
 		void			setMetaConnection(const EnumConnection &value);
 		void			setMetaContentLength(const size_t &value);
 		void			setMetaTransferEncoding(const EnumTransEnc &value);
+		void			setMetaContentType(const std::string &value);
 
 		// 파싱 후, 결과 출력을 위한 함수
 		void printResult() const;
@@ -70,4 +71,5 @@ class RequestMessage {
 		EnumConnect		metaConnection_;
 		size_t			metaContentLength_;
 		EnumTransEnc	metaTransferEncoding_;
+		std::string		metaContentType_;
 };

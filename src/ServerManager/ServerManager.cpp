@@ -8,8 +8,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <cstring>
 
-void ServerManager::~ServerManager() {
+// 프로그램을 종료할 때 소켓을 닫기 위해 소멸자를 사용합니다.
+ServerManager::~ServerManager() {
     for (std::set<int>::iterator it = listenFds_.begin(); it != listenFds_.end(); ++it) {
         close(*it);
     }
@@ -18,9 +21,9 @@ void ServerManager::~ServerManager() {
 
 // 서버 매니저를 초기화하고 수신 소켓을 설정합니다.
 void ServerManager::setupListeningSockets() {
-	// 전역 설정 인스턴스를 가져옵니다.
-	const GlobalConfig& globalConfig = GlobalConfig::getInstance();
-    // 호스트/포트 쌍과 해당 소켓 파일 디스크립터를 연관짓는 맵입니다.
+	// 전역 설정을 가져와서 수정할 수 있도록 const_cast를 사용합니다.
+	GlobalConfig& globalConfig = const_cast<GlobalConfig&>(GlobalConfig::getInstance());
+    // 주소와 포트를 소켓 파일 디스크립터에 매핑하는 맵을 생성합니다.
     std::map<std::pair<std::string, int>, int> addressToSocket;
 
     // 전역 설정에 정의된 각 가상 서버 구성을 반복합니다.
@@ -78,7 +81,8 @@ void ServerManager::setupListeningSockets() {
             // 지정된 IP 주소와 포트에 소켓을 바인딩합니다.
             if (bind(sockFd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr)) < 0) {
                 close(sockFd);
-				throw std::runtime_error("Failed to bind socket");
+				std::string errorMsg = "Failed to bind socket to " + server.host_ + ":" + std::to_string(server.port_) + " - " + strerror(errno);
+    			throw std::runtime_error(errorMsg);
             }
 
             // 소켓에서 들어오는 연결 요청을 수신하기 시작합니다.
@@ -98,3 +102,29 @@ void ServerManager::setupListeningSockets() {
         globalConfig.listenFdToServers_[sockFd].push_back(&server);
     }
 }
+
+extern volatile bool globalServerRunning;
+
+// 서버를 종료해야 하는지 확인하는 함수입니다.
+bool ServerManager::isServerRunning() {
+    return globalServerRunning;
+}
+
+// 디버깅을 위해 현재 수신 소켓 정보를 출력합니다.
+void ServerManager::print() {
+    std::cout << "listenFds: ";
+    for (std::set<int>::iterator it = listenFds_.begin(); it != listenFds_.end(); ++it) {
+        std::cout << *it << ", ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "listenFdToServers_: " << std::endl;
+    for (std::map<int, std::vector<ServerConfig*> >::const_iterator it = GlobalConfig::getInstance().listenFdToServers_.begin();
+         it != GlobalConfig::getInstance().listenFdToServers_.end(); ++it) {
+        std::cout << "listenFd: " << it->first << std::endl;
+        for (size_t i = 0; i < it->second.size(); ++i) {
+            std::cout << "server: " << it->second[i]->host_ << ":" << it->second[i]->port_ << std::endl;
+        }
+    }
+}
+

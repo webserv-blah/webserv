@@ -7,7 +7,9 @@ endif
 
 NAME := utils.a
 HEAD := utils.hpp \
-		Optional.hpp
+		Optional.hpp \
+		file_utils.hpp \
+
 SRCS := $(wildcard *.cpp)
 
 include $(TOPDIR)/include_make/Variable.mk

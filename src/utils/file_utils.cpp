@@ -1,6 +1,6 @@
 #include "file_utils.hpp"
 
-using namespace fileUtilities;
+using namespace FileUtilities;
 
 EnumValidationResult validatePath(const std::string& path)
 {

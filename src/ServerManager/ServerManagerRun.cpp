@@ -2,12 +2,12 @@
 
 // EventLoop 실행 함수
 void ServerManager::run() {
-	Demultiplexer	reactor(serverFds_); // I/O 멀티플렉싱을 위한 리액터 객체
+	Demultiplexer	reactor(listenFds_); // I/O 멀티플렉싱을 위한 리액터 객체
 	EventHandler 	eventHandler; // 이벤트 처리 담당 객체
 	TimeoutHandler	timeoutHandler; // 클라이언트 타임아웃 관리 객체
 	ClientManager	clientManager; // 클라이언트 세션 관리 객체
 
-	while (isRunning()) { // isRunning() 함수로 서버 실행 여부 확인 (g_signal을 대체 가능)
+	while (isServerRunning()) { // isServerRunning() 함수로 서버 실행 여부 확인 (전역변수 플래그 대체 가능)
 		int	numEvents = reactor.waitForEvent(); // 발생한 이벤트 개수 확인
 
 		for (int i = 0; i < numEvents; ++i) {
@@ -17,7 +17,7 @@ void ServerManager::run() {
 			if (type == EXCEPTION_EVENT) { // 예외(오류) 이벤트 발생 시
 				removeClientInfo(fd, clientManager, reactor, timeoutHandler); // 클라이언트 제거
 			} else if (type == READ_EVENT) { // 읽기(수신) 이벤트 발생 시
-				if (isServer(fd)) { // 서버 소켓이라면 새 클라이언트 연결 처리
+				if (isListeningSocket(fd)) { // 서버 소켓이라면 새 클라이언트 연결 처리
 					int clientFd = eventHandler.handleServerReadEvent(fd);
 
 					if (clientFd > 0) { // 새로운 클라이언트가 정상적으로 연결됨

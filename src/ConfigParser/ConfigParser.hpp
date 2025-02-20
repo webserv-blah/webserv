@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GlobalConfig.hpp"
+#include "../GlobalConfig/GlobalConfig.hpp"
 #include "utils.hpp"
 
 #include <string>            // std::string
@@ -10,6 +10,11 @@
 #include <stdexcept>         // std::runtime_error
 #include <cctype>            // std::isdigit, std::isxdigit, std::isspace, std::tolower
 #include <iterator>          // std::iterator
+
+class GlobalConfig;
+class ServerConfig;
+class LocationConfig;
+class RequestConfig;
 
 // 설정 파일 파서
 class ConfigParser {

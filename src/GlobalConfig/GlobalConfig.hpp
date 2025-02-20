@@ -1,9 +1,13 @@
 #pragma once
 
 # include "Optional.hpp"
+# include "../ConfigParser/ConfigParser.hpp"
 # include <string>
 # include <vector>
 # include <map>
+# include <iostream>
+
+class ConfigParser;
 
 // RequestConfig는 요청 처리를 위한 설정을 나타냅니다.
 class RequestConfig {
@@ -32,7 +36,7 @@ public:
 // ServerConfig는 특정 서버의 구성을 나타냅니다.
 class ServerConfig {
 public:
-	ServerConfig() : port_(80) {}					// 포트를 80으로 기본 설정합니다.
+	ServerConfig() : host_("0.0.0.0"), port_(80) {}	// 포트를 80으로 기본 설정합니다.
 
 	std::string					host_;				// 호스트 이름 또는 IP 주소
 	unsigned int				port_;				// 수신 대기할 포트 번호
@@ -49,18 +53,30 @@ public:
 	std::vector<ServerConfig>	servers_;			// 서버 구성 목록
 	TypeListenFdToServers		listenFdToServers_;	// 리스닝 소켓 디스크립터 별 서버 구성 목록
 
+	
+	static const GlobalConfig&	getInstance();	// 싱글톤 인스턴스를 반환 (오직 const 접근만 허용됨)
+	static void 				initGlobalConfig(const char* path);	// 설정 파일을 이용해 GlobalConfig를 초기화 (단 한 번만 호출 가능)
+	static void					destroyInstance();	// 싱글톤 인스턴스를 파괴
+
 	// 리스닝 소켓 디스크립터, 도메인 이름, 대상 URL에 해당하는 요청 설정 찾기
 	const RequestConfig*		findRequestConfig(const int listenFd, \
 												const std::string& domainName, \
 												const std::string& targetUrl) const;
 	// 설정 정보 출력
-	void						print();
+	void						print() const;
 
 private:
+	// 싱글톤 패턴을 적용하기 위해 생성자를 private으로 설정
+	GlobalConfig() {}
+	~GlobalConfig() {}
+
+	static GlobalConfig*	instance_;			// 싱글톤 인스턴스 포인터
+	static bool				isInitialized_;		// GlobalConfig 초기화 여부
+
 	// 도메인 이름에 해당하는 서버 설정 찾기
-	const ServerConfig&			findServerConfig(const std::vector<ServerConfig*>& servers, \
-												const std::string& domainName) const;
+	const ServerConfig&		findServerConfig(const std::vector<ServerConfig*>& servers, \
+											const std::string& domainName) const;
 	// 대상 URI에 해당하는 location 설정 찾기
-	const RequestConfig*		findLocationConfig(const ServerConfig& server, \
-													const std::string& targetUrl) const;
+	const RequestConfig*	findLocationConfig(const ServerConfig& server, \
+												const std::string& targetUrl) const;
 };

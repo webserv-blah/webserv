@@ -29,7 +29,7 @@ class ServerManager {
 		bool isListeningSocket(int fd);
         // 주어진 파일 디스크립터(fd)가 수신 소켓인지 판단하는 함수
 
-		void addClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler);
+		void addClientInfo(int listenFd, int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler);
         // 새로운 클라이언트 연결 정보를 추가하는 함수
         // - ClientManager: 클라이언트 세션 관리
         // - Demultiplexer: 이벤트 루프에 클라이언트 소켓 등록

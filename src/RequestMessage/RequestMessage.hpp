@@ -5,7 +5,8 @@
 #include <vector>
 
 enum EnumMethod { NONE, GET, POST, DELETE };
-enum EnumConnection { KEEP_ALIVE, CLOSE };
+typedef enum EnumConnection { KEEP_ALIVE, CLOSE } EnumConnect;
+typedef enum EnumTransferEncoding { NONE_ENCODING, CHUNK } EnumTransEnc;
 typedef enum EnumRequestStatus {
 	REQ_INIT,
 	REQ_TOP_CRLF,		// CRLF(0,1)
@@ -24,26 +25,30 @@ class RequestMessage {
 		typedef std::map<std::string, std::vector<std::string> >	TypeField;
 
 		RequestMessage();
-		RequestMessage(EnumMethod method, std::string target);
 		~RequestMessage();
 
 		EnumMethod		getMethod() const;
 		std::string		getTargetURI() const;
 		TypeField		getFields() const;
 		std::string		getBody() const;
+		size_t			getBodyLength() const;
 		void			setMethod(const EnumMethod &method);
 		void			setTargetURI(const std::string &targetURI);
-		void			addFields(std::string field, std::vector<std::string> values);
-		void			addBody(std::string bodyData);
+		void			addFieldLine(const std::string &name, const std::vector<std::string> &values);
+		void			addBody(const std::string &bodyData);
 		
 		EnumReqStatus	getStatus() const;
 		std:: string	getMetaHost() const;
 		EnumConnection	getMetaConnection() const;
-		ssize_t			getMetaContentLength() const;
+		size_t			getMetaContentLength() const;
+		EnumTransEnc	getMetaTransferEncoding() const;
+		std:: string	getMetaContentType() const;
 		void			setStatus(const EnumReqStatus &status);
 		void			setMetaHost(const std::string &value);
-		void			setMetaConnection(const std::string &value);
-		void			setMetaContentLength(const std::string &value);
+		void			setMetaConnection(const EnumConnection &value);
+		void			setMetaContentLength(const size_t &value);
+		void			setMetaTransferEncoding(const EnumTransEnc &value);
+		void			setMetaContentType(const std::string &value);
 
 		// 파싱 후, 결과 출력을 위한 함수
 		void printResult() const;
@@ -58,10 +63,13 @@ class RequestMessage {
 		std::string		targetURI_;
 		TypeField		fieldLines_;
 		std::string		body_;
+		size_t			bodyLength_;
 
 		// Header Field에 작성되어있던 메타데이터
 		EnumReqStatus	status_;
 		std::string		metaHost_;
-		EnumConnection	metaConnection_;
-		ssize_t			metaContentLength_;
+		EnumConnect		metaConnection_;
+		size_t			metaContentLength_;
+		EnumTransEnc	metaTransferEncoding_;
+		std::string		metaContentType_;
 };

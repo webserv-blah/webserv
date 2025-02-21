@@ -54,10 +54,10 @@ void ClientSession::setWriteBuffer(const std::string &remainData) {
 	this->writeBuffer_ = remainData;
 }
 
-//Optional<ssize_t> ClientSession::getConfBodyMax() const {
+//Optional<size_t> ClientSession::getConfBodyMax() const {
 //	if (this->config_ == NULL)
-//		return Optional<ssize_t>();
-//	return this->config_->clientMaxBodySize_;//size_t & ssize_t는 맞춰봐야함
+//		return Optional<size_t>();
+//	return this->config_->clientMaxBodySize_;
 //}
 
 #include <iostream>
@@ -68,10 +68,12 @@ EnumSesStatus ClientSession::implementReqMsg(RequestParser &parser, const std::s
 	try {
 		//parser.setBodyMaxLength(this->config_);
 		this->readBuffer_ = parser.parse(this->readBuffer_ + readData, *this->reqMsg_);
-		//if (this->reqMsg_->getStatus() != DONE)
-		//	this->status_ = ;
-		//	?? throw?
-		this->reqMsg_->printResult();
+		if (this->reqMsg_->getStatus() == REQ_DONE) {
+			this->status_ = READ_COMPLETE;
+			this->reqMsg_->printResult();
+		}
+		//if (this->status_ == READ_CONTINUE)
+		//	std::cout << "READ_CONTINUE\n";
 	} catch (const std::exception &e) {
 		std::cerr << e.what() << "\033[37;2m//in ClientSeesion.implementReqMsg()\033[0m" << std::endl;
 		this->status_ = CONNECTION_ERROR;

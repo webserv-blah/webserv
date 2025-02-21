@@ -11,18 +11,19 @@ class RequestParser {
 		~RequestParser();
 
 		std::string		parse(const std::string &readData, RequestMessage &reqMsg);
-		//void			setBodyMaxLength(ssize_t length);
+		//void			setBodyMaxLength(size_t length);
 
 	private:
-		ssize_t			oneLineMaxLength_;
-		ssize_t			uriMaxLength_;
-		//Optional<ssize_t>	bodyMaxLength_;//Client마다 바뀌는 설정 값
+		size_t			oneLineMaxLength_;
+		size_t			uriMaxLength_;
+		//Optional<size_t>	bodyMaxLength_;//Client마다 바뀌는 설정 값
 		
 		void			handleOneLine(const std::string &line, RequestMessage &reqMsg);
-		EnumReqStatus	setStatusCRLF(const EnumReqStatus &curStatus);
+		EnumReqStatus	handleCRLFLine(const EnumReqStatus &curStatus);
 		void			parseStartLine(const std::string &line, RequestMessage &reqMsg);
 		void			parseFieldLine(const std::string &line, RequestMessage &reqMsg);
-		void			parseBody(const std::string &line, RequestMessage &reqMsg);
-		//void				cleanUpChunkedBody(const std::string &line);
+		bool			validateFieldValueCount(const std::string &name, const int count);
+		bool			handleFieldValue(const std::string &name, const std::string &value, RequestMessage &reqMsg);
+		std::string		cleanUpChunkedBody(const std::string &data, RequestMessage &reqMsg);
+		std::string 	parseBody(const std::string &line, RequestMessage &reqMsg);
 };
-

@@ -36,7 +36,7 @@ namespace utils {
 	}
 
 	// 문자열을 size_t로 변환하는 함수
-	size_t stosizet(const std::string& str) {
+	size_t sto_size_t(const std::string& str) {
 		char* end;
 		errno = 0;
 		unsigned long result = std::strtoul(str.c_str(), &end, 10);
@@ -52,4 +52,19 @@ namespace utils {
 
 		return static_cast<size_t>(result);
 	}
+
+	std::string strtrim(const std::string& str) {
+		// 앞쪽 공백 제거
+		size_t start = 0;
+		while (start < str.size() && std::isspace(str[start]))
+			++start;
+
+		// 뒤쪽 공백 제거
+		size_t end = str.size();
+		while (end > start && std::isspace(str[end - 1]))
+			--end;
+
+		return str.substr(start, end - start);
+	}
+
 }

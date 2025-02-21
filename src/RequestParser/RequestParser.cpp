@@ -1,7 +1,6 @@
-#include <iostream>//중간 과정을 출력하기 위한 임시 헤더
-
 #include "RequestParser.hpp"
 #include "utils.hpp"
+#include "GlobalConfig.hpp"
 #include <stdexcept>
 #include <sstream>
 
@@ -13,38 +12,49 @@ RequestParser::~RequestParser() {}
 //	this->bodyMaxLength = length;
 //}
 
+// 1. 기본 파싱 로직 함수, body전까지는 \r\n기준으로 한 줄씩 읽음
 std::string RequestParser::parse(const std::string &readData, RequestMessage &reqMsg) {
 	std::istringstream iss(readData);
 	std::string buffer;
-	EnumReqStatus newStatus;
-
-	// MUST TO DO: 다시 마저 읽어오는 경우도 생각해봐야함
-	while (std::getline(iss, buffer, '\n')) {
-		//std::cout << "WHILE: " << buffer <<std::endl;
-		if (!buffer.empty() && buffer[buffer.size() - 1] == '\r') {
-			if (buffer.size() == 1) {
-				newStatus = this->setStatusCRLF(reqMsg.getStatus());
-				reqMsg.setStatus(newStatus);
-				if (newStatus == REQ_HEADER_CRLF)
-					break ;// == body
-				if (newStatus == REQ_ERROR)
-					throw std::logic_error("Error: invalid CLRF location error");
-				continue ;
+	EnumReqStatus status = reqMsg.getStatus();
+	
+	if (status != REQ_HEADER_CRLF // 1-1. Body가 아닌, start-line이나 field-line인 경우
+	&&  status != REQ_BODY) {
+		while (std::getline(iss, buffer, '\n')) {
+			if (iss.eof())// 1-1-1. \n이 나오지 않고 readData가 끝난 상태. 다음 loop로 넘어감 
+				return buffer;
+			if (!buffer.empty() && buffer[buffer.size() - 1] == '\r') {// 1-1-2. \r\n 줄 파싱
+				if (buffer.size() == 1) {
+					status = this->handleCRLFLine(reqMsg.getStatus());
+					reqMsg.setStatus(status);
+					if (status == REQ_HEADER_CRLF) {
+						std:getline(iss, buffer, '\0');
+						break ;
+					}
+					if (status == REQ_ERROR)
+						throw std::logic_error("Error: invalid CLRF location error");
+				} else {
+					this->handleOneLine(buffer.erase(buffer.size() - 1), reqMsg);
+				}
+			} else {//1-1-3. \r\n이 아닌 단일 개행인 경우 에러
+				throw std::logic_error("Error: single \\n error");
 			}
-			this->handleOneLine(buffer.erase(buffer.size() - 1), reqMsg);
-			if (iss.peek() == EOF)// MUST TO DO: 덜 읽어들인 케이스 // ?????MUST TO DO: 완료 이전 판단중에 iss.peek() == EOF라면 기다려봐야함
-				return buffer;// == remain data
-		} else {
-			throw std::logic_error("Error: single \\n error");
 		}
-		// MUST TO DO: 정상종료시에 connenction & content length 디폴트값설정 해줘야함
+	} else {// 1-2. Body인 경우
+		buffer = readData;
 	}
-	iss >> buffer;
-	this->parseBody(buffer, reqMsg);// MUST TO DO: body는 content length만큼 그대로 읽어들임 
-	return "";
+
+	if (buffer.length() == 0)
+		return "";
+
+	// 1-3. Body 처리, 청크전송인지 아닌지에 따라 처리과정을 달리함
+	if (reqMsg.getMetaTransferEncoding() == CHUNK)
+		return this->cleanUpChunkedBody(buffer, reqMsg);
+	else
+		return this->parseBody(buffer, reqMsg);
 }
 
-
+// 1-1-2번에서 \r\n으로 구분된 줄, 현 메시지 상태별로 의미해석하여 파싱하는 함수
 void RequestParser::handleOneLine(const std::string &line, RequestMessage &reqMsg) {
 	const EnumReqStatus curStatus = reqMsg.getStatus();
 
@@ -54,13 +64,10 @@ void RequestParser::handleOneLine(const std::string &line, RequestMessage &reqMs
 	if (curStatus == REQ_STARTLINE
 	||  curStatus == REQ_HEADER_FIELD)
 		this->parseFieldLine(line, reqMsg);
-	//if (reqMsg.getStatus() == REQ_HEADER_CRLF) {
-	//	this->parseBody(line, reqMsg);//body는 content length만큼 그대로 읽어들임 
-	//	break ;//body는 CRLF를 그대로 담아야하기때문에 다르게 처리되어야함
-	//}
 }
 
-EnumReqStatus RequestParser::setStatusCRLF(const EnumReqStatus &curStatus) {
+// 1-1-2번에서 \r\n으로만 구성된 줄, 현재 RequestMessage 상태에서 CRLF줄이 유효한지 검증하고, 다음 상태를 지정해주는 함수
+EnumReqStatus RequestParser::handleCRLFLine(const EnumReqStatus &curStatus) {
 	// 유효한 것으로 처리되는 두 위치의 CRLF외에는 전부 에러
 	if (curStatus == REQ_INIT)
 		return REQ_TOP_CRLF;
@@ -70,7 +77,9 @@ EnumReqStatus RequestParser::setStatusCRLF(const EnumReqStatus &curStatus) {
 	// MUST TO DO: 이상태에서 DONE의 판단을 할 수 있는가?
 }
 
+// 2. Start-line 한 줄을 파싱하는 함수
 void RequestParser::parseStartLine(const std::string &line, RequestMessage &reqMsg) {
+	EnumReqStatus status = reqMsg.getStatus();
 	std::istringstream iss(line);
 	std::string buffer;
 
@@ -86,8 +95,12 @@ void RequestParser::parseStartLine(const std::string &line, RequestMessage &reqM
 			throw std::logic_error("not allow method");
 		}
 	}
+
 	if (std::getline(iss, buffer, ' '))
 		reqMsg.setTargetURI(buffer);
+	else
+		throw std::logic_error("none target uri");
+
 	iss >> buffer;
 	if (buffer == "HTTP/1.1")
 		reqMsg.setStatus(REQ_STARTLINE);
@@ -97,41 +110,172 @@ void RequestParser::parseStartLine(const std::string &line, RequestMessage &reqM
 	}
 }
 
+// 3. field-line 한 줄을 파싱하는 함수
 void RequestParser::parseFieldLine(const std::string &line, RequestMessage &reqMsg) {
 	std::istringstream iss(line);
 	std::string name;
 	std::string value;
+	std::vector<std::string> values;
 
+	// 3-1. field-line의 기본 파싱 (name: value, ...)
 	std::getline(iss, name, ':');
-	iss.get();//trim 임시
-	iss >> value;
-
-	std::vector<std::string> values(1, value);// MUST TO DO: 여러 value를 처리하는 로직
-	reqMsg.addFields(name, values);
-
-	try {
-		if (name == "Host")
-			reqMsg.setMetaHost(value);
-		if (name == "Content-Length")
-			reqMsg.setMetaContentLength(value);
-		if (name == "Connection")
-			reqMsg.setMetaConnection(value);
-	} catch (const std::exception &e) {
-		// MUST TO DO: Header Field value오류 처리
+	while (std::getline(iss, value, ',')) {
+		value = utils::strtrim(value);
+		values.push_back(value);
 	}
-
+	// map<string, vector> 형태의 멤버변수 데이터에 저장
+	reqMsg.addFieldLine(name, values);
+	
+	// 3-2. field value 갯수 검증
+	if (validateFieldValueCount(name, values.size()))
+		throw std::logic_error("invalid field-value");
+	
+	// 3-3. field value중 RequestMessage의 메타데이터 처리
+	if (handleFieldValue(name, value, reqMsg))
+		throw std::logic_error("invalid field-value");
+		
+	// 3-4. RequestMessage가 하나 이상의 field-line를 갖고 있으며, 아직 CRLF가 나오지 않음을 뜻함
 	reqMsg.setStatus(REQ_HEADER_FIELD);
 }
 
-void RequestParser::parseBody(const std::string &line, RequestMessage &reqMsg) {
-	//if (reqMsg.getMetaContentLength())
-
-	reqMsg.addBody(line);
-
-	//reqMsg.setStatus(REQ_BODY_ING);
-	reqMsg.setStatus(REQ_DONE);// MUST TO DO: 우선 종료가 아닌, 추가적인 로직이 많이 필요함
+// 3-2. field-line의 value 갯수를 검증하는 함수
+bool RequestParser::validateFieldValueCount(const std::string &name, const int count) {
+	if (count < 1)
+		return false;
+	if (count > 1
+	&& (name == "Host" || name == "Content-Length"
+	||  name == "Connection" || name == "Transfer-Encoding"
+	||  name == "User-Agent" ||  name == "Authorization"
+	||  name == "Referer" ||  name == "Range"
+	||  name == "If-Modified-Since" ||  name == "If-Unmodified-Since"
+	||  name == "If-Match" ||  name == "If-None-Match"
+	||  name == "Content-Location"))
+		return false;
+	return true;
 }
 
-//void RequestParser::cleanUpChunkedBody() {
-	// MUST TO DO: 청크 전송 파싱
-//}
+// 3-3. field-line의 value중 RequestMessage의 메타데이터에 해당하는 value 파싱하는 함수
+bool RequestParser::handleFieldValue(const std::string &name, const std::string &value, RequestMessage &reqMsg) {
+	if (name == "Host") {//									1) Host
+		reqMsg.setMetaHost(value);
+	} else if (name == "Connection") {//					2) Connection
+		EnumConnect connection;
+		if (value == "keep-alive")
+			connection = KEEP_ALIVE;
+		else if (value == "close")
+			connection = CLOSE;
+		else
+			return false;
+		reqMsg.setMetaConnection(connection);
+	} else if (name == "Content-Length") {//				3) Content-Length
+		size_t contentLength;
+		try {
+			contentLength = utils::sto_size_t(value);
+		} catch (const std::exception & e) {
+			return false;
+		}
+		reqMsg.setMetaContentLength(contentLength);
+	} else if (name == "Transfer-Encoding") {//				4) Transfer-Encoding
+		EnumTransEnc transferEncoding;
+		if (value == "chunked")
+			transferEncoding = CHUNK;
+		else
+			return false;
+		reqMsg.setMetaTransferEncoding(transferEncoding);
+	} else if (name == "Content-Type") {//					5) Content-Type
+		reqMsg.setMetaContentType(value);
+	}
+	return true;
+}
+
+// 4. Body를 파싱하는 함수. Content-Length의 길이에 따라 예외 처리됨. 유효한 문자열은 기존의 Body의 추가함
+std::string RequestParser::parseBody(const std::string &line, RequestMessage &reqMsg) {
+	const size_t contentLength = reqMsg.getMetaContentLength();
+
+	// 4-1. 최종 body의 길이 >= 현재 저장된 body길이 + 파싱하려는 길이
+	if (contentLength >= reqMsg.getBodyLength() + line.length()) {
+		reqMsg.addBody(line);
+		if (contentLength == reqMsg.getBodyLength())
+			reqMsg.setStatus(REQ_DONE);
+		else
+			reqMsg.setStatus(REQ_BODY);
+		return "";
+	}
+
+	// 4-2. 최종 body의 길이 < 현재 저장된 body길이 + 파싱하려는 길이
+	// 우선, content length를 저장하되
+	size_t substrSize = contentLength - reqMsg.getBodyLength();
+	reqMsg.addBody(line.substr(0, substrSize));
+	std::string remainData = line.substr(substrSize);
+	
+	// 일차적으로 완성된 request이지만, 두 가지 우려사항을 검증해야함
+	const std::string methods[3] = {"GET", "POST", "DELETE"};
+	bool suspicious = true;
+	// 1) 남은 데이터가 유효한 메서드로 시작하면 -> 정상 요청 가능성
+	for (size_t i = 0; i < 3; ++i) {
+		if (remainData[0] == methods[i][0]) {
+			suspicious = false;
+			break;
+		}
+	}
+	// 2) body 안에 메서드가 들어있으면 → 의심스러운 요청
+	for (size_t i = 0; i < 3; ++i) {
+		if (reqMsg.getBody().find(methods[i]) != std::string::npos) {
+			suspicious = true;
+			break;
+		}
+	}
+
+	if (suspicious) {
+		reqMsg.setStatus(REQ_ERROR);
+		throw std::logic_error("body -> suspicious request");
+	}
+	reqMsg.setStatus(REQ_DONE);
+	return remainData;
+}
+
+// 5. 청크 전송 파싱하는 함수. Transfer-Encoding이 chunked여서 Body가 청크로 아루어진 경우
+std::string RequestParser::cleanUpChunkedBody(const std::string &data, RequestMessage &reqMsg) {
+	std::istringstream iss(data);
+	std::string buffer;
+	std::string tmp;
+	size_t chunkSize;
+
+	while (std::getline(iss, buffer, '\n')) {
+		if (iss.eof())// 5-1. \n으로 getline되지 않은 경우 readBuffer에 남겨 다음 loop에 진행
+			return buffer;
+		if (!buffer.empty() && buffer[buffer.size() - 1] == '\r') {// 5-2. \r\n으로 찾은 줄 파싱
+			// iss에 남은 길이 측정을 위한 도구
+			std::streampos currentPos = iss.tellg();
+			iss.seekg(0, std::ios::end);
+			std::streampos endPos = iss.tellg();
+			iss.seekg(currentPos);
+
+			// 청크 사이즈 파싱
+			chunkSize = utils::sto_size_t(buffer.erase(buffer.size() - 1));
+			if (chunkSize == 0) {
+				reqMsg.setStatus(REQ_DONE);
+				reqMsg.setMetaContentLength(reqMsg.getBodyLength());
+				return iss.str().substr(static_cast<std::string::size_type>(currentPos)); 
+			}
+			
+			// 읽어낸 데이터가 모자를 경우 readBuffer에 돌려놓기 위함
+			tmp = buffer + "\r\n";
+			if (endPos - currentPos < chunkSize + 2)
+				return tmp + iss.str().substr(static_cast<std::string::size_type>(currentPos));
+
+			// 파싱한 청크사이즈 기준으로 청크 데이터를 읽음
+			buffer.resize(chunkSize + 2);
+			iss.read(&buffer[0], chunkSize + 2);
+
+			// 청크 데이터가 \r\n형식에 맞춰 들어왔는지 검증
+			if (buffer.compare(buffer.size() - 2, 2, "\r\n") != 0)
+				throw std::logic_error("chunk format error: chunk data");
+			
+			// 청크 데이터에 \r\n를 제거하여 Body에 저장
+			reqMsg.addBody(buffer.substr(0, buffer.size() - 2));
+		} else { //\r\n으로 이루어져있지 않음
+			throw std::logic_error("chunk format error: single \\n");
+		}
+	}
+}

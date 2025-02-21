@@ -1,6 +1,12 @@
+#define _DARWIN_C_SOURCE
 #include "EventHandler.hpp"
+#include <iostream>
 
-EnumSesState	EventHandler::readRequest() {
+#ifndef BUFFER_SIZE
+# define BUFFER_SIZE 8192 //== 8KB
+#endif
+
+EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 	std::string buffer;
 	buffer.resize(BUFFER_SIZE);
 
@@ -14,4 +20,3 @@ EnumSesState	EventHandler::readRequest() {
 		return requestResult;
 	}
 }
-

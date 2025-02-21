@@ -71,8 +71,8 @@ void ServerManager::run() {
 
 // 서버 종료 전, 모든 클라이언트에 종료 응답을 전송하고 연결된 리소스를 정리하는 함수
 void ServerManager::cleanUpConnections(ClientManager& clientManager, EventHandler& eventHandler) {
-	std::map<int, ClientSession*>&			clientList = clientManager.accessClientSessionMap();
-	std::map<int, ClientSession*>::iterator	it;
+	ClientManager::TypeClientMap&			clientList = clientManager.accessClientSessionMap();
+	ClientManager::TypeClientMap::iterator	it;
 
 	for (it = clientList.begin(); it != clientList.end(); ) {
 		eventHandler.handleError(503, *it->second); // 클라이언트에게 서버 종료 알림

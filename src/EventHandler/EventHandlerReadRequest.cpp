@@ -1,6 +1,6 @@
 #include "EventHandler.hpp"
 
-int	EventHandler::readRequest() {
+EnumSesState	EventHandler::readRequest() {
 	std::string buffer;
 	buffer.resize(BUFFER_SIZE);
 

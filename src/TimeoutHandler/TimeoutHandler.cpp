@@ -52,8 +52,12 @@ void    TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer&
         int fd = it->second;
         
 		//send 408 error
-		ClientSession clientSession = clientManager.accessClientSession(fd);
-		eventHandler.handleError(408, clientSession); 
+        ClientSession*	client = clientManager.accessClientSession(fd);
+        if (!client) {
+            perror("Invalid Client Fd");
+            continue ;
+        }
+		eventHandler.handleError(408, *client); 
 
 		//client 정보 삭제
         removeConnection(fd, it);

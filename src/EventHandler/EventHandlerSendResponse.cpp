@@ -27,7 +27,7 @@ EnumSesStatus EventHandler::sendResponse(ClientSession& session) {
             session.setStatus(WRITE_CONTINUE);
             return WRITE_CONTINUE;
         }
-        // 그 외의 오류는 치명적 오류로 간주하여 WRITE_COMPLETE 상태로 처리
+        // 그 외의 오류는 치명적 오류로 간주하여 CONNECTION_CLOSED 상태로 처리
         session.setStatus(CONNECTION_CLOSED);
         return CONNECTION_CLOSED;
     }

@@ -1,7 +1,7 @@
 #ifndef CLIENT_MANAGER_HPP
 #define CLIENT_MANAGER_HPP
 
-#include "ClientSession.hpp"
+#include "./ClientSession.hpp"
 #include <map>
 #include <unistd.h>
 
@@ -19,5 +19,6 @@ class ClientManager {
 		TypeClientMap	clientList_;
 
 };
+
 
 #endif

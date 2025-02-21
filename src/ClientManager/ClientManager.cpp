@@ -1,5 +1,8 @@
 #include "ClientManager.hpp"
 
+
+int ClientSession::counter = 0;
+
 ClientManager::ClientManager() {
 	// 생성자
 }
@@ -51,3 +54,4 @@ ClientSession* ClientManager::accessClientSession(int fd) {
 ClientManager::TypeClientMap& ClientManager::accessClientSessionMap() {
 	return clientList_;
 }
+

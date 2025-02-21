@@ -1,37 +1,43 @@
 #include "EventHandler.hpp"
 #include "ClientSession.hpp"
-#define CHUNK_SIZE 8192
+#include <errno.h>
+#include <algorithm>
+
+#ifndef BUFFER_SIZE
+#define BUFFER_SIZE 8192
+#endif
 
 EnumSesStatus EventHandler::sendResponse(ClientSession& session) {
     std::string writeBuffer = session.getWriteBuffer();
     int clientFd = session.getClientFd();
-    size_t bufferSize = writeBuffer.size();
 
-    if (bufferSize == 0) {
-        // 보낼 내용이 없으면 완료 상태로 설정
+    // 보낼 내용이 없으면 바로 완료 상태로 설정
+    if (writeBuffer.empty()) {
         session.setStatus(WRITE_COMPLETE);
         return WRITE_COMPLETE;
     }
 
-    // 이번 호출에서 보낼 바이트 수는 CHUNK_SIZE와 버퍼 남은 크기 중 작은 값
-    size_t bytesToSend = (bufferSize < CHUNK_SIZE) ? bufferSize : CHUNK_SIZE;
-    ssize_t sent = send(clientFd, writeBuffer.c_str(), bytesToSend, 0);
-    
+    // 전송할 바이트 수는 BUFFER_SIZE와 남은 데이터 크기 중 작은 값
+    size_t bytesToSend = std::min(writeBuffer.size(), static_cast<size_t>(BUFFER_SIZE));
+    ssize_t sent = send(clientFd, writeBuffer.data(), bytesToSend, 0);
+
     if (sent < 0) {
-        session.setStatus(CONNECTION_ERROR);
-        return CONNECTION_ERROR;
+        // 재시도 가능한 오류인 경우 (EINTR, EAGAIN, EWOULDBLOCK)는 WRITE_CONTINUE 상태로 처리
+        if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) {
+            session.setStatus(WRITE_CONTINUE);
+            return WRITE_CONTINUE;
+        }
+        // 그 외의 오류는 치명적 오류로 간주하여 WRITE_COMPLETE 상태로 처리
+        session.setStatus(CONNECTION_CLOSED);
+        return CONNECTION_CLOSED;
     }
 
-    // 전송된 만큼 writeBuffer에서 제거하여 남은 데이터를 다시 저장
-    std::string remaining = writeBuffer.substr(sent);
-    session.setWriteBuffer(remaining);
-
-    // 전송 후 남은 데이터가 있다면 WRITE_CONTINUE 상태로, 모두 전송되었다면 WRITE_COMPLETE 상태로 설정
-    if (remaining.size() > 0) {
-        session.setStatus(WRITE_CONTINUE); // 아직 전송할 데이터가 남음
-        return WRITE_CONTINUE;
-    } else {
-        session.setStatus(WRITE_COMPLETE);
-        return WRITE_COMPLETE;
-    }
+    // 전송된 만큼 버퍼에서 제거
+    writeBuffer.erase(0, sent);
+    EnumSesStatus status = writeBuffer.empty() ? WRITE_COMPLETE : WRITE_CONTINUE;
+    
+    // 업데이트된 버퍼와 상태를 세션에 반영
+    session.setWriteBuffer(writeBuffer);
+    session.setStatus(status);
+    return status;
 }

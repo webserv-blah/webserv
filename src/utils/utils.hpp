@@ -1,15 +1,16 @@
-#pragma once
+#ifndef UTILS_HPP
+# define UTILS_HPP
 
-#include <string>       // std::string
-#include <stdexcept>    // std::invalid_argument, std::overflow_error
-#include <cerrno>       // errno
-#include <climits>      // INT_MAX, INT_MIN
-#include <csignal>
-#include <iostream>
-#include <limits>
-#include <csignal>
-#include <iostream>
-#include <limits>
+# include <string>       // std::string
+# include <stdexcept>    // std::invalid_argument, std::overflow_error
+# include <cerrno>       // errno
+# include <climits>      // INT_MAX, INT_MIN
+# include <csignal>
+# include <iostream>
+# include <limits>
+# include <csignal>
+# include <iostream>
+# include <limits>
 
 // 유틸리티 함수들을 담는 네임스페이스
 namespace utils {
@@ -39,3 +40,5 @@ namespace utils {
 void signalHandler(int signum);
 // 시그널 핸들러 설정 함수
 void setupSignalHandlers();
+
+#endif

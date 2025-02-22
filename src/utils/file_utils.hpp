@@ -1,10 +1,11 @@
-#pragma once
+#ifndef FILE_UTILS_HPP
+# define FILE_UTILS_HPP
 
-#include <string>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fstream>
-#include <vector>
+# include <string>
+# include <sys/stat.h>
+# include <unistd.h>
+# include <fstream>
+# include <vector>
 
 namespace FileUtilities {
 	enum EnumValidationResult {
@@ -22,3 +23,5 @@ namespace FileUtilities {
 	EnumValidationResult	validatePath(const std::string& path);
 	std::string			    readFile(const std::string &filePath);
 };
+
+#endif

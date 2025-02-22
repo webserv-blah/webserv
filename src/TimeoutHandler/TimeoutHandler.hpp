@@ -1,13 +1,13 @@
-#pragma once
+#ifndef TIMEOUT_HANDLER_HPP
+# define TIMEOUT_HANDLER_HPP
 
-#include <map>
+# include <map>
 
-//임시
-#include "../EventHandler/EventHandler.hpp"
-#include "../Demultiplexer/KqueueDemultiplexer.hpp"
-#include "../ClientManager/ClientManager.hpp"
+# include "../EventHandler/EventHandler.hpp"
+# include "../Demultiplexer/KqueueDemultiplexer.hpp"
+# include "../ClientManager/ClientManager.hpp"
 
-#define LIMIT 60 //sec => 만료 시간 논의
+# define LIMIT 60 //sec => 만료 시간 논의
 
 class TimeoutHandler {
     public:
@@ -32,3 +32,5 @@ class TimeoutHandler {
         void removeConnection(int fd, ExpireQueueIter it);
         time_t getTime() const;
 };
+
+#endif

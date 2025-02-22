@@ -1,8 +1,9 @@
-#pragma once
+#ifndef CLIENT_SESSION_HPP
+# define CLIENT_SESSION_HPP
 
-#include "RequestParser.hpp"
-#include "GlobalConfig.hpp"
-#include "commonEnums.hpp"
+# include "RequestParser.hpp"
+# include "GlobalConfig.hpp"
+# include "commonEnums.hpp"
 
 class ClientSession {
 	public:
@@ -35,3 +36,5 @@ class ClientSession {
 		std::string				readBuffer_;
 		std::string				writeBuffer_;
 };
+
+#endif

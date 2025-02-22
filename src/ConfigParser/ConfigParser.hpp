@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CONFIG_PARSER_HPP
+# define CONFIG_PARSER_HPP
 
 #include "../GlobalConfig/GlobalConfig.hpp"
 #include "utils.hpp"
@@ -16,6 +17,7 @@ class ServerConfig;
 class LocationConfig;
 class RequestConfig;
 
+// GlobalConfig::initGlobalConfig() 에서 객체를 초기화할때 사용됩니다.
 // 설정 파일 파서
 class ConfigParser {
 public:
@@ -55,3 +57,5 @@ private:
 	// 다음 토큰을 미리 확인
 	static std::string	peekNextToken(std::ifstream& configFile);
 };
+
+#endif

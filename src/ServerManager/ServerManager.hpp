@@ -1,11 +1,13 @@
-#pragma once
-#include <set>
-#include "../GlobalConfig/GlobalConfig.hpp"
-#include "../Demultiplexer/KqueueDemultiplexer.hpp"
-#include "../TimeoutHandler/TimeoutHandler.hpp"
-#include "../EventHandler/EventHandler.hpp"
-#include "../ClientManager/ClientManager.hpp"
-#include "../include/commonEnums.hpp"
+#ifndef SERVER_MANAGER_HPP
+# define SERVER_MANAGER_HPP
+
+# include <set>
+# include "../GlobalConfig/GlobalConfig.hpp"
+# include "../Demultiplexer/KqueueDemultiplexer.hpp"
+# include "../TimeoutHandler/TimeoutHandler.hpp"
+# include "../EventHandler/EventHandler.hpp"
+# include "../ClientManager/ClientManager.hpp"
+# include "../include/commonEnums.hpp"
 
 class ServerManager {
 	public:
@@ -46,3 +48,5 @@ class ServerManager {
         // - ClientManager: 모든 클라이언트 세션 접근
         // - EventHandler: 클라이언트에게 서버 종료 알림 전송
 };
+
+#endif

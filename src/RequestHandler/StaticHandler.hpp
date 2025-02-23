@@ -1,15 +1,15 @@
 #ifndef STATIC_HANDLER_HPP
-# define STATIC_HANDLER_HPP
+#define STATIC_HANDLER_HPP
 
-# include "GlobalConfig.hpp"
-# include "ClientSession.hpp"
-# include "RequestMessage.hpp"
-# include "ResponseBuilder.hpp"
-# include "file_utils.hpp"
-# include <sstream>
-# include <vector>
-# include <string>
-# include <map>
+#include "GlobalConfig.hpp"
+#include "ClientSession.hpp"
+#include "RequestMessage.hpp"
+#include "ResponseBuilder.hpp"
+#include "file_utils.hpp"
+#include <sstream>
+#include <vector>
+#include <string>
+#include <map>
 
 class StaticHandler {
 public:

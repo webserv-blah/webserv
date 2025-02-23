@@ -1,12 +1,12 @@
 #ifndef GLOBAL_CONFIG_HPP
-# define GLOBAL_CONFIG_HPP
+#define GLOBAL_CONFIG_HPP
 
-# include "Optional.hpp"
-# include "../ConfigParser/ConfigParser.hpp"
-# include <string>
-# include <vector>
-# include <map>
-# include <iostream>
+#include "Optional.hpp"
+#include "../ConfigParser/ConfigParser.hpp"
+#include <string>
+#include <vector>
+#include <map>
+#include <iostream>
 
 class ConfigParser;
 

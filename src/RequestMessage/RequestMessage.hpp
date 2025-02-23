@@ -1,9 +1,9 @@
 #ifndef REQUEST_MESSAGE_HPP
-# define REQUEST_MESSAGE_HPP
+#define REQUEST_MESSAGE_HPP
 
-# include <string>
-# include <map>
-# include <vector>
+#include <string>
+#include <map>
+#include <vector>
 
 enum EnumMethod { NONE, GET, POST, DELETE };
 typedef enum EnumConnection { KEEP_ALIVE, CLOSE } EnumConnect;

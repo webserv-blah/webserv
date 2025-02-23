@@ -23,8 +23,8 @@ int	EventHandler::handleServerReadEvent(int fd) {
 
 // 클라이언트 fd에서 발생한 Read 이벤트 처리
 int	EventHandler::handleClientReadEvent(ClientSession& clientSession) {
-    int status = readRequest(clientSession); // ! parser_넘겨줄 필요가 없음
-    //readRequest: EventHandler의 멤버 함수
+    int status = recvRequest(clientSession); // ! parser_넘겨줄 필요가 없음
+    //recvRequest: EventHandler의 멤버 함수
     //parser_: EventHandler의 멤버 변수
 
     if (status == READ_COMPLETE) {

@@ -1,4 +1,7 @@
 #include "KqueueDemultiplexer.hpp"
+#include <iostream>
+#include <sys/event.h>
+#include <unistd.h>
 
 KqueueDemultiplexer::KqueueDemultiplexer(std::set<int>& listenFds) : eventList_(MAX_EVENT){
 	kq_ = kqueue();
@@ -53,7 +56,7 @@ void	KqueueDemultiplexer::removeWriteEventImpl(int fd) {
 	changedEvents_.push_back(change);
 }
 
-TypeEvent	KqueueDemultiplexer::getEventTypeImpl(int idx) {
+EnumEvent	KqueueDemultiplexer::getEventTypeImpl(int idx) {
 	if (eventList_[idx].filter == EVFILT_EXCEPT) {
 		return EXCEPTION_EVENT;
 	}

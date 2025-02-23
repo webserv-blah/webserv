@@ -1,13 +1,15 @@
 #ifndef TIMEOUT_HANDLER_HPP
 #define TIMEOUT_HANDLER_HPP
 
+//테스트용 dummy includes
 #include "EventHandler.hpp"
-#include "KqueueDemultiplexer.hpp"
-#include "ClientManager.hpp"
+// #include "KqueueDemultiplexer.hpp"
+#include "Demultiplexer.hpp"
+// #include "ClientManager.hpp"
+#include "Client.hpp"
 #include <map>
 
-// Nginx의 client_body_timeout 값과 동일 (초 단위 제한 시간)
-static const int LIMIT = 60;
+static const int LIMIT = 2;//테스트용 만료시간
 
 class TimeoutHandler {
     public:

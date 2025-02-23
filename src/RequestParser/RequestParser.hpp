@@ -1,10 +1,10 @@
 #ifndef REQUEST_PARSER_HPP
-# define REQUEST_PARSER_HPP
+#define REQUEST_PARSER_HPP
 
-# include "RequestMessage.hpp"
+#include "RequestMessage.hpp"
 
-# define ONELINE_MAX_LENGTH	8190//8KB - 2bytes(\r\n)
-# define URI_MAX_LENGTH		2048//2KB
+#define ONELINE_MAX_LENGTH	8190//8KB - 2bytes(\r\n)
+#define URI_MAX_LENGTH		2048//2KB
 
 class RequestParser {
 	public:

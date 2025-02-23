@@ -1,19 +1,19 @@
 #ifndef EVENT_HANDLER_HPP
-# define EVENT_HANDLER_HPP
+#define EVENT_HANDLER_HPP
 
-# include <string>
-# include <sys/socket.h>
-# include <netinet/in.h>
-# include <unistd.h>
-# include <cstdio>
+#include <string>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <cstdio>
 
-# include "../include/commonEnums.hpp"
-# include "../ClientManager/ClientManager.hpp"
-# include "../RequestMessage/RequestMessage.hpp"
-# include "../RequestParser/RequestParser.hpp"
-# include "../RequestHandler/StaticHandler.hpp"
-# include "../RequestHandler/CgiHandler.hpp"
-# include "../ResponseBuilder/ResponseBuilder.hpp"
+#include "../include/commonEnums.hpp"
+#include "../ClientManager/ClientManager.hpp"
+#include "../RequestMessage/RequestMessage.hpp"
+#include "../RequestParser/RequestParser.hpp"
+#include "../RequestHandler/StaticHandler.hpp"
+#include "../RequestHandler/CgiHandler.hpp"
+#include "../ResponseBuilder/ResponseBuilder.hpp"
 
 // EventHandler 객체는 ServerManager::run()에서 사용됩니다.
 // ../ServerManager/ServerManagerRun.cpp

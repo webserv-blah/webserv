@@ -67,7 +67,7 @@ void testUpdateActivity() {
     TimeoutHandler handler;
     int clientFd = 2;
     handler.addConnection(clientFd);
-
+    sleep(1);
     // 시간이 진행되었다고 가정
     handler.updateActivity(clientFd);
     // checkTimeouts를 호출할 때, 아직 만료전이므로 처리되지 않아야 함.

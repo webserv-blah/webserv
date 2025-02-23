@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CLIENT_SESSION_HPP
+#define CLIENT_SESSION_HPP
 
 #include "RequestParser.hpp"
 #include "GlobalConfig.hpp"
@@ -35,3 +36,5 @@ class ClientSession {
 		std::string				readBuffer_;
 		std::string				writeBuffer_;
 };
+
+#endif

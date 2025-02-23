@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ERROR_PAGE_RESOLVER_HPP
+#define ERROR_PAGE_RESOLVER_HPP
 
 #include "file_utils.hpp"
 #include <sstream>
@@ -11,3 +12,5 @@
 namespace ErrorPageResolver {
 	std::string resolveErrorPage(int errorCode, const std::map<int, std::string>& errorPages);
 };
+
+#endif

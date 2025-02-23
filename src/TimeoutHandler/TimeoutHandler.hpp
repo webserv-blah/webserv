@@ -1,8 +1,8 @@
-#pragma once
+#ifndef TIMEOUT_HANDLER_HPP
+#define TIMEOUT_HANDLER_HPP
 
 #include <map>
 
-//임시
 #include "../EventHandler/EventHandler.hpp"
 #include "../Demultiplexer/KqueueDemultiplexer.hpp"
 #include "../ClientManager/ClientManager.hpp"
@@ -32,3 +32,5 @@ class TimeoutHandler {
         void removeConnection(int fd, ExpireQueueIter it);
         time_t getTime() const;
 };
+
+#endif

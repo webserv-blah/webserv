@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UTILS_HPP
+#define UTILS_HPP
 
 #include <string>       // std::string
 #include <stdexcept>    // std::invalid_argument, std::overflow_error
@@ -39,3 +40,5 @@ namespace utils {
 void signalHandler(int signum);
 // 시그널 핸들러 설정 함수
 void setupSignalHandlers();
+
+#endif

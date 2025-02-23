@@ -1,6 +1,8 @@
+#ifndef KQUEUE_DEMULTIPLEXER_HPP
+#define KQUEUE_DEMULTIPLEXER_HPP
+
 #ifdef __APPLE__
 
-#pragma once
 #include "DemultiplexerBase.hpp"
 #include <iostream>
 #include <vector>
@@ -29,4 +31,6 @@ class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 };
 
 typedef KqueueDemultiplexer Demultiplexer;
+
+#endif
 #endif

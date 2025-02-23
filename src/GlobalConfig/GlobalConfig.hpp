@@ -1,14 +1,16 @@
-#pragma once
+#ifndef GLOBAL_CONFIG_HPP
+#define GLOBAL_CONFIG_HPP
 
-# include "Optional.hpp"
-# include "../ConfigParser/ConfigParser.hpp"
-# include <string>
-# include <vector>
-# include <map>
-# include <iostream>
+#include "Optional.hpp"
+#include "../ConfigParser/ConfigParser.hpp"
+#include <string>
+#include <vector>
+#include <map>
+#include <iostream>
 
 class ConfigParser;
 
+// ServerConfig, LocationConfig 클래스의 멤버 변수로 사용됩니다.
 // RequestConfig는 요청 처리를 위한 설정을 나타냅니다.
 class RequestConfig {
 public:
@@ -26,6 +28,7 @@ public:
 	Optional<bool>				autoIndex_;			// 디렉토리 자동 색인화 여부
 };
 
+// ServerConfig에서 std::vector<LocationConfig> 형태로 사용됩니다.
 // LocationConfig는 특정 위치 블록의 구성을 나타냅니다.
 class LocationConfig {
 public:
@@ -33,6 +36,7 @@ public:
 	RequestConfig				reqConfig_;			// 이 위치의 요청 처리 구성
 };
 
+// GlobalConfig 클래스에서 std::vector<ServerConfig> 형태로 사용됩니다.
 // ServerConfig는 특정 서버의 구성을 나타냅니다.
 class ServerConfig {
 public:
@@ -45,6 +49,8 @@ public:
 	std::vector<LocationConfig>	locations_;			// 위치별 구성 목록
 };
 
+// main문에서 initGlobalConfig()를 통해 생성됩니다.
+// /src/main.cpp
 // GlobalConfig는 웹 서버의 전체 구성을 나타냅니다.
 class GlobalConfig {
 public:
@@ -80,3 +86,5 @@ private:
 	const RequestConfig*	findLocationConfig(const ServerConfig& server, \
 												const std::string& targetUrl) const;
 };
+
+#endif

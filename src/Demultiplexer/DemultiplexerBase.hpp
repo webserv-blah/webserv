@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef DEMULTIPLEXER_BASE_HPP
+#define DEMULTIPLEXER_BASE_HPP
 
 #include "../include/commonEnums.hpp"
 #define MAX_EVENT 1024
@@ -21,4 +21,6 @@ class DemultiplexerBase {
 	
 };
 
-# include "DemultiplexerBase.tpp"
+#include "DemultiplexerBase.tpp"
+
+#endif

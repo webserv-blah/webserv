@@ -12,6 +12,8 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <sstream>
+
 
 class CgiHandler {
 public:
@@ -21,7 +23,7 @@ public:
 
     // CGI를 실행하고, 자식 프로세스의 표준 출력 내용을 그대로 문자열로 반환.
     // 만약 에러 발생 시, responseBuilder.buildError(...) 를 통해 에러응답 문자열을 반환.
-    std::string handleRequest(const RequestMessage& reqMsg, const RequestConfig& conf);
+    std::string handleRequest(const ClientSession& clientSession);
 
 private:
     const ResponseBuilder& responseBuilder_; // 에러 응답 생성에 사용

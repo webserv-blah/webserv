@@ -1,5 +1,5 @@
 #ifndef OPTIONAL_HPP
-# define OPTIONAL_HPP
+#define OPTIONAL_HPP
 
 // 템플릿 클래스 Optional 정의
 template<typename T>

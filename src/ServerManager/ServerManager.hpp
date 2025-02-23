@@ -1,13 +1,13 @@
 #ifndef SERVER_MANAGER_HPP
-# define SERVER_MANAGER_HPP
+#define SERVER_MANAGER_HPP
 
-# include <set>
-# include "../GlobalConfig/GlobalConfig.hpp"
-# include "../Demultiplexer/KqueueDemultiplexer.hpp"
-# include "../TimeoutHandler/TimeoutHandler.hpp"
-# include "../EventHandler/EventHandler.hpp"
-# include "../ClientManager/ClientManager.hpp"
-# include "../include/commonEnums.hpp"
+#include <set>
+#include "../GlobalConfig/GlobalConfig.hpp"
+#include "../Demultiplexer/KqueueDemultiplexer.hpp"
+#include "../TimeoutHandler/TimeoutHandler.hpp"
+#include "../EventHandler/EventHandler.hpp"
+#include "../ClientManager/ClientManager.hpp"
+#include "../include/commonEnums.hpp"
 
 class ServerManager {
 	public:

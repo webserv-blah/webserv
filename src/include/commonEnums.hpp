@@ -1,5 +1,5 @@
 #ifndef COMMON_ENUMS_HPP
-# define COMMON_ENUMS_HPP
+#define COMMON_ENUMS_HPP
 
 typedef enum EnumSessionStatus {
 	READ_CONTINUE,

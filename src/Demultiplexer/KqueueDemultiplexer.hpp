@@ -1,14 +1,14 @@
 #ifndef KQUEUE_DEMULTIPLEXER_HPP
-# define KQUEUE_DEMULTIPLEXER_HPP
+#define KQUEUE_DEMULTIPLEXER_HPP
 
-# ifdef __APPLE__
+#ifdef __APPLE__
 
-# include "DemultiplexerBase.hpp"
-# include <iostream>
-# include <vector>
-# include <set>
-# include <sys/event.h>
-# include <unistd.h>
+#include "DemultiplexerBase.hpp"
+#include <iostream>
+#include <vector>
+#include <set>
+#include <sys/event.h>
+#include <unistd.h>
 
 class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 	public:
@@ -32,5 +32,5 @@ class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 
 typedef KqueueDemultiplexer Demultiplexer;
 
-# endif
+#endif
 #endif

@@ -22,6 +22,7 @@ class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 	
 	private:
 		int							kq_;
+		in_addr_t					numEvents_;
 		std::vector<struct kevent>	eventList_;
 		std::vector<struct kevent>	changedEvents_;
 	

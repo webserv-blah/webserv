@@ -1,8 +1,8 @@
 #ifndef DEMULTIPLEXER_BASE_HPP
-# define DEMULTIPLEXER_BASE_HPP
+#define DEMULTIPLEXER_BASE_HPP
 
-# include "../include/commonEnums.hpp"
-# define MAX_EVENT 1024
+#include "../include/commonEnums.hpp"
+#define MAX_EVENT 1024
 
 template <typename Derived>
 class DemultiplexerBase {
@@ -21,6 +21,6 @@ class DemultiplexerBase {
 	
 };
 
-# include "DemultiplexerBase.tpp"
+#include "DemultiplexerBase.tpp"
 
 #endif

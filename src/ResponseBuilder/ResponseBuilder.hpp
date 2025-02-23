@@ -1,14 +1,14 @@
 #ifndef RESPONSE_BUILDER_HPP
-# define RESPONSE_BUILDER_HPP
+#define RESPONSE_BUILDER_HPP
 
-# include "GlobalConfig.hpp"
-# include "ErrorPageResolver.hpp"
+#include "GlobalConfig.hpp"
+#include "ErrorPageResolver.hpp"
 
-# include <map>
-# include <string>
-# include <ctime>
-# include <sstream>
-# include <iostream>
+#include <map>
+#include <string>
+#include <ctime>
+#include <sstream>
+#include <iostream>
 
 // HTTP 응답을 조립하는 클래스.
 // 상태 코드/Reason, 헤더, 바디 등을 받아 최종 HTTP 응답 문자열을 생성한다.

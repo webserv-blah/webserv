@@ -1,4 +1,5 @@
-#pragma once
+#ifndef COMMON_ENUMS_HPP
+#define COMMON_ENUMS_HPP
 
 typedef enum EnumSessionStatus {
 	READ_CONTINUE,
@@ -14,3 +15,5 @@ enum EnumEvent {
 	WRITE_EVENT,
 	EXCEPTION_EVENT
 };
+
+#endif

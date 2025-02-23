@@ -1,4 +1,5 @@
-#pragma once
+#ifndef FILE_UTILS_HPP
+#define FILE_UTILS_HPP
 
 #include <string>
 #include <sys/stat.h>
@@ -22,3 +23,5 @@ namespace FileUtilities {
 	EnumValidationResult	validatePath(const std::string& path);
 	std::string			    readFile(const std::string &filePath);
 };
+
+#endif

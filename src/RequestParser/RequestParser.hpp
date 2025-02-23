@@ -1,4 +1,5 @@
-#pragma once
+#ifndef REQUEST_PARSER_HPP
+#define REQUEST_PARSER_HPP
 
 #include "RequestMessage.hpp"
 
@@ -27,3 +28,5 @@ class RequestParser {
 		std::string		cleanUpChunkedBody(const std::string &data, RequestMessage &reqMsg);
 		std::string 	parseBody(const std::string &line, RequestMessage &reqMsg);
 };
+
+#endif

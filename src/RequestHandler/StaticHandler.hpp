@@ -1,5 +1,5 @@
-#ifndef STATICHANDLER_HPP
-#define STATICHANDLER_HPP
+#ifndef STATIC_HANDLER_HPP
+#define STATIC_HANDLER_HPP
 
 #include "GlobalConfig.hpp"
 #include "ClientSession.hpp"

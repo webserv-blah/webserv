@@ -1,5 +1,5 @@
-#ifndef RESPONSEBUILDER_HPP
-#define RESPONSEBUILDER_HPP
+#ifndef RESPONSE_BUILDER_HPP
+#define RESPONSE_BUILDER_HPP
 
 #include "GlobalConfig.hpp"
 #include "ErrorPageResolver.hpp"
@@ -50,4 +50,4 @@ private:
 								const std::string& body) const;
 };
 
-#endif // RESPONSEBUILDER_HPP
+#endif

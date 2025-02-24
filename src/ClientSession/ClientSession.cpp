@@ -65,9 +65,9 @@ EnumSesStatus ClientSession::implementReqMsg(RequestParser &parser, const std::s
 		this->reqMsg_ = new RequestMessage();
 	
 	if (this->config_ != NULL)
-		parser.setBodyMaxLength(this->config_->clientMaxBodySize_);
+		parser.setConfigBodyLength(this->config_->clientMaxBodySize_.value());
 	this->errorStatusCode_ = parser.parse(readData, this->readBuffer_, *this->reqMsg_);
-	if (this->reqMsg_->getStatus == REQ_HEADER_CRLF) {
+	if (this->reqMsg_->getStatus() == REQ_HEADER_CRLF) {
 		const GlobalConfig &globalConfig = GlobalConfig::getInstance();
 		this->config_ = globalConfig.findRequestConfig(this->listenFd_, this->reqMsg_->getMetaHost(), this->reqMsg_->getTargetURI());
 	}

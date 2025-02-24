@@ -8,10 +8,13 @@ RequestParser::RequestParser() : oneLineMaxLength_(ONELINE_MAX_LENGTH), uriMaxLe
 RequestParser::~RequestParser() {}
 
 void RequestParser::setConfigBodyLength(size_t length) {
-	this->bodyMaxLength = length;
+	this->bodyMaxLength_ = length;
 }
 
-// 1. 기본 파싱 로직 함수, body전까지는 \r\n기준으로 한 줄씩 읽음
+// 1. 기본 파싱 로직 함수
+// readData: recv함수로 읽은 요쳥 데이터
+// readBuffer: 기존 요청데이터를 파싱하고 남은 데이터
+// reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
 int RequestParser::parse(const std::string &readData, std::string &readBuffer, RequestMessage &reqMsg) {
 	std::istringstream iss(readData + readBuffer);
 	std::string buffer;
@@ -79,6 +82,8 @@ EnumReqStatus RequestParser::handleCRLFLine(const EnumReqStatus &curStatus) {
 }
 
 // 2. Start-line 한 줄을 파싱하는 함수
+// line: \r\n기준으로 나뉜 요청 데이터의 첫 줄
+// reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
 int RequestParser::parseStartLine(const std::string &line, RequestMessage &reqMsg) {
 	EnumReqStatus status = reqMsg.getStatus();
 	std::istringstream iss(line);
@@ -114,6 +119,8 @@ int RequestParser::parseStartLine(const std::string &line, RequestMessage &reqMs
 }
 
 // 3. field-line 한 줄을 파싱하는 함수
+// line: \r\n기준으로 나뉜 요청 데이터, 첫 줄(start line)이 아닌 다음 줄
+// reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
 int RequestParser::parseFieldLine(const std::string &line, RequestMessage &reqMsg) {
 	std::istringstream iss(line);
 	std::string name;
@@ -192,16 +199,19 @@ bool RequestParser::handleFieldValue(const std::string &name, const std::string 
 	return true;
 }
 
-// 4. Body를 파싱하는 함수. Content-Length의 길이에 따라 예외 처리됨. 유효한 문자열은 기존의 Body의 추가함
-int RequestParser::parseBody(const std::string &line, std::string &readBuffer, RequestMessage &reqMsg) {
+// 4. Body를 파싱하는 함수, Content-Length의 길이에 따라 예외 처리됨. 유효한 문자열은 기존의 Body의 추가함
+// data: Body로 파싱할 요청 데이터 
+// readBuffer: 남은 데이터를 저장할 ClientSession의 readBuffer
+// reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
+int RequestParser::parseBody(const std::string &data, std::string &readBuffer, RequestMessage &reqMsg) {
 	const size_t contentLength = reqMsg.getMetaContentLength();
 
 	// 4-1. 최종 body의 길이 >= 현재 저장된 body길이 + 파싱하려는 길이
-	if (contentLength >= reqMsg.getBodyLength() + line.length()) {
-		if (this->bodyMaxLength_ < reqMsg.getBodyLength() + line.length())
+	if (contentLength >= reqMsg.getBodyLength() + data.length()) {
+		if (this->bodyMaxLength_ < reqMsg.getBodyLength() + data.length())
 			return 413;//status code: Body가 설정보다 큼 “Request Entity Too Large”
 
-		reqMsg.addBody(line);
+		reqMsg.addBody(data);
 		if (contentLength == reqMsg.getBodyLength()) {
 			reqMsg.setStatus(REQ_DONE);
 			return NONE_STATUS_CODE;
@@ -214,8 +224,8 @@ int RequestParser::parseBody(const std::string &line, std::string &readBuffer, R
 	// 4-2. 최종 body의 길이 < 현재 저장된 body길이 + 파싱하려는 길이
 	// 우선, content length를 저장하되
 	size_t substrSize = contentLength - reqMsg.getBodyLength();
-	reqMsg.addBody(line.substr(0, substrSize));
-	std::string remainData = line.substr(substrSize);
+	reqMsg.addBody(data.substr(0, substrSize));
+	std::string remainData = data.substr(substrSize);
 	
 	// 일차적으로 완성된 request이지만, 두 가지 우려사항을 검증해야함
 	const std::string methods[3] = {"GET", "POST", "DELETE"};
@@ -245,6 +255,9 @@ int RequestParser::parseBody(const std::string &line, std::string &readBuffer, R
 }
 
 // 5. 청크 전송 파싱하는 함수. Transfer-Encoding이 chunked여서 Body가 청크로 아루어진 경우
+// data: Body로 파싱할 요청 데이터
+// readBuffer: 남은 데이터를 저장할 ClientSession의 readBuffer
+// reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
 int RequestParser::cleanUpChunkedBody(const std::string &data, std::string &readBuffer, RequestMessage &reqMsg) {
 	std::istringstream iss(data);
 	std::string buffer;

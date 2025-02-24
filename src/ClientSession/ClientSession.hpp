@@ -23,7 +23,6 @@ class ClientSession {
 		void					setReadBuffer(const std::string &remainData);
 		void					setWriteBuffer(const std::string &remainData);
 		
-		//Optional<size_t>	getConfBodyMax() const;
 		EnumSesStatus			implementReqMsg(RequestParser &parser, const std::string &readData);
 
 	private:

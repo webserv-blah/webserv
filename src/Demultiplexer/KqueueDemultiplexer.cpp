@@ -31,6 +31,9 @@ int KqueueDemultiplexer::waitForEventImpl() {
 	// kevent 호출: 이벤트 감지
 	// 반환값 : 감지된 이벤트 개수
 	numEvents_ = kevent(kq_, changedEvents, numChanges, &eventList_[0], MAX_EVENT, nullptr);
+	if (numEvents_ == -1) {
+		throw std::runtime_error("kevent() failed"); // kevent 호출 실패
+	}
 	changedEvents_.clear(); // 변경된 이벤트 목록 초기화
 
 	return numEvents_;

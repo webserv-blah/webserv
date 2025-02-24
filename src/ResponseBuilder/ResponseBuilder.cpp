@@ -22,13 +22,16 @@ void ResponseBuilder::setContentLength(std::map<std::string, std::string>& heade
 std::string ResponseBuilder::getReasonPhrase(int errorCode) const {
 	// 상태 코드에 따른 이유 구문 반환
 	switch (errorCode) {
-		case 200: return "OK";				// 200: OK
-		case 400: return "Bad Request";		// 400: 잘못된 요청
-		case 403: return "Forbidden";			// 403: 접근 거부
-		case 404: return "Not Found";			// 404: 찾을 수 없음
-		case 405: return "Method Not Allowed";	// 405: 허용되지 않은 메소드
-		case 500: return "Internal Server Error";	// 500: 내부 서버 오류
-		default:  return "Error";				// 그 외: 일반 오류
+		case 200: return "OK";                     // 200: OK
+		case 400: return "Bad Request";            // 400: 잘못된 요청
+		case 403: return "Forbidden";              // 403: 접근 거부
+		case 404: return "Not Found";              // 404: 찾을 수 없음
+		case 405: return "Method Not Allowed";     // 405: 허용되지 않은 메소드
+		case 408: return "Request Timeout";        // 408: 요청 시간 초과
+		case 413: return "Payload Too Large";      // 413: 요청 페이로드가 너무 큼
+		case 500: return "Internal Server Error";  // 500: 내부 서버 오류
+		case 503: return "Service Unavailable";    // 503: 서비스 이용 불가
+		default:  return "Error";                  // 그 외: 일반 오류
 	}
 }
 
@@ -50,13 +53,18 @@ std::string ResponseBuilder::assembleResponse(int statusCode, const std::string&
 	return oss.str();	// 완성된 응답 메시지 반환
 }
 
-std::string ResponseBuilder::build(int statusCode, const std::string& contentType, const std::string& body) const {
+std::string ResponseBuilder::build(	int statusCode, 
+									std::map<std::string, std::string>& headers,  
+									const std::string& body) const {
 	// 일반 응답 메시지 생성
 	std::string reason = getReasonPhrase(statusCode);	// 상태 코드에 따른 이유 구문 결정
-	std::map<std::string, std::string> headers;			// 헤더 저장용 맵
 
-	headers["Content-Type"] = contentType;	// Content-Type 헤더 설정
-	setContentLength(headers, body);			// Content-Length 헤더 설정
+	if (!body.empty()) {
+		// Content-Length 값을 snprintf를 이용하여 변환
+		char contentLengthBuffer[20];  // 충분한 크기의 버퍼 확보
+		snprintf(contentLengthBuffer, sizeof(contentLengthBuffer), "%zu", body.size());
+		headers["Content-Length"] = contentLengthBuffer;
+	}
 
 	return assembleResponse(statusCode, reason, headers, body);	// 최종 응답 메시지 반환
 }

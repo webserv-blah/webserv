@@ -1,7 +1,7 @@
 #ifndef DEMULTIPLEXER_BASE_HPP
 #define DEMULTIPLEXER_BASE_HPP
 
-#include "commonEnums.hpp"
+#include "../include/commonEnums.hpp"
 static const int MAX_EVENT = 1024;
 
 template <typename Derived>

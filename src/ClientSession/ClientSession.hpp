@@ -31,7 +31,7 @@ class ClientSession {
 		int						clientFd_;
 		EnumSesStatus			status_;
 		RequestMessage			*reqMsg_;
-		RequestConfig			*config_;
+		const RequestConfig		*config_;
 		std::string				readBuffer_;
 		std::string				writeBuffer_;
 };

@@ -63,9 +63,8 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
         if (!client) { 
             std::cerr << "[Error][TimeoutHandler][checkTimeouts] Invalid Client Fd" << std::endl;
         } else {
-			// TODO: error 전송이 불가한 경우 write이벤트 등록 후 대기해야 하는지
-			//		 만약 대기한다면, 어떻게 처리할건지 고민. 
-            eventHandler.handleError(408, *client); // HTTP 408 Request Timeout 처리
+            // HTTP 408 Request Timeout 처리
+            eventHandler.handleError(408, *client);
         }
 
         // client 정보 삭제 및 정리

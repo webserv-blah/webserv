@@ -15,7 +15,7 @@ class RequestParser {
 		~RequestParser();
 
 		int					parse(const std::string &readData, std::string &readBuffer, RequestMessage &reqMsg);
-		void				setBodyMaxLength(size_t length);
+		void				setConfigBodyLength(size_t length);
 
 	private:
 		size_t				oneLineMaxLength_;

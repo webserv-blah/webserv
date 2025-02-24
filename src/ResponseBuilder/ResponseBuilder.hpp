@@ -17,10 +17,10 @@ class ResponseBuilder {
 public:
 	// 일반 응답 문자열을 생성하는 함수
 	// @param status       HTTP 상태 코드
-	// @param contentType  응답의 Content-Type 헤더 값
 	// @param body         응답 바디
+	// @param headers	   응답 생성에 사용될 헤더들
 	// @return 최종 HTTP 응답 문자열
-	std::string build(int status, const std::string& contentType, const std::string& body) const;
+	std::string build(int status, std::map<std::string, std::string>& headers, const std::string& body) const;
 
 	// 에러 응답 문자열을 생성하는 함수
 	// (실제 에러 페이지 내용은 ErrorPageResolver가 결정 및 로드)

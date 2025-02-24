@@ -43,6 +43,16 @@ StaticHandler::~StaticHandler() {
 
 // 요청 처리의 메인 진입점
 std::string StaticHandler::handleRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
+	if (conf.returnStatus_ >= 100) {
+		if (conf.returnStatus_ == 200) {
+			//location block의 리턴 지시자가 text로 오는 경우. ex) "return 200 text"
+		} else if (!conf.returnUrl_.empty() && (conf.returnStatus_ == 302 || conf.returnStatus_ == 301)) {
+			return handleRedirction(conf);
+		} else {
+			return responseBuilder_.buildError(conf.returnStatus_, conf);
+		}
+	}
+	
 	std::string uri = reqMsg.getTargetURI();      // ex) "/images/logo.png"
 	std::string documentRoot = conf.root_;          // ex) "/var/www/html"
 	std::string fullPath = documentRoot + uri;      // ex) "/var/www/html/images/logo.png"
@@ -56,9 +66,6 @@ std::string StaticHandler::handleRequest(const RequestMessage& reqMsg, const Req
 		case VALID_FILE:
 			return handleFile(fullPath, conf);
 		case PATH_NOT_FOUND:
-			if (conf.returnStatus_ != 0) {
-				return handleRedirction(fullPath, conf);
-			}
 		case FILE_NOT_FOUND:
 			return responseBuilder_.buildError(404, conf);
 		case PATH_NO_PERMISSION:
@@ -94,7 +101,7 @@ std::string StaticHandler::handleDirectory(const std::string &dirPath,
 }
 
 // redirection 처리
-std::string StaticHandler::handleRedirction(const std::string &filePath, const RequestConfig& conf) {
+std::string StaticHandler::handleRedirction(const RequestConfig& conf) {
 	std::string location = conf.returnUrl_;
 	std::map<std::string, std::string> headers;
 	headers["Location:"] = location;

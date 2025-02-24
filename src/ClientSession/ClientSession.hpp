@@ -15,8 +15,8 @@ class ClientSession {
 		EnumSesStatus			getStatus() const;
 		std::string				getReadBuffer() const;
 		std::string				getWriteBuffer() const;
-		const RequestMessage	*getReqMsg() const;
-		const RequestConfig		*getConfig() const;
+		const RequestMessage	&getReqMsg() const;
+		const RequestConfig		&getConfig() const;
 		void					setListenFd(const int &listenFd);
 		void					setClientFd(const int &clientFd);
 		void					setStatus(const EnumSesStatus &status);

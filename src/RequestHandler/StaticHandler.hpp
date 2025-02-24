@@ -31,7 +31,7 @@ private:
     std::string handleFile(const std::string &filePath, const RequestConfig& conf);
 
     // redirection 처리
-    std::string handleRedirction(const std::string &filePath, const RequestConfig& conf);
+    std::string handleRedirction(const RequestConfig& conf);
 
     // index.html 등 특정 파일 응답
     std::string serveFile(const std::string &filePath, const std::string &contentType, const RequestConfig& conf);

@@ -6,7 +6,7 @@ ifndef SRCDIR
 endif
 
 NAME := RequestHandler.a
-HEAD := StaticHandler.hpp \
+HEAD := StaticHandler.hpp CgiHandler.hpp\
 
 SRCS := $(wildcard *.cpp)
 

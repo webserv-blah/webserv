@@ -1,6 +1,16 @@
 #include "DemultiplexerBase.hpp"
 
 template <typename Derived>
+DemultiplexerBase<Derived>::DemultiplexerBase() {
+
+}
+
+template <typename Derived>
+DemultiplexerBase<Derived>::~DemultiplexerBase() {
+
+}
+
+template <typename Derived>
 int DemultiplexerBase<Derived>::waitForEvent() {
 	return static_cast<Derived&>(*this).waitForEventImpl();
 }

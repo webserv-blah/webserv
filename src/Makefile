@@ -22,6 +22,9 @@ DIRS := utils \
 		ServerManager \
 		Demultiplexer \
 		ClientManager
+		ServerManager \
+		Demultiplexer \
+		TimeoutHandler
 
 SUBS := $(addsuffix .a,$(DIRS))
 

@@ -23,6 +23,8 @@ std::string ResponseBuilder::getReasonPhrase(int errorCode) const {
 	// 상태 코드에 따른 이유 구문 반환
 	switch (errorCode) {
 		case 200: return "OK";                     // 200: OK
+		case 301: return "Moved Permanently";      // 301: 영구적으로 이동됨
+		case 302: return "Found";                  // 302: 찾음 (임시 이동)
 		case 400: return "Bad Request";            // 400: 잘못된 요청
 		case 403: return "Forbidden";              // 403: 접근 거부
 		case 404: return "Not Found";              // 404: 찾을 수 없음

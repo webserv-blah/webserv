@@ -4,13 +4,12 @@
 #include <stdexcept>
 #include <sstream>
 
-RequestParser::RequestParser() : oneLineMaxLength_(ONELINE_MAX_LENGTH), uriMaxLength_(URI_MAX_LENGTH) {}
+RequestParser::RequestParser() : oneLineMaxLength_(ONELINE_MAX_LENGTH), uriMaxLength_(URI_MAX_LENGTH), bodyMaxLength_(BODY_MAX_LENGTH) {}
 RequestParser::~RequestParser() {}
 
-//void RequestParser::setConfigBodyLength(size_t length) {
-	// MUST TO DO: Config를 반영하는 로직 필요, Body파싱 구현시 하게 될 듯
-//	this->bodyMaxLength = length;
-//}
+void RequestParser::setConfigBodyLength(size_t length) {
+	this->bodyMaxLength = length;
+}
 
 // 1. 기본 파싱 로직 함수, body전까지는 \r\n기준으로 한 줄씩 읽음
 int RequestParser::parse(const std::string &readData, std::string &readBuffer, RequestMessage &reqMsg) {
@@ -30,7 +29,8 @@ int RequestParser::parse(const std::string &readData, std::string &readBuffer, R
 					reqMsg.setStatus(status);
 					if (status == REQ_HEADER_CRLF) {
 						std:getline(iss, buffer, '\0');
-						break ;
+						readBuffer = buffer;
+						return NONE_STATUS_CODE;
 					}
 					if (status == REQ_ERROR)
 						return 400;//status code: 유효하지 않은 CRLF 위치
@@ -45,11 +45,6 @@ int RequestParser::parse(const std::string &readData, std::string &readBuffer, R
 		}
 	} else {// 1-2. Body인 경우
 		buffer = readData;
-	}
-
-	if (buffer.length() == 0) {
-		readBuffer = "";
-		return NONE_STATUS_CODE;
 	}
 
 	// 1-3. Body 처리, 청크전송인지 아닌지에 따라 처리과정을 달리함
@@ -203,6 +198,9 @@ int RequestParser::parseBody(const std::string &line, std::string &readBuffer, R
 
 	// 4-1. 최종 body의 길이 >= 현재 저장된 body길이 + 파싱하려는 길이
 	if (contentLength >= reqMsg.getBodyLength() + line.length()) {
+		if (this->bodyMaxLength_ < reqMsg.getBodyLength() + line.length())
+			return 413;//status code: Body가 설정보다 큼 “Request Entity Too Large”
+
 		reqMsg.addBody(line);
 		if (contentLength == reqMsg.getBodyLength()) {
 			reqMsg.setStatus(REQ_DONE);
@@ -288,8 +286,11 @@ int RequestParser::cleanUpChunkedBody(const std::string &data, std::string &read
 			// 청크 데이터가 \r\n형식에 맞춰 들어왔는지 검증
 			if (buffer.compare(buffer.size() - 2, 2, "\r\n") != 0)
 				return 400;//status code: 유효하지 않은 청크 데이터 형식
-			
-			// 청크 데이터에 \r\n를 제거하여 Body에 저장
+				
+			if (this->bodyMaxLength_ < reqMsg.getBodyLength() + chunkSize)
+				return 413;//status code: Body가 설정보다 큼 “Request Entity Too Large”
+
+				// 청크 데이터에 \r\n를 제거하여 Body에 저장
 			reqMsg.addBody(buffer.substr(0, buffer.size() - 2));
 		} else { //\r\n으로 이루어져있지 않음
 			return 400;//status code: CRLF가 아닌, 단일 LF

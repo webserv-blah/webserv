@@ -1,4 +1,5 @@
 #include "ResponseBuilder.hpp"	// ResponseBuilder 헤더 파일 포함
+#include "commonEnums.hpp"
 
 // 현재 GMT 시간의 RFC1123 형식 문자열 반환
 static std::string getCurrentDateString() {
@@ -22,18 +23,19 @@ void ResponseBuilder::setContentLength(std::map<std::string, std::string>& heade
 std::string ResponseBuilder::getReasonPhrase(int errorCode) const {
 	// 상태 코드에 따른 이유 구문 반환
 	switch (errorCode) {
-		case 200: return "OK";                     // 200: OK
-		case 301: return "Moved Permanently";      // 301: 영구적으로 이동됨
-		case 302: return "Found";                  // 302: 찾음 (임시 이동)
-		case 400: return "Bad Request";            // 400: 잘못된 요청
-		case 403: return "Forbidden";              // 403: 접근 거부
-		case 404: return "Not Found";              // 404: 찾을 수 없음
-		case 405: return "Method Not Allowed";     // 405: 허용되지 않은 메소드
-		case 408: return "Request Timeout";        // 408: 요청 시간 초과
-		case 413: return "Payload Too Large";      // 413: 요청 페이로드가 너무 큼
-		case 500: return "Internal Server Error";  // 500: 내부 서버 오류
-		case 503: return "Service Unavailable";    // 503: 서비스 이용 불가
-		default:  return "Error";                  // 그 외: 일반 오류
+		case OK: return "OK";                     // 200: OK
+		case MOVED_PERMANENTLY: return "Moved Permanently";				// 301: 영구적으로 이동됨
+		case FOUND: return "Found";                  					// 302: 찾음 (임시 이동)
+		case BAD_REQUEST: return "Bad Request";            				// 400: 잘못된 요청
+		case FORBIDDEN: return "Forbidden";              				// 403: 접근 거부
+		case NOT_FOUND: return "Not Found";        						// 404: 찾을 수 없음
+		case METHOD_NOT_ALLOWED: return "Method Not Allowed";   		// 405: 허용되지 않은 메소드
+		case REQUEST_TIMEOUT: return "Request Timeout";        			// 408: 요청 시간 초과
+		case CONTENT_TOO_LARGE: return "Payload Too Large";     		// 413: 요청 페이로드가 너무 큼
+		case INTERNAL_SERVER_ERROR: return "Internal Server Error"; 	// 500: 내부 서버 오류
+		case NOT_IMPLEMENTED: return "Not Implemented";					// 501: 구현되지 않음
+		case SERVICE_UNAVAILABLE: return "Service Unavailable";			// 503: 서비스 이용 불가
+		default:  return "Error";                  						// 그 외: 일반 오류
 	}
 }
 

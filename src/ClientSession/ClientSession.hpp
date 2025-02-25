@@ -7,12 +7,14 @@
 
 class ClientSession {
 	public:
-		ClientSession(int listenFd, int clientFd);
+		ClientSession(int listenFd, int clientFd, std::string clientIP);
 		~ClientSession();
 
 		int						getListenFd() const;
 		int						getClientFd() const;
+		int						getErrorStatusCode() const;
 		EnumSesStatus			getStatus() const;
+		std::string				getClientIP() const;
 		std::string				getReadBuffer() const;
 		std::string				getWriteBuffer() const;
 		const RequestMessage	&getReqMsg() const;
@@ -34,6 +36,7 @@ class ClientSession {
 		const RequestConfig		*config_;
 		std::string				readBuffer_;
 		std::string				writeBuffer_;
+		std::string				clientIP_;
 };
 
 #endif

@@ -1,7 +1,6 @@
 #include "ClientSession.hpp"
 
-ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : status_(READ_CONTINUE), listenFd_(listenFd), clientFd_(clientFd), clientIP_(clientIP), reqMsg_(NULL), config_(NULL) {}
-
+ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : listenFd_(listenFd), clientFd_(clientFd), status_(READ_CONTINUE), reqMsg_(NULL), config_(NULL), clientIP_(clientIP) {}
 ClientSession::~ClientSession() {
 	if (this->reqMsg_ != NULL)
 		delete this->reqMsg_;

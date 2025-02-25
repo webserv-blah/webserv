@@ -34,4 +34,4 @@ Content-Length: 4\r\n\
 hi\r\n\
 "
 
-export HTTP_REQUEST=$(printf "%b" "$CHUNK")
+export HTTP_REQUEST=$(printf "%b" "$BASIC")

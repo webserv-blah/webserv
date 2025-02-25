@@ -49,7 +49,7 @@ EnumSesStatus recvRequest(ClientSession &curSession) {
 	data.push_back('\n');
 	RequestParser parser;
 	std::cout << "ORIGIN ENV: "<<std::endl;
-	for (auto it = data.begin(); it != data.end(); ++it) {
+	for (std::string::const_iterator it = data.begin(); it != data.end(); ++it) {
 		if (*it == '\n')
 			std::cout << "\\n" << std::endl;
 		else if (*it == '\r')
@@ -67,7 +67,8 @@ EnumSesStatus recvRequest(ClientSession &curSession) {
 		std::string chunk(&data[offset], chunkSize);  // BUFFER_SIZE만큼 잘라서 문자열 생성
 
 		const RequestConfig *config = curSession.getConfig();
-		const size_t BodyMax = (config == NULL) ? BODY_MAX_LENGTH : config->clientMaxBodySize_.value();
+		const size_t bodyMax = (config == NULL) ? BODY_MAX_LENGTH : config->clientMaxBodySize_.value();
+		parser.setConfigBodyLength(bodyMax);
 
 		// 이전에 버퍼 저장해놓은 데이터와 새로운 요청 데이터를 가지고 파싱
 		EnumStatusCode statusCode = parser.parse(data, curSession);

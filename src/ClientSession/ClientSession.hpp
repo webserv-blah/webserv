@@ -25,6 +25,8 @@ class ClientSession {
 		void					setClientFd(const int &clientFd);
 		void					setErrorStatusCode(const int &statusCode);
 		void					setStatus(const EnumSesStatus &status);
+		void					setReqMsg(RequestMessage *reqMsg);
+		void					setConfig(const RequestConfig *config);
 		void					setReadBuffer(const std::string &remainData);
 		void					setReadCursor(const size_t &curCursor);
 		void					setWriteBuffer(const std::string &remainData);

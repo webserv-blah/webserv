@@ -62,6 +62,14 @@ void ClientSession::setStatus(const EnumSesStatus &status) {
 	this->status_ = status;
 }
 
+void ClientSession::setReqMsg(RequestMessage *reqMsg) {
+	this->reqMsg_ = reqMsg;
+}
+
+void ClientSession::setConfig(const RequestConfig *config) {
+	this->config_ = config;
+}
+
 void ClientSession::setReadBuffer(const std::string &remainData) {
 	this->readBuffer_ = remainData;
 }

@@ -22,9 +22,17 @@ void RequestParser::setConfigBodyLength(size_t length) {
 //     readBuffer_: 기존 요청데이터를 파싱하고 남은 데이터
 //     readCursor_: 버퍼의 마지막 위치를 기록
 EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &curSession) {
-	sd::istringstream iss(readBuffer + readData);
-	std::string buffer;
+	// TO DO: RequestParser 내부로 이동
+	// 새로운 요청일 때, RequestMessage 동적할당
+	if (curSession.getReqMsg() == NULL)
+		curSession.setReqMsg(new RequestMessage());// 이후 요청처리(handler&builder) 완료 후, delete 필요
+
+	RequestMessage &reqMsg = curSession.accessReqMsg();
+	std::string &readBuffer = curSession.accessReadBuffer();
+	
 	EnumReqStatus status = reqMsg.getStatus();
+	std::istringstream iss(readBuffer + readData);
+	std::string buffer;
 	
 	if (status != REQ_HEADER_CRLF // 1-1. Body가 아닌, start-line이나 field-line인 경우
 	&&  status != REQ_BODY) {
@@ -39,6 +47,17 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 					if (status == REQ_HEADER_CRLF) {
 						std::getline(iss, buffer, '\0');
 						readBuffer = buffer;
+						// TO DO: RequestParser 내부로 이동
+						// field-line까지 다 읽은 후, 요청메시지에 맞는 RequestConfig를 설정하고 Host헤더필드 유무를 검증함
+						if (reqMsg.getStatus() == REQ_HEADER_CRLF) {
+							const GlobalConfig &globalConfig = GlobalConfig::getInstance();
+							curSession.setConfig(globalConfig.findRequestConfig(curSession.getListenFd(), reqMsg.getMetaHost(), reqMsg.getTargetURI()));
+							if (reqMsg.getMetaHost().empty())
+								return BAD_REQUEST;
+							if (reqMsg.getMetaContentLength() == 0
+							&&  reqMsg.getMetaTransferEncoding() == NONE_ENCODING)
+								reqMsg.setStatus(REQ_DONE);
+						}
 						return NONE_STATUS_CODE;
 					}
 					if (status == REQ_ERROR)

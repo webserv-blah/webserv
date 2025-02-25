@@ -128,7 +128,7 @@ void ConfigParser::parseClientMaxBodySize(std::ifstream& configFile, Optional<si
 		throw std::runtime_error("Unexpected end of file in client_max_body_size directive");
 	} else if (utils::all_of(nextToken.begin(), nextToken.end(), ::isdigit)) {
 		// 토큰을 unsigned long 형태로 변환 후 clientMaxBody에 저장
-		clientMaxBody = strtoul(nextToken);
+		clientMaxBody = strtoul(nextToken.c_str(), nullptr, 10);
 	} else {
 		throw std::runtime_error("Expected numeric value for client_max_body_size directive");
 	}

@@ -55,8 +55,7 @@ void ServerManager::setupListeningSockets() {
 }
 
 // 서버 구성에 따라 소켓을 생성하고 바인딩하고 수신 대기 상태로 전환하는 함수입니다.
-int ServerManager::createListeningSocket(const ServerConfig &server)
-{
+int ServerManager::createListeningSocket(const ServerConfig &server) const {
     int sockFd;
     struct addrinfo hints, *result, *currAddr;
     
@@ -110,7 +109,7 @@ int ServerManager::createListeningSocket(const ServerConfig &server)
 }
 
 // addrinfo 구조체의 힌트를 초기화하는 함수입니다.
-void ServerManager::initAddrInfo(struct addrinfo &hints) {
+void ServerManager::initAddrInfo(struct addrinfo &hints) const {
     // hints 구조체의 모든 필드를 0으로 초기화합니다.
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;			// IPv4 허용
@@ -119,7 +118,7 @@ void ServerManager::initAddrInfo(struct addrinfo &hints) {
 }
 
 // 소켓 옵션과 논블로킹 모드를 설정하는 함수입니다.
-int ServerManager::configureSocket(int sockFd) {
+int ServerManager::configureSocket(int sockFd) const {
     if (setSocketOptions(sockFd) < 0) {
         return -1;
     }
@@ -130,7 +129,7 @@ int ServerManager::configureSocket(int sockFd) {
 }
 
 // 소켓을 논블로킹 모드로 설정하는 함수입니다.
-int ServerManager::setNonBlocking(int sockFd) {
+int ServerManager::setNonBlocking(int sockFd) const {
     // 현재 파일 디스크립터의 플래그를 가져옵니다.
     int flags = fcntl(sockFd, F_GETFL, 0);
     if (flags == -1) {
@@ -144,7 +143,7 @@ int ServerManager::setNonBlocking(int sockFd) {
 }
 
 // 로컬 주소 재사용을 허용하는 소켓 옵션을 설정하는 함수입니다.
-int ServerManager::setSocketOptions(int sockFd) {
+int ServerManager::setSocketOptions(int sockFd) const {
     int opt = 1;
     // SO_REUSEADDR 옵션을 활성화하여, 소켓을 빠르게 재사용할 수 있도록 합니다.
     if (setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {

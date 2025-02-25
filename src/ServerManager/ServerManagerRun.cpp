@@ -53,10 +53,7 @@ void ServerManager::run() {
 				if (status == CONNECTION_CLOSED) { // 클라이언트가 연결 종료
 					removeClientInfo(fd, clientManager, reactor, timeoutHandler);
 				} else if (status == WRITE_COMPLETE) { // 데이터 전송 완료
-					timeoutHandler.updateActivity(fd); // 타임아웃 갱신((지울지 여부 판단 필요))
 					reactor.removeWriteEvent(fd); // 쓰기 이벤트 제거
-				} else { // 쓰기 작업 진행 중 -> 타임아웃 갱신
-					timeoutHandler.updateActivity(fd); // 타임아웃 갱신((지울지 여부 판단 필요))
 				}
 
 			}
@@ -94,3 +91,49 @@ void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager,
 	timeoutHandler.removeConnection(clientFd); // 타임아웃 관리 제거
 	reactor.removeSocket(clientFd); // 리액터에서 소켓 제거
 }
+
+void ServerManager::processServerReadEvent(int fd, ClientManager& clientManager, \
+EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
+	int clientFd = eventHandler.handleServerReadEvent(fd);
+
+	if (clientFd > 0) { // 새로운 클라이언트가 정상적으로 연결됨
+		addClientInfo(fd, clientFd, clientManager, reactor, timeoutHandler);
+	}
+}
+
+void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager, \
+EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
+	ClientSession*	client = clientManager.accessClientSession(fd);
+	if (!client) {
+		perror("Invalid Client Fd");
+		return ;
+	}
+
+	EnumSesStatus	status = eventHandler.handleClientReadEvent(*client);
+	if (status == CONNECTION_CLOSED) { // 클라이언트가 연결 종료
+		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
+	} else if (status == WRITE_CONTINUE) { // 추가적인 쓰기 작업 필요
+		timeoutHandler.updateActivity(fd); // 타임아웃 갱신
+		reactor.addWriteEvent(fd); // 쓰기 이벤트 추가
+	} else { // 데이터 수신 후 타임아웃 갱신
+		timeoutHandler.updateActivity(fd);
+	}
+}
+
+void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager, \
+EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
+	ClientSession*	client = clientManager.accessClientSession(fd);
+	if (!client) {
+		perror("Invalid Client Fd");
+		return ;
+	}
+
+	EnumSesStatus	status = eventHandler.handleClientWriteEvent(*client);
+	if (status == CONNECTION_CLOSED) { // 클라이언트가 연결 종료
+		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
+	} else if (status == WRITE_COMPLETE) { // 데이터 전송 완료
+		reactor.removeWriteEvent(fd); // 쓰기 이벤트 제거
+	}
+}
+
+

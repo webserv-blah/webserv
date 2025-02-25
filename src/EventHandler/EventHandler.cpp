@@ -1,4 +1,6 @@
 #include "EventHandler.hpp"
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 EventHandler::EventHandler() : staticHandler_(rspBuilder_) {
 
@@ -10,15 +12,16 @@ EventHandler::~EventHandler() {
 
 // 서버 fd에서 발생한 Read 이벤트 처리
 int	EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
-    struct sockaddr clientAddr;
-    socklen_t addrLen = sizeof(clientAddr);
+    struct sockaddr_in  clientAddr;
+    socklen_t           addrLen = sizeof(clientAddr);
 
     int clientFd = accept(fd, (struct sockaddr*)&clientAddr, &addrLen);
     if (clientFd < 0) {
         perror("client accept error");
     }
 
-    clientManager.addClient(fd, clientFd, /*string으로 변환된 clientAddr*/);
+    std::string clientIP(inet_ntoa(clientAddr.sin_addr));
+    clientManager.addClient(fd, clientFd, clientIP);
 
     return clientFd;
 }

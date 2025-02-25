@@ -9,6 +9,7 @@ RequestParser::RequestParser() : oneLineMaxLength_(ONELINE_MAX_LENGTH), uriMaxLe
 RequestParser::~RequestParser() {}
 
 void RequestParser::setConfigBodyLength(size_t length) {
+	// TO-DO: config의 oneLineMaxLength_, uriMaxLength_ 적용
 	(void)this->oneLineMaxLength_;
 	(void)this->uriMaxLength_;
 	this->bodyMaxLength_ = length;
@@ -16,10 +17,12 @@ void RequestParser::setConfigBodyLength(size_t length) {
 
 // 1. 기본 파싱 로직 함수
 // readData: recv함수로 읽은 요쳥 데이터
-// readBuffer: 기존 요청데이터를 파싱하고 남은 데이터
-// reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
-EnumStatusCode RequestParser::parse(const std::string &readData, std::string &readBuffer, RequestMessage &reqMsg) {
-	std::istringstream iss(readBuffer + readData);
+// curSession: 현재 클라이언트 소켓에 해당하는 데이터들(아래 내용)
+//     reqMsg_: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
+//     readBuffer_: 기존 요청데이터를 파싱하고 남은 데이터
+//     readCursor_: 버퍼의 마지막 위치를 기록
+EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &curSession) {
+	sd::istringstream iss(readBuffer + readData);
 	std::string buffer;
 	EnumReqStatus status = reqMsg.getStatus();
 	

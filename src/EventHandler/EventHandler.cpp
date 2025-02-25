@@ -1,8 +1,10 @@
 #include "EventHandler.hpp"
-#include <arpa/inet.h>
+#include <iostream>
+#include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
-EventHandler::EventHandler() : staticHandler_(rspBuilder_) {
+EventHandler::EventHandler() : staticHandler_(rspBuilder_), cgiHandler_(rspBuilder_) {
 
 }
 

@@ -1,12 +1,6 @@
 #ifndef EVENT_HANDLER_HPP
 #define EVENT_HANDLER_HPP
 
-#include <string>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <cstdio>
-
 #include "../include/commonEnums.hpp"
 #include "../ClientManager/ClientManager.hpp"
 #include "../RequestMessage/RequestMessage.hpp"

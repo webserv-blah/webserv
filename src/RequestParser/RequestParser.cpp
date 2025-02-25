@@ -16,7 +16,7 @@ void RequestParser::setConfigBodyLength(size_t length) {
 // readData: recv함수로 읽은 요쳥 데이터
 // readBuffer: 기존 요청데이터를 파싱하고 남은 데이터
 // reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
-int RequestParser::parse(const std::string &readData, std::string &readBuffer, RequestMessage &reqMsg) {
+EnumStatusCode RequestParser::parse(const std::string &readData, std::string &readBuffer, RequestMessage &reqMsg) {
 	std::istringstream iss(readBuffer + readData);
 	std::string buffer;
 	EnumReqStatus status = reqMsg.getStatus();
@@ -37,14 +37,14 @@ int RequestParser::parse(const std::string &readData, std::string &readBuffer, R
 						return NONE_STATUS_CODE;
 					}
 					if (status == REQ_ERROR)
-						return 400;//status code: 유효하지 않은 CRLF 위치
+						return BAD_REQUEST;//status code: 유효하지 않은 CRLF 위치
 				} else {
-					int statusCode = this->handleOneLine(buffer.erase(buffer.size() - 1), reqMsg);
+					EnumStatusCode statusCode = this->handleOneLine(buffer.erase(buffer.size() - 1), reqMsg);
 					if (statusCode != NONE_STATUS_CODE)
 						return statusCode;
 				}
 			} else {//1-1-3. \r\n이 아닌 단일 개행인 경우 에러
-				return 400;//status code: CRLF가 아닌, 단일 LF
+				return BAD_REQUEST;//status code: CRLF가 아닌, 단일 LF
 			}
 		}
 	} else {// 1-2. Body인 경우
@@ -64,7 +64,7 @@ int RequestParser::parse(const std::string &readData, std::string &readBuffer, R
 }
 
 // 1-1-2번에서 \r\n으로 구분된 줄, 현 메시지 상태별로 의미해석하여 파싱하는 함수
-int RequestParser::handleOneLine(const std::string &line, RequestMessage &reqMsg) {
+EnumStatusCode RequestParser::handleOneLine(const std::string &line, RequestMessage &reqMsg) {
 	const EnumReqStatus curStatus = reqMsg.getStatus();
 
 	if (curStatus == REQ_INIT
@@ -90,7 +90,7 @@ EnumReqStatus RequestParser::handleCRLFLine(const EnumReqStatus &curStatus) {
 // 2. Start-line 한 줄을 파싱하는 함수
 // line: \r\n기준으로 나뉜 요청 데이터의 첫 줄
 // reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
-int RequestParser::parseStartLine(const std::string &line, RequestMessage &reqMsg) {
+EnumStatusCode RequestParser::parseStartLine(const std::string &line, RequestMessage &reqMsg) {
 	EnumReqStatus status = reqMsg.getStatus();
 	std::istringstream iss(line);
 	std::string buffer;
@@ -104,14 +104,14 @@ int RequestParser::parseStartLine(const std::string &line, RequestMessage &reqMs
 			reqMsg.setMethod(DELETE);
 		else {
 			reqMsg.setStatus(REQ_ERROR);
-			return 501;//status code: 구현되지 않은 메서드
+			return NOT_IMPLEMENTED;//status code: 구현되지 않은 메서드
 		}
 	}
 
 	if (std::getline(iss, buffer, ' '))
 		reqMsg.setTargetURI(buffer);
 	else
-		return 400;//status code: "URI version" 형식이 유효하지 않음
+		return BAD_REQUEST;//status code: "URI version" 형식이 유효하지 않음
 	//MUST TO DO: URI길이 제한 
 
 	iss >> buffer;
@@ -119,7 +119,7 @@ int RequestParser::parseStartLine(const std::string &line, RequestMessage &reqMs
 		reqMsg.setStatus(REQ_STARTLINE);
 	else {
 		reqMsg.setStatus(REQ_ERROR);
-		return 400;//status code: HTTP 버전 오류
+		return BAD_REQUEST;//status code: HTTP 버전 오류
 	}
 	return NONE_STATUS_CODE;
 }
@@ -127,7 +127,7 @@ int RequestParser::parseStartLine(const std::string &line, RequestMessage &reqMs
 // 3. field-line 한 줄을 파싱하는 함수
 // line: \r\n기준으로 나뉜 요청 데이터, 첫 줄(start line)이 아닌 다음 줄
 // reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
-int RequestParser::parseFieldLine(const std::string &line, RequestMessage &reqMsg) {
+EnumStatusCode RequestParser::parseFieldLine(const std::string &line, RequestMessage &reqMsg) {
 	std::istringstream iss(line);
 	std::string name;
 	std::string value;
@@ -144,11 +144,11 @@ int RequestParser::parseFieldLine(const std::string &line, RequestMessage &reqMs
 	
 	// 3-2. field value 갯수 검증
 	if (!validateFieldValueCount(name, values.size()))
-		return 400;
+		return BAD_REQUEST;
 		
 	// 3-3. field value중 RequestMessage의 메타데이터 처리
 	if (!handleFieldValue(name, value, reqMsg))
-		return 400;
+		return BAD_REQUEST;
 	
 	// 3-4. RequestMessage가 하나 이상의 field-line를 갖고 있으며, 아직 CRLF가 나오지 않음을 뜻함
 	reqMsg.setStatus(REQ_HEADER_FIELD);
@@ -209,13 +209,13 @@ bool RequestParser::handleFieldValue(const std::string &name, const std::string 
 // data: Body로 파싱할 요청 데이터 
 // readBuffer: 남은 데이터를 저장할 ClientSession의 readBuffer
 // reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
-int RequestParser::parseBody(const std::string &data, std::string &readBuffer, RequestMessage &reqMsg) {
+EnumStatusCode RequestParser::parseBody(const std::string &data, std::string &readBuffer, RequestMessage &reqMsg) {
 	const size_t contentLength = reqMsg.getMetaContentLength();
 
 	// 4-1. 최종 body의 길이 >= 현재 저장된 body길이 + 파싱하려는 길이
 	if (contentLength >= reqMsg.getBodyLength() + data.length()) {
 		if (this->bodyMaxLength_ < reqMsg.getBodyLength() + data.length())
-			return 413;//status code: Body가 설정보다 큼 “Request Entity Too Large”
+			return PAYLOAD_TOO_LARGE;//status code: Body가 설정보다 큼 “Request Entity Too Large”
 
 		reqMsg.addBody(data);
 		if (contentLength == reqMsg.getBodyLength()) {
@@ -253,7 +253,7 @@ int RequestParser::parseBody(const std::string &data, std::string &readBuffer, R
 
 	if (suspicious) {
 		reqMsg.setStatus(REQ_ERROR);
-		return 400;//status code: 의심스러운 Body 거부
+		return BAD_REQUEST;//status code: 의심스러운 Body 거부
 	}
 	reqMsg.setStatus(REQ_DONE);
 	readBuffer = remainData;
@@ -264,7 +264,7 @@ int RequestParser::parseBody(const std::string &data, std::string &readBuffer, R
 // data: Body로 파싱할 요청 데이터
 // readBuffer: 남은 데이터를 저장할 ClientSession의 readBuffer
 // reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
-int RequestParser::cleanUpChunkedBody(const std::string &data, std::string &readBuffer, RequestMessage &reqMsg) {
+EnumStatusCode RequestParser::cleanUpChunkedBody(const std::string &data, std::string &readBuffer, RequestMessage &reqMsg) {
 	std::istringstream iss(data);
 	std::string buffer;
 	std::string tmp;
@@ -304,17 +304,17 @@ int RequestParser::cleanUpChunkedBody(const std::string &data, std::string &read
 
 			// 청크 데이터가 \r\n형식에 맞춰 들어왔는지 검증
 			if (buffer.compare(buffer.size() - 2, 2, "\r\n") != 0)
-				return 400;//status code: 유효하지 않은 청크 데이터 형식
+				return BAD_REQUEST;//status code: 유효하지 않은 청크 데이터 형식
 				
 			if (this->bodyMaxLength_ < reqMsg.getBodyLength() + chunkSize)
-				return 413;//status code: Body가 설정보다 큼 “Request Entity Too Large”
+				return PAYLOAD_TOO_LARGE;//status code: Body가 설정보다 큼 “Request Entity Too Large”
 
 				// 청크 데이터에 \r\n를 제거하여 Body에 저장
 			reqMsg.addBody(buffer.substr(0, buffer.size() - 2));
 		} else { //\r\n으로 이루어져있지 않음
-			return 400;//status code: CRLF가 아닌, 단일 LF
+			return BAD_REQUEST;//status code: CRLF가 아닌, 단일 LF
 		}
 	}
 	readBuffer = "";
-	return 0;
+	return NONE_STATUS_CODE;
 }

@@ -154,15 +154,38 @@ void RequestMessage::printBody(void) const {
 }
 void RequestMessage::printMetaData(void) const {
 	std::cout << "\033[37;7m MetaData :\033[0m"<<std::endl;
-	std::cout <<"\033[37;2mHost_: "<<this->metaHost_ <<";\033[0m\n";
+	std::cout <<"\033[37;2mHost_: ";
+	if (this->metaHost_.empty())
+		std::cout <<this->metaHost_ <<";\033[0m\n";
+	else
+		std::cout <<"(none);\033[0m\n";
+		
 	std::cout <<"\033[37;2mConnection_: ";
 	const char *connection;
 	switch (this->metaConnection_) {
 		case KEEP_ALIVE:
 			connection = "keep-alive";
+			break;
 		case CLOSE:
 			connection = "close";
+			break;
 	}
 	std::cout<<connection <<";\033[0m\n";
 	std::cout <<"\033[37;2mContentLength_: "<<this->metaContentLength_ <<";\033[0m\n";
+	std::cout <<"\033[37;2mTransferEncoding_: ";
+	const char *encoding;
+	switch (this->metaTransferEncoding_) {
+		case NONE_ENCODING:
+			encoding = "(none)";
+			break;
+		case CHUNK:
+			encoding = "chunked";
+			break;
+	}
+	std::cout<< encoding <<";\033[0m\n";
+	std::cout <<"\033[37;2mContentType_: ";
+		if (this->metaContentType_.empty())
+		std::cout <<this->metaContentType_ <<";\033[0m\n";
+	else
+		std::cout <<"(none);\033[0m\n";
 }

@@ -38,8 +38,6 @@ class ServerManager {
         int setNonBlocking(int sockFd) const;
         // 소켓 옵션을 설정합니다.
         int setSocketOptions(int sockFd) const;
-		// IPv6 주소인지 확인합니다.
-		inline bool isIPv6(const std::string& ip) const;
 
 		// run() 함수에서 사용되는 함수들
         // 주어진 파일 디스크립터(fd)가 수신 소켓인지 판단하는 함수

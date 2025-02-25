@@ -4,11 +4,8 @@
 #ifdef __APPLE__
 
 #include "DemultiplexerBase.hpp"
-#include <iostream>
 #include <vector>
 #include <set>
-#include <sys/event.h>
-#include <unistd.h>
 
 class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 	public:
@@ -20,11 +17,12 @@ class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 		void		addWriteEventImpl(int fd);
 		void		removeWriteEventImpl(int fd);
 		int			getSocketFdImpl(int idx);
-		TypeEvent	getEventTypeImpl(int idx);
+		EnumEvent	getEventTypeImpl(int idx);
 	
 	
 	private:
 		int							kq_;
+		int							numEvents_;
 		std::vector<struct kevent>	eventList_;
 		std::vector<struct kevent>	changedEvents_;
 	

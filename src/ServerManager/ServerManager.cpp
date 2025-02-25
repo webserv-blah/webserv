@@ -108,9 +108,9 @@ int ServerManager::createListeningSocket(const ServerConfig &server)
 void ServerManager::initAddrInfo(struct addrinfo &hints) {
     // hints 구조체의 모든 필드를 0으로 초기화합니다.
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;    // IPv4와 IPv6 모두 허용
-    hints.ai_socktype = SOCK_STREAM; // TCP 스트림 소켓 사용
-    hints.ai_flags = AI_PASSIVE;     // 로컬 주소에 바인딩하기 위해 설정
+    hints.ai_family = AF_INET;			// IPv4 허용
+    hints.ai_socktype = SOCK_STREAM;	// TCP 스트림 소켓 사용
+    hints.ai_flags = AI_PASSIVE;		// 로컬 주소에 바인딩하기 위해 설정
 }
 
 // 소켓 옵션과 논블로킹 모드를 설정하는 함수입니다.
@@ -146,13 +146,6 @@ int ServerManager::setSocketOptions(int sockFd) {
         return -1;
     }
     return 0;
-}
-
-// 주어진 IP 주소가 IPv6 주소인지 확인하는 함수입니다.
-inline bool isIPv6(const std::string& ip) const {
-    struct in6_addr addr;
-    // inet_pton() 함수를 사용해 IPv6 형식의 주소인지 검사합니다.
-    return inet_pton(AF_INET6, ip.c_str(), &addr) == 1;
 }
 
 extern volatile bool globalServerRunning;

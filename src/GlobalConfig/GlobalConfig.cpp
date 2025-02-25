@@ -20,8 +20,6 @@ void GlobalConfig::initGlobalConfig(const char* path) {
 	instance_ = new GlobalConfig();
 	ConfigParser::parse(*instance_, path);  // 설정 파일을 파싱하고 초기화 수행
 	isInitialized_ = true;
-	// 프로그램 종료 시 싱글톤 인스턴스 파괴를 위해 atexit에 등록
-	std::atexit(&GlobalConfig::destroyInstance);
 }
 
 // 싱글톤 인스턴스를 파괴

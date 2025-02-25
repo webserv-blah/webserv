@@ -10,10 +10,17 @@ int main(int argc, char** argv) {
 		std::cerr << "Usage: ./webserver [config file path]" << std::endl;
 		return 1;
 	}
-	GlobalConfig::initGlobalConfig(argv[1]);
-	setupSignalHandlers();
-	ServerManager serverManager;
-	serverManager.setupListeningSockets();
-	serverManager.run();
+	try {
+		GlobalConfig::initGlobalConfig(argv[1]);
+		setupSignalHandlers();
+		ServerManager serverManager;
+		serverManager.setupListeningSockets();
+		serverManager.run();
+	} catch (const std::exception& e) {
+		GlobalConfig::destroyInstance();
+		std::cerr << "Error: " << e.what() << std::endl;
+		return 1;
+	}
+	GlobalConfig::destroyInstance();
 	return 0;
 }

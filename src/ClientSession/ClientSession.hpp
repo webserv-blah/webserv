@@ -20,7 +20,6 @@ class ClientSession {
 		size_t					getReadCursor() const;
 		std::string				getWriteBuffer() const;
 		std::string				getClientIP() const;
-
 		void					setListenFd(const int &listenFd);
 		void					setClientFd(const int &clientFd);
 		void					setErrorStatusCode(const int &statusCode);
@@ -33,7 +32,8 @@ class ClientSession {
 
 		RequestMessage			&accessReqMsg();
 		std::string				&accessReadBuffer();
-
+		void					resetRequest();
+		
 	private:
 		int						listenFd_;
 		int						clientFd_;

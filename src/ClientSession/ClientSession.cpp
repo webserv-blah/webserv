@@ -89,3 +89,9 @@ RequestMessage &ClientSession::accessReqMsg() {
 std::string &ClientSession::accessReadBuffer() {
 	return this->readBuffer_;
 }
+
+void ClientSession::resetRequest() {
+	delete this->reqMsg_;
+	this->reqMsg_ = NULL;
+	this->config_ = NULL;
+}

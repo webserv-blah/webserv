@@ -12,6 +12,7 @@ class ClientSession {
 
 		int						getListenFd() const;
 		int						getClientFd() const;
+		int						getErrorStatusCode() const;
 		EnumSesStatus			getStatus() const;
 		std::string				getClientAddr() const;
 		std::string				getReadBuffer() const;

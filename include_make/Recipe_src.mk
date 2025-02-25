@@ -1,6 +1,7 @@
 all:
 	$(foreach dir,$(DIRS),$(MAKE) TOPDIR=$(TOPDIR) SRCDIR=`pwd` -C $(dir) $@;)
 	$(MAKE) $(NAME)
+	$(call color_printf,$(BOLD_PURPLE),$(NAME),✨ compiled!)
 
 $(NAME): $(OBJS) $(SUBS)
 	$(LINK.cpp) $^ $(LOADLIBES) $(LDLIBS) -o $@

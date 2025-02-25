@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <cstring>
+#include <sstream>
 
 // 프로그램 종료 시, 열려있는 소켓들을 닫기 위한 소멸자입니다.
 ServerManager::~ServerManager() {
@@ -53,19 +54,23 @@ void ServerManager::setupListeningSockets() {
     }
 }
 
-// 새 TCP 소켓을 생성하는 함수입니다.
+// 서버 구성에 따라 소켓을 생성하고 바인딩하고 수신 대기 상태로 전환하는 함수입니다.
 int ServerManager::createListeningSocket(const ServerConfig &server)
 {
+    int sockFd;
     struct addrinfo hints, *result, *currAddr;
-    char portStr[6];
     
     // 주소 정보를 위한 힌트 구조체를 초기화합니다.
     initAddrInfo(hints);
     // 포트 번호를 문자열로 변환합니다.
-    snprintf(portStr, sizeof(portStr), "%d", server.port_);
+	std::stringstream ss;
+	ss << server.port_;
+	std::string portStr = ss.str();
+	const char* portCStr = portStr.c_str();
 
     // 서버의 호스트명과 포트 번호를 기반으로 주소 정보를 가져옵니다.
-    if (getaddrinfo(server.host_.c_str(), portStr, &hints, &result)) {
+	int s = getaddrinfo(server.host_.c_str(), portCStr, &hints, &result);
+    if (s != 0) {
         throw std::runtime_error(std::string("getaddrinfo: ") + gai_strerror(s));
     }
 

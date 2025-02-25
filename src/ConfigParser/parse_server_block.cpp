@@ -1,73 +1,73 @@
 #include "ConfigParser.hpp"
 
 namespace {
-	// IPv6 주소를 파싱하는 함수
-	// hostPortToken: 파싱할 문자열
-	// tokenIterator: 문자열 내의 현재 위치 iterator
-	// host: 파싱된 호스트(IPv6 주소)를 저장할 변수
-	void parseIPv6Address(std::string& hostPortToken, std::string::iterator& tokenIterator, std::string& host) {
-		// 토큰이 '['로 시작하는지 확인
-		if (tokenIterator == hostPortToken.end() || *tokenIterator != '[') {
-			throw std::runtime_error("Invalid IPv6 address: missing opening '['");
-		}
-		++tokenIterator; // '[' 건너뛰기
+	// // IPv6 주소를 파싱하는 함수
+	// // hostPortToken: 파싱할 문자열
+	// // tokenIterator: 문자열 내의 현재 위치 iterator
+	// // host: 파싱된 호스트(IPv6 주소)를 저장할 변수
+	// void parseIPv6Address(std::string& hostPortToken, std::string::iterator& tokenIterator, std::string& host) {
+	// 	// 토큰이 '['로 시작하는지 확인
+	// 	if (tokenIterator == hostPortToken.end() || *tokenIterator != '[') {
+	// 		throw std::runtime_error("Invalid IPv6 address: missing opening '['");
+	// 	}
+	// 	++tokenIterator; // '[' 건너뛰기
 
-		std::string parsedAddress;
-		// IPv6 주소는 정확히 8개의 hextet(16진수 묶음)으로 구성되어야 함
-		for (int i = 0; i < 8; ++i) {
-			std::string hextet;
-			int count = 0;
-			// 각 hextet은 최대 4자리의 16진수로 구성됨
-			while (tokenIterator != hostPortToken.end() && count < 4 && std::isxdigit(*tokenIterator)) {
-				hextet.push_back(*tokenIterator);
-				++tokenIterator;
-				++count;
-			}
-			// 각 hextet은 최소 한 자리 이상의 16진수가 있어야 함
-			if (hextet.empty()) {
-				throw std::runtime_error("Invalid IPv6 address: expected hex digits in hextet");
-			}
-			// 4자리 초과의 16진수는 오류
-			if (tokenIterator != hostPortToken.end() && std::isxdigit(*tokenIterator)) {
-				throw std::runtime_error("Invalid IPv6 address: hextet exceeds 4 hex digits");
-			}
+	// 	std::string parsedAddress;
+	// 	// IPv6 주소는 정확히 8개의 hextet(16진수 묶음)으로 구성되어야 함
+	// 	for (int i = 0; i < 8; ++i) {
+	// 		std::string hextet;
+	// 		int count = 0;
+	// 		// 각 hextet은 최대 4자리의 16진수로 구성됨
+	// 		while (tokenIterator != hostPortToken.end() && count < 4 && std::isxdigit(*tokenIterator)) {
+	// 			hextet.push_back(*tokenIterator);
+	// 			++tokenIterator;
+	// 			++count;
+	// 		}
+	// 		// 각 hextet은 최소 한 자리 이상의 16진수가 있어야 함
+	// 		if (hextet.empty()) {
+	// 			throw std::runtime_error("Invalid IPv6 address: expected hex digits in hextet");
+	// 		}
+	// 		// 4자리 초과의 16진수는 오류
+	// 		if (tokenIterator != hostPortToken.end() && std::isxdigit(*tokenIterator)) {
+	// 			throw std::runtime_error("Invalid IPv6 address: hextet exceeds 4 hex digits");
+	// 		}
 
-			// hextet에서 선행하는 0을 제거
-			size_t nonZeroPos = 0;
-			while (nonZeroPos < hextet.size() && hextet[nonZeroPos] == '0') {
-				++nonZeroPos;
-			}
-			std::string stripped = (nonZeroPos == hextet.size()) ? "0" : hextet.substr(nonZeroPos);
+	// 		// hextet에서 선행하는 0을 제거
+	// 		size_t nonZeroPos = 0;
+	// 		while (nonZeroPos < hextet.size() && hextet[nonZeroPos] == '0') {
+	// 			++nonZeroPos;
+	// 		}
+	// 		std::string stripped = (nonZeroPos == hextet.size()) ? "0" : hextet.substr(nonZeroPos);
 
-			// hextet을 소문자로 변환
-			for (size_t j = 0; j < stripped.size(); ++j) {
-				stripped[j] = std::tolower(stripped[j]);
-			}
+	// 		// hextet을 소문자로 변환
+	// 		for (size_t j = 0; j < stripped.size(); ++j) {
+	// 			stripped[j] = std::tolower(stripped[j]);
+	// 		}
 
-			// 처리된 hextet을 결과 문자열에 추가 (필요 시 ':' 구분자 추가)
-			if (!parsedAddress.empty()) {
-				parsedAddress.push_back(':');
-			}
-			parsedAddress.append(stripped);
+	// 		// 처리된 hextet을 결과 문자열에 추가 (필요 시 ':' 구분자 추가)
+	// 		if (!parsedAddress.empty()) {
+	// 			parsedAddress.push_back(':');
+	// 		}
+	// 		parsedAddress.append(stripped);
 
-			// 마지막 hextet을 제외하고는 ':' 구분자가 있어야 함
-			if (i < 7) {
-				if (tokenIterator == hostPortToken.end() || *tokenIterator != ':') {
-					throw std::runtime_error("Invalid IPv6 address: expected ':' delimiter between hextets");
-				}
-				++tokenIterator; // ':' 건너뛰기
-			}
-		}
+	// 		// 마지막 hextet을 제외하고는 ':' 구분자가 있어야 함
+	// 		if (i < 7) {
+	// 			if (tokenIterator == hostPortToken.end() || *tokenIterator != ':') {
+	// 				throw std::runtime_error("Invalid IPv6 address: expected ':' delimiter between hextets");
+	// 			}
+	// 			++tokenIterator; // ':' 건너뛰기
+	// 		}
+	// 	}
 
-		// 8개의 hextet 이후에는 닫는 대괄호 ']'가 있어야 함
-		if (tokenIterator == hostPortToken.end() || *tokenIterator != ']') {
-			throw std::runtime_error("Invalid IPv6 address: missing closing ']'");
-		}
-		++tokenIterator; // ']' 건너뛰기
+	// 	// 8개의 hextet 이후에는 닫는 대괄호 ']'가 있어야 함
+	// 	if (tokenIterator == hostPortToken.end() || *tokenIterator != ']') {
+	// 		throw std::runtime_error("Invalid IPv6 address: missing closing ']'");
+	// 	}
+	// 	++tokenIterator; // ']' 건너뛰기
 
-		// 처리된 IPv6 주소를 host 변수에 저장
-		host = parsedAddress;
-	}
+	// 	// 처리된 IPv6 주소를 host 변수에 저장
+	// 	host = parsedAddress;
+	// }
 
 	// IPv4 주소를 파싱하는 함수
 	// hostPortToken: 파싱할 문자열
@@ -167,7 +167,8 @@ void ConfigParser::parseHostPort(std::ifstream& configFile, std::string& host, u
 	if (!utils::all_of(token.begin(), token.end(), ::isdigit)) {
 		if (*tokenIterator == '[') {
 			// IPv6 주소인 경우
-			parseIPv6Address(token, tokenIterator, host);
+			// parseIPv6Address(token, tokenIterator, host);
+			throw std::runtime_error("IPv6 address is not supported");
 		}
 		else {
 			// IPv4 주소인 경우

@@ -1,4 +1,5 @@
 #include "StaticHandler.hpp"
+#include "commonEnums.hpp"
 #include <dirent.h>
 #include <errno.h>
 #include <cctype>
@@ -35,7 +36,7 @@ static std::vector<std::string> getDirectoryListing(const std::string &directory
 
 // 생성자와 소멸자
 StaticHandler::StaticHandler(const ResponseBuilder& responseBuilder)
-	: responseBuilder_(responseBuilder) {
+: responseBuilder_(responseBuilder) {
 }
 
 StaticHandler::~StaticHandler() {
@@ -44,79 +45,79 @@ StaticHandler::~StaticHandler() {
 // 요청 처리의 메인 진입점
 std::string StaticHandler::handleRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
 	if (conf.returnStatus_ >= 100) {
-		if (conf.returnStatus_ == 200) {
-			//location block의 리턴 지시자가 text로 오는 경우. ex) "return 200 text"
-		} else if (!conf.returnUrl_.empty() && (conf.returnStatus_ == 302 || conf.returnStatus_ == 301)) {
+		if (conf.returnStatus_ == OK) {
+			//location block의 리턴 지시자가 text로 오는 경우. ex) "return OK text" ??
+		} else if (!conf.returnUrl_.empty() && (conf.returnStatus_ == FOUND || conf.returnStatus_ == MOVED_PERMANENTLY)) {
 			return handleRedirction(conf);
 		} else {
 			return responseBuilder_.buildError(conf.returnStatus_, conf);
 		}
 	}
 	
-	std::string uri = reqMsg.getTargetURI();      // ex) "/images/logo.png"
-	std::string documentRoot = conf.root_;          // ex) "/var/www/html"
-	std::string fullPath = documentRoot + uri;      // ex) "/var/www/html/images/logo.png"
-
-	// path 유효성 체크 (validatePath는 file_utils.hpp에 구현되어 있다고 가정)
+	std::string uri = reqMsg.getTargetURI();
+	std::string documentRoot = conf.root_;
+	std::string fullPath = documentRoot + uri;
+	
+	// path 유효성 체크
 	EnumValidationResult pathValidation = validatePath(fullPath);
-
+	
 	switch (pathValidation) {
 		case VALID_PATH:
-			return handleDirectory(fullPath, uri, conf);
+		return handleDirectory(fullPath, uri, conf);
 		case VALID_FILE:
-			return handleFile(fullPath, conf);
+		return handleFile(fullPath, conf);
 		case PATH_NOT_FOUND:
 		case FILE_NOT_FOUND:
-			return responseBuilder_.buildError(404, conf);
+		return responseBuilder_.buildError(NOT_FOUND, conf);
 		case PATH_NO_PERMISSION:
 		case FILE_NO_READ_PERMISSION:
 		case FILE_NO_EXEC_PERMISSION:
-			return responseBuilder_.buildError(403, conf);
+		return responseBuilder_.buildError(FORBIDDEN, conf);
 		default:
-			return responseBuilder_.buildError(500, conf);
+		return responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf);
 	}
 }
 
 // 디렉토리 처리: index.html 우선, autoIndex 기능, 그 외 403 반환
 std::string StaticHandler::handleDirectory(const std::string &dirPath,
-											 const std::string &uri,
-											 const RequestConfig &conf)
-{
-	std::string indexPath = dirPath;
-	if (!indexPath.empty() && indexPath[indexPath.size()-1] != '/') {
-		indexPath.push_back('/');
+	const std::string &uri,
+	const RequestConfig &conf)
+	{
+		std::string indexPath = dirPath;
+		if (!indexPath.empty() && indexPath[indexPath.size()-1] != '/') {
+			indexPath.push_back('/');
+		}
+		indexPath += conf.indexFile_;
+		
+		EnumValidationResult indexValidation = validatePath(indexPath);
+		
+		if (indexValidation == VALID_FILE) {
+			return handleFile(indexPath, conf);
+		} else if ((indexValidation == FILE_NOT_FOUND || indexValidation == PATH_NOT_FOUND) &&
+		conf.autoIndex_.value() == 1) {
+			return buildAutoIndexResponse(dirPath, uri);
+		}
+		
+		return responseBuilder_.buildError(FORBIDDEN, conf);
 	}
-	indexPath += conf.indexFile_;
-
-	EnumValidationResult indexValidation = validatePath(indexPath);
-
-	if (indexValidation == VALID_FILE) {
-		return handleFile(indexPath, conf);
-	} else if ((indexValidation == FILE_NOT_FOUND || indexValidation == PATH_NOT_FOUND) &&
-			   conf.autoIndex_.value() == 1) {
-		return buildAutoIndexResponse(dirPath, uri);
+	
+	// redirection 처리
+	std::string StaticHandler::handleRedirction(const RequestConfig& conf) {
+		std::string location = conf.returnUrl_;
+		std::map<std::string, std::string> headers;
+		headers["Location:"] = location;
+		return responseBuilder_.build(conf.returnStatus_, headers, "");
 	}
-
-	return responseBuilder_.buildError(403, conf);
-}
-
-// redirection 처리
-std::string StaticHandler::handleRedirction(const RequestConfig& conf) {
-	std::string location = conf.returnUrl_;
-	std::map<std::string, std::string> headers;
-	headers["Location:"] = location;
-	return responseBuilder_.build(conf.returnStatus_, headers, "");
-}
-
+	
 // 파일 처리: 파일 읽기, MIME 타입 결정 후 응답
 std::string StaticHandler::handleFile(const std::string &filePath, const RequestConfig& conf) {
 	std::string content = readFile(filePath);
 	if (content.empty()) {
-		return responseBuilder_.buildError(404, conf);
+		return responseBuilder_.buildError(NOT_FOUND, conf);
 	}
 	std::map<std::string, std::string> headers;
 	headers["Content-Type"] = determineContentType(filePath);
-	return responseBuilder_.build(200, headers, content);
+	return responseBuilder_.build(OK, headers, content);
 }
 
 // autoIndex가 켜진 경우, 디렉토리 목록을 HTML로 구성하여 반환
@@ -136,7 +137,7 @@ std::string StaticHandler::buildAutoIndexResponse(const std::string &dirPath, co
 	body << "</ul></body></html>";
 	std::map<std::string, std::string> headers;
 	headers["Content-Type"] = "text/html";
-	return responseBuilder_.build(200, headers, body.str());
+	return responseBuilder_.build(OK, headers, body.str());
 }
 
 // 파일 확장자에 따른 MIME 타입 결정

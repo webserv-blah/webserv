@@ -40,8 +40,8 @@ std::string CgiHandler::handleRequest(const ClientSession& clientSession) {
     if (vr != VALID_FILE) {
         // 파일이 없거나 경로가 올바르지 않으면 404 또는 403 에러 반환
         return (vr == FILE_NOT_FOUND || vr == PATH_NOT_FOUND) ? 
-               responseBuilder_.buildError(404, conf) : 
-               responseBuilder_.buildError(403, conf);
+               responseBuilder_.buildError(NOT_FOUND, conf) : 
+               responseBuilder_.buildError(FORBIDDEN, conf);
     }
 
     // POST 요청이면 요청 본문을, 아니면 빈 문자열을 사용
@@ -53,7 +53,7 @@ std::string CgiHandler::handleRequest(const ClientSession& clientSession) {
     // CGI 스크립트를 실행하고 결과를 받아옴
     std::string cgiResult = executeCgi(parts.scriptPath, cgiEnv, requestBody);
     // 실행 결과가 없으면 500 에러, 있으면 결과 반환
-    return cgiResult.empty() ? responseBuilder_.buildError(500, conf) : cgiResult;
+    return cgiResult.empty() ? responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf) : cgiResult;
 }
 
 // CGI 실행에 필요한 환경 변수를 설정하는 함수

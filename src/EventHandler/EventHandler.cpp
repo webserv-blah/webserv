@@ -25,7 +25,7 @@ int	EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
 
 // 클라이언트 fd에서 발생한 Read 이벤트 처리
 int	EventHandler::handleClientReadEvent(ClientSession& clientSession) {
-    int status = recvRequest(clientSession); // ! parser_넘겨줄 필요가 없음
+    int status = recvRequest(clientSession);
     //recvRequest: EventHandler의 멤버 함수
     //parser_: EventHandler의 멤버 변수
 
@@ -34,8 +34,6 @@ int	EventHandler::handleClientReadEvent(ClientSession& clientSession) {
 		std::string     responseMsg;
 
         // CGI 실행 여부 판별 및 응답 생성
-        // 일단 requestMsg와 config가 nullptr일리가 없을 것 같아서 가드를 따로 하진 않았습니다.
-        // 그치만 nullptr일리 없다면, 애초에 레퍼런스여도 되지 않을까요..??!
 		if (cgiHandler_.isCGI(requestMsg.getTargetURI())) {
 			responseMsg = cgiHandler_.handleRequest(clientSession);
 		} else {
@@ -48,7 +46,7 @@ int	EventHandler::handleClientReadEvent(ClientSession& clientSession) {
         status = sendResponse(clientSession);
     } else if (status == REQUEST_ERROR) {
         int statusCode = clientSession.getErrorStatusCode();
-        
+
         handleError(statusCode, clientSession);
     }
 

@@ -19,7 +19,7 @@ enum EnumEvent {
 
 enum EnumStatusCode {
 	// RequestParser의 결과 정상상태
-	NONE_STATUS_CODE = 0;
+	NONE_STATUS_CODE = 0,
 	// 2xx, Successful
 	OK = 200,
 	// 3xx, Redirection
@@ -36,6 +36,6 @@ enum EnumStatusCode {
 	INTERNAL_SERVER_ERROR = 500,
 	NOT_IMPLEMENTED = 501,
 	SERVICE_UNAVAILABLE = 503
-}
+};
 
 #endif

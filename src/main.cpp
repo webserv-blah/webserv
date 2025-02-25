@@ -33,6 +33,22 @@ int main(int argc, char** argv) {
 		std::cout << "(READ_COMPLETE)" << std::endl;
 	ses.getReqMsg()->printResult();
 	std::cout << "=================== END ===================" << std::endl;
+
+	ses.resetRequest();
+
+	std::cout << "================== START ==================" << std::endl;
+	std::cout << "ses.getReadBuffer(): " << ses.getReadBuffer() << ";\n";
+	sessionStatus = recvRequest(ses);
+	std::cout << "================== RESULT =================" << std::endl;
+	std::cout << "(STATUSCODE: " << ses.getErrorStatusCode() << ")&";
+	if (sessionStatus == REQUEST_ERROR)
+		std::cout << "(REQUEST_ERROR)" << std::endl;
+	if (sessionStatus == READ_CONTINUE)
+		std::cout << "(READ_CONTINUE)" << std::endl;
+	if (sessionStatus == READ_COMPLETE)
+		std::cout << "(READ_COMPLETE)" << std::endl;
+	ses.getReqMsg()->printResult();
+	std::cout << "=================== END ===================" << std::endl;
 }
 
 EnumSesStatus recvRequest(ClientSession &curSession) {	
@@ -80,14 +96,15 @@ EnumSesStatus recvRequest(ClientSession &curSession) {
 			requestResult = REQUEST_ERROR;
 		else if (curSession.getReqMsg()->getStatus() == REQ_DONE)
 			requestResult = READ_COMPLETE;
-		requestResult = READ_CONTINUE;
+		else
+			requestResult = READ_CONTINUE;
 
 		if (requestResult == READ_COMPLETE) {
-			std::cerr << "요청 처리 성공\n";
+			std::cout << "요청 처리 성공\n";
 			break;
 		}
 		if (requestResult != READ_CONTINUE) {
-			std::cerr << "요청 처리 실패\n";
+			std::cout << "요청 처리 실패\n";
 			break;
 		}
 		offset += chunkSize;

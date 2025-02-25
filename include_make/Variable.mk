@@ -2,7 +2,7 @@
 .DEFAULT_GOAL = all
 
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
-CXXFLAGS += -DBUFFER_SIZE=2
+CXXFLAGS += -DBUFFER_SIZE=1
 ARFLAGS = rcs
 CPPFLAGS = -I$(TOPDIR)/include -I$(SRCDIR)/include
 

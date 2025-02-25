@@ -26,12 +26,11 @@ pedia\n\r\n\
 
 ERROR="\
 GET /index.html HTTP/1.1\r\n\
-\r\n\
 Host: localhost\r\n\
 Connection: keep-alive\r\n\
-Content-Length: 4\r\n\
 \r\n\
 hi\r\n\
 "
+#여기 에러케이스 더 작성해봐야함...
 
-export HTTP_REQUEST=$(printf "%b" "$BASIC")
+export HTTP_REQUEST=$(printf "%b" "$ERROR")

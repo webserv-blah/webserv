@@ -5,4 +5,4 @@ endif
 all clean fclean re:
 	$(MAKE) TOPDIR=`pwd` -C src $@
 
-.PHONY: all clean fclean re reqtest
+.PHONY: all clean fclean re

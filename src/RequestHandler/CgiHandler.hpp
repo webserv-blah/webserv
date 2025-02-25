@@ -22,7 +22,7 @@ public:
     ~CgiHandler();
 
     // 주어진 URI가 CGI 대상인지 확인하는 함수
-    bool isCGI(const std::string& targetUri);
+    bool isCGI(const std::string& targetUri, const std::string& cgiExtension);
     // 클라이언트 요청을 처리하여 CGI 실행 결과를 반환하는 함수
     std::string handleRequest(const ClientSession& clientSession);
 

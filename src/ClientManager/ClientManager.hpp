@@ -10,7 +10,7 @@ class ClientManager {
 		typedef std::map<int, ClientSession*>	TypeClientMap;
 		ClientManager();
 		~ClientManager();
-		void					addClient(int listenFd, int clientFd);
+		void					addClient(int listenFd, int clientFd, std::string clientAddr);
 		TypeClientMap::iterator	removeClient(int fd);
 		ClientSession*			accessClientSession(int fd);
 		TypeClientMap&			accessClientSessionMap();

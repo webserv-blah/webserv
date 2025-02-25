@@ -14,9 +14,9 @@ ClientManager::~ClientManager() {
 }
 
 // 새로운 clientSession 생성 및 관리 목록에 추가
-void ClientManager::addClient(int listenFd, int clientFd) {
+void ClientManager::addClient(int listenFd, int clientFd, std::string clientAddr) {
 	// 중복 검사 필요 여부 고려
-	ClientSession* newClient = new ClientSession(listenFd, clientFd);
+	ClientSession* newClient = new ClientSession(listenFd, clientFd, clientAddr);
 	clientList_.insert(std::make_pair(clientFd, newClient)); // clientFd를 key로 하여 추가
 }
 

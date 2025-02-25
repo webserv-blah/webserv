@@ -1,23 +1,23 @@
 all:
-	$(foreach dir,$(DIRS),$(MAKE) TOPDIR=$(TOPDIR) SRCDIR=`pwd` -C $(dir) $@;)
-	$(MAKE) $(NAME)
-	$(call color_printf,$(BOLD_PURPLE),$(NAME),✨ compiled!)
+	$(Q)$(foreach dir,$(DIRS),$(MAKE) TOPDIR=$(TOPDIR) SRCDIR=`pwd` -C $(dir) $@;)
+	$(Q)$(MAKE) $(NAME)
+	$(Q)$(call color_printf,$(BOLD_PURPLE),$(NAME),✨ compiled!)
 
 $(NAME): $(OBJS) $(SUBS)
-	$(LINK.cpp) $^ $(LOADLIBES) $(LDLIBS) -o $@
-	$(MAKE) files=$(NAME) src_dir=`pwd` dst_dir=$(TOPDIR) link_files
+	$(Q)$(LINK.cpp) $^ $(LOADLIBES) $(LDLIBS) -o $@
+	$(Q)$(MAKE) files=$(NAME) src_dir=`pwd` dst_dir=$(TOPDIR) link_files
 
 clean:
-	$(foreach dir,$(DIRS),$(MAKE) TOPDIR=$(TOPDIR) SRCDIR=`pwd` -C $(dir) $@;)
-	$(RM) $(OBJS) $(DEPS)
+	$(Q)$(foreach dir,$(DIRS),$(MAKE) TOPDIR=$(TOPDIR) SRCDIR=`pwd` -C $(dir) $@;)
+	$(Q)$(RM) $(OBJS) $(DEPS)
 
 fclean: clean
-	$(foreach dir,$(DIRS),$(MAKE) TOPDIR=$(TOPDIR) SRCDIR=`pwd` -C $(dir) $@;)
-	$(MAKE) files=$(NAME) src_dir=`pwd` dst_dir=$(TOPDIR) unlink_files
-	$(RM) $(NAME)
+	$(Q)$(foreach dir,$(DIRS),$(MAKE) TOPDIR=$(TOPDIR) SRCDIR=`pwd` -C $(dir) $@;)
+	$(Q)$(MAKE) files=$(NAME) src_dir=`pwd` dst_dir=$(TOPDIR) unlink_files
+	$(Q)$(RM) $(NAME)
 
 re:
-	$(MAKE) fclean
-	$(MAKE) all
+	$(Q)$(MAKE) fclean
+	$(Q)$(MAKE) all
 
 .PHONY: all clean fclean re

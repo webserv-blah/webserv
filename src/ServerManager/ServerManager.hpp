@@ -46,8 +46,12 @@ class ServerManager {
         void addClientInfo(int listenFd, int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler);
         // 기존 클라이언트 연결 정보를 제거하는 함수
         void removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler);
+        // - ClientManager: 클라이언트 세션 제거
+        // - Demultiplexer: 이벤트 루프에서 클라이언트 소켓 제거
+        // - TimeoutHandler: 타임아웃 관리 제거
+        
+		void notifyClientsShutdown(ClientManager& clientManager, EventHandler& eventHandler);
         // 서버 종료 시, 모든 클라이언트에 종료 응답 전송 및 연결 정리 함수
-        void cleanUpConnections(ClientManager& clientManager, EventHandler& eventHandler);
         // - ClientManager: 모든 클라이언트 세션 접근
         // - EventHandler: 클라이언트에게 서버 종료 알림 전송
 

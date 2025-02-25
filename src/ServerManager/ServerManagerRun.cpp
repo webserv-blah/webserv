@@ -63,11 +63,11 @@ void ServerManager::run() {
 	}
 
 	// 서버 종료 시, 연결된 클라이언트 정리
-	cleanUpConnections(clientManager, eventHandler);
+	notifyClientsShutdown(clientManager, eventHandler);
 }
 
 // 서버 종료 전, 모든 클라이언트에 종료 응답을 전송하고 연결된 리소스를 정리하는 함수
-void ServerManager::cleanUpConnections(ClientManager& clientManager, EventHandler& eventHandler) {
+void ServerManager::notifyClientsShutdown(ClientManager& clientManager, EventHandler& eventHandler) {
 	ClientManager::TypeClientMap&			clientList = clientManager.accessClientSessionMap();
 	ClientManager::TypeClientMap::iterator	it;
 

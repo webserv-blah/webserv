@@ -21,6 +21,7 @@ DIRS := utils \
 
 SUBS := $(addsuffix .a,$(DIRS))
 
+include $(TOPDIR)/include_make/Verbose.mk
 include $(TOPDIR)/include_make/Color.mk
 include $(TOPDIR)/include_make/Variable.mk
 include $(TOPDIR)/include_make/Link.mk

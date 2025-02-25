@@ -215,7 +215,7 @@ EnumStatusCode RequestParser::parseBody(const std::string &data, std::string &re
 	// 4-1. 최종 body의 길이 >= 현재 저장된 body길이 + 파싱하려는 길이
 	if (contentLength >= reqMsg.getBodyLength() + data.length()) {
 		if (this->bodyMaxLength_ < reqMsg.getBodyLength() + data.length())
-			return PAYLOAD_TOO_LARGE;//status code: Body가 설정보다 큼 “Request Entity Too Large”
+			return CONTENT_TOO_LARGE;//status code: Body가 설정보다 큼 “Request Entity Too Large”
 
 		reqMsg.addBody(data);
 		if (contentLength == reqMsg.getBodyLength()) {
@@ -307,7 +307,7 @@ EnumStatusCode RequestParser::cleanUpChunkedBody(const std::string &data, std::s
 				return BAD_REQUEST;//status code: 유효하지 않은 청크 데이터 형식
 				
 			if (this->bodyMaxLength_ < reqMsg.getBodyLength() + chunkSize)
-				return PAYLOAD_TOO_LARGE;//status code: Body가 설정보다 큼 “Request Entity Too Large”
+				return CONTENT_TOO_LARGE;//status code: Body가 설정보다 큼 “Request Entity Too Large”
 
 				// 청크 데이터에 \r\n를 제거하여 Body에 저장
 			reqMsg.addBody(buffer.substr(0, buffer.size() - 2));

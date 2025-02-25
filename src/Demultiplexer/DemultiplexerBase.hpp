@@ -1,8 +1,8 @@
 #ifndef DEMULTIPLEXER_BASE_HPP
 #define DEMULTIPLEXER_BASE_HPP
 
-#include "../include/commonEnums.hpp"
-#define MAX_EVENT 1024
+#include "commonEnums.hpp"
+static const int MAX_EVENT = 1024;
 
 template <typename Derived>
 class DemultiplexerBase {
@@ -13,7 +13,7 @@ class DemultiplexerBase {
 		void		addWriteEvent(int fd);
 		void		removeWriteEvent(int fd);
 		int			getSocketFd(int idx);
-		TypeEvent	getEventType(int idx);
+		EnumEvent	getEventType(int idx);
 	
 	protected:
 		DemultiplexerBase();

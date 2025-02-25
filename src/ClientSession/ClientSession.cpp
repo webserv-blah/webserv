@@ -1,6 +1,7 @@
 #include "ClientSession.hpp"
 
-ClientSession::ClientSession(int listenFd, int clientFd) : status_(READ_CONTINUE), listenFd_(listenFd), clientFd_(clientFd), reqMsg_(NULL), config_(NULL) {}
+ClientSession::ClientSession(int listenFd, int clientFd, std::string clientAddr) : status_(READ_CONTINUE), listenFd_(listenFd), clientFd_(clientFd), clientAddr_(clientAddr), reqMsg_(NULL), config_(NULL) {}
+
 ClientSession::~ClientSession() {
 	if (this->reqMsg_ != NULL)
 		delete this->reqMsg_;
@@ -16,6 +17,10 @@ int ClientSession::getClientFd() const {
 
 EnumSesStatus ClientSession::getStatus() const {
 	return this->status_;
+}
+
+std::string	ClientSession::getClientAddr() const {
+	return this->clientAddr_;
 }
 
 std::string ClientSession::getReadBuffer() const {

@@ -23,7 +23,8 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 	} else {
 		// 해당 ClientSession의 RequestMessage를 파싱하기 전에 Body의 최대 길이를 설정
 		const RequestConfig *config = curSession.getConfig();
-		const size_t BodyMax = (config == NULL) ? BODY_MAX_LENGTH : config->clientMaxBodySize_.value();
+		const size_t bodyMax = (config == NULL) ? BODY_MAX_LENGTH : config->clientMaxBodySize_.value();
+		this->parser_.setConfigBodyLength(bodyMax);
 
 		// 이전에 버퍼 저장해놓은 데이터와 새로운 요청 데이터를 가지고 파싱
 		EnumStatusCode statusCode = this->parser_.parse(buffer.substr(res), curSession);

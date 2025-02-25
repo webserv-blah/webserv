@@ -9,6 +9,8 @@ RequestParser::RequestParser() : oneLineMaxLength_(ONELINE_MAX_LENGTH), uriMaxLe
 RequestParser::~RequestParser() {}
 
 void RequestParser::setConfigBodyLength(size_t length) {
+	(void)this->oneLineMaxLength_;
+	(void)this->uriMaxLength_;
 	this->bodyMaxLength_ = length;
 }
 
@@ -32,7 +34,7 @@ EnumStatusCode RequestParser::parse(const std::string &readData, std::string &re
 					status = this->handleCRLFLine(reqMsg.getStatus());
 					reqMsg.setStatus(status);
 					if (status == REQ_HEADER_CRLF) {
-						std:getline(iss, buffer, '\0');
+						std::getline(iss, buffer, '\0');
 						readBuffer = buffer;
 						return NONE_STATUS_CODE;
 					}
@@ -91,7 +93,6 @@ EnumReqStatus RequestParser::handleCRLFLine(const EnumReqStatus &curStatus) {
 // line: \r\n기준으로 나뉜 요청 데이터의 첫 줄
 // reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
 EnumStatusCode RequestParser::parseStartLine(const std::string &line, RequestMessage &reqMsg) {
-	EnumReqStatus status = reqMsg.getStatus();
 	std::istringstream iss(line);
 	std::string buffer;
 
@@ -293,7 +294,7 @@ EnumStatusCode RequestParser::cleanUpChunkedBody(const std::string &data, std::s
 			
 			// 읽어낸 데이터가 모자를 경우 readBuffer에 돌려놓기 위함
 			tmp = buffer + "\r\n";
-			if (endPos - currentPos < chunkSize + 2) {
+			if (static_cast<size_t>(endPos - currentPos) < chunkSize + 2) {
 				readBuffer = tmp + iss.str().substr(static_cast<std::string::size_type>(currentPos));
 				return NONE_STATUS_CODE;
 			}

@@ -55,10 +55,12 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 							if (reqMsg.getMetaHost().empty())
 								return BAD_REQUEST;
 							if (reqMsg.getMetaContentLength() == 0
-							&&  reqMsg.getMetaTransferEncoding() == NONE_ENCODING)
+							&&  reqMsg.getMetaTransferEncoding() == NONE_ENCODING) {
 								reqMsg.setStatus(REQ_DONE);
+								return NONE_STATUS_CODE;
+							}
 						}
-						return NONE_STATUS_CODE;
+						break ;
 					}
 					if (status == REQ_ERROR)
 						return BAD_REQUEST;//status code: 유효하지 않은 CRLF 위치
@@ -129,6 +131,8 @@ EnumStatusCode RequestParser::parseStartLine(const std::string &line, RequestMes
 			reqMsg.setStatus(REQ_ERROR);
 			return NOT_IMPLEMENTED;//status code: 구현되지 않은 메서드
 		}
+	} else {
+		return BAD_REQUEST;
 	}
 
 	if (std::getline(iss, buffer, ' '))
@@ -241,6 +245,7 @@ EnumStatusCode RequestParser::parseBody(const std::string &data, std::string &re
 			return CONTENT_TOO_LARGE;//status code: Body가 설정보다 큼 “Request Entity Too Large”
 
 		reqMsg.addBody(data);
+		readBuffer = "";
 		if (contentLength == reqMsg.getBodyLength()) {
 			reqMsg.setStatus(REQ_DONE);
 			return NONE_STATUS_CODE;

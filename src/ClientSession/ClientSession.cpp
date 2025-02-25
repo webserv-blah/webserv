@@ -54,18 +54,39 @@ void ClientSession::setWriteBuffer(const std::string &remainData) {
 	this->writeBuffer_ = remainData;
 }
 
-//Optional<size_t> ClientSession::getConfBodyMax() const {
-//	if (this->config_ == NULL)
-//		return Optional<size_t>();
-//	return this->config_->clientMaxBodySize_;
-//}
-
+// EventHandler::recvRequest에서 호출되어 요청데이터를 파싱하고 결과를 판단하는 함수
+// parser: EventHandler가 들고있는 주요로직객체중 하나
+// readData: recv()함수에서 새로 읽어들인 요청 데이터
 EnumSesStatus ClientSession::implementReqMsg(RequestParser &parser, const std::string &readData) {
+	// 새로운 요청일 때, RequestMessage 동적할당
 	if (this->reqMsg_ == NULL)
-		this->reqMsg_ = new RequestMessage();
-	
-	//parser.setBodyMaxLength(this->config_);
+		this->reqMsg_ = new RequestMessage();// 이후 요청처리(handler&builder) 완료 후, delete 필요
+
+	// 해당 ClientSession의 RequestMessage를 파싱하기 전에 Body의 최대 길이를 설정
+	if (this->config_ != NULL)
+		parser.setConfigBodyLength(this->config_->clientMaxBodySize_.value());
+	else
+		parser.setConfigBodyLength(BODY_MAX_LENGTH);
+
+	// 이전에 버퍼 저장해놓은 데이터와 새로운 요청 데이터를 가지고 파싱
 	this->errorStatusCode_ = parser.parse(readData, this->readBuffer_, *this->reqMsg_);
+
+	// field-line까지 다 읽은 후, 요청메시지에 맞는 RequestConfig를 설정하고 Host헤더필드 유무를 검증함
+	if (this->reqMsg_->getStatus() == REQ_HEADER_CRLF) {
+		const GlobalConfig &globalConfig = GlobalConfig::getInstance();
+		this->config_ = globalConfig.findRequestConfig(this->listenFd_, this->reqMsg_->getMetaHost(), this->reqMsg_->getTargetURI());
+		if (this->reqMsg_->getMetaHost().empty()) {
+			this->errorStatusCode_ = 400;
+			return REQUEST_ERROR;
+		}
+		if (this->reqMsg_->getMetaContentLength() == 0
+		&&  this->reqMsg_->getMetaTransferEncoding() == NONE_ENCODING) {
+			this->reqMsg_->setStatus(REQ_DONE);
+			return READ_COMPLETE;
+		}
+	}
+
+	// 파싱이 끝나고 나서, 에러 status code와 RequestMessage의 상태를 점검함
 	if (this->errorStatusCode_ != NONE_STATUS_CODE)
 		return REQUEST_ERROR;
 	else if (this->reqMsg_->getStatus() == REQ_DONE)

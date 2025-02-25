@@ -22,7 +22,7 @@ class EventHandler {
 	public:
 		EventHandler();
 		~EventHandler();
-		int		handleServerReadEvent(int fd);
+		int		handleServerReadEvent(int fd, ClientManager& clientManager);
 		int		handleClientReadEvent(ClientSession& clientSession);
 		int 	handleClientWriteEvent(ClientSession& clientSession);
 		void	handleError(int statusCode, ClientSession& clientSession);

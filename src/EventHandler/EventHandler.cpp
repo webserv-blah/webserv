@@ -9,7 +9,7 @@ EventHandler::~EventHandler() {
 }
 
 // 서버 fd에서 발생한 Read 이벤트 처리
-int	EventHandler::handleServerReadEvent(int fd) {
+int	EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
     struct sockaddr clientAddr;
     socklen_t addrLen = sizeof(clientAddr);
 
@@ -17,6 +17,8 @@ int	EventHandler::handleServerReadEvent(int fd) {
     if (clientFd < 0) {
         perror("client accept error");
     }
+
+    clientManager.addClient(fd, clientFd, /*string으로 변환된 clientAddr*/);
 
     return clientFd;
 }
@@ -28,22 +30,26 @@ int	EventHandler::handleClientReadEvent(ClientSession& clientSession) {
     //parser_: EventHandler의 멤버 변수
 
     if (status == READ_COMPLETE) {
-        RequestMessage* requestMsg = clientSession.getReqMsg();
+        RequestMessage  requestMsg = clientSession.getReqMsg();
 		std::string     responseMsg;
 
         // CGI 실행 여부 판별 및 응답 생성
         // 일단 requestMsg와 config가 nullptr일리가 없을 것 같아서 가드를 따로 하진 않았습니다.
         // 그치만 nullptr일리 없다면, 애초에 레퍼런스여도 되지 않을까요..??!
-		if (cgiHandler_.isCGI(requestMsg->getTargetURI())) {
-			responseMsg = cgiHandler_.handleRequest(*requestMsg, *clientSession.getConfig());
+		if (cgiHandler_.isCGI(requestMsg.getTargetURI())) {
+			responseMsg = cgiHandler_.handleRequest(clientSession);
 		} else {
-			responseMsg = staticHandler_.handleRequest(*requestMsg, *clientSession.getConfig());
+			responseMsg = staticHandler_.handleRequest(requestMsg, clientSession.getConfig());
 		}
         // 생성된 응답을 clientSession 내 write 버퍼에 저장
 		clientSession.setWriteBuffer(responseMsg);
 		
         // 응답 전송 시도 및 sessionStatus 갱신
         status = sendResponse(clientSession);
+    } else if (status == REQUEST_ERROR) {
+        int statusCode = clientSession.getErrorStatusCode();
+        
+        handleError(statusCode, clientSession);
     }
 
     return status;

@@ -17,7 +17,7 @@ void RequestParser::setConfigBodyLength(size_t length) {
 // readBuffer: 기존 요청데이터를 파싱하고 남은 데이터
 // reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
 int RequestParser::parse(const std::string &readData, std::string &readBuffer, RequestMessage &reqMsg) {
-	std::istringstream iss(readData + readBuffer);
+	std::istringstream iss(readBuffer + readData);
 	std::string buffer;
 	EnumReqStatus status = reqMsg.getStatus();
 	
@@ -48,7 +48,12 @@ int RequestParser::parse(const std::string &readData, std::string &readBuffer, R
 			}
 		}
 	} else {// 1-2. Body인 경우
-		buffer = readData;
+		buffer = readBuffer + readData;
+	}
+
+	if (buffer.empty()) {
+		readBuffer = "";
+		return NONE_STATUS_CODE;
 	}
 
 	// 1-3. Body 처리, 청크전송인지 아닌지에 따라 처리과정을 달리함
@@ -138,13 +143,13 @@ int RequestParser::parseFieldLine(const std::string &line, RequestMessage &reqMs
 	reqMsg.addFieldLine(name, values);
 	
 	// 3-2. field value 갯수 검증
-	if (validateFieldValueCount(name, values.size()))
-		return 400;
-	
-	// 3-3. field value중 RequestMessage의 메타데이터 처리
-	if (handleFieldValue(name, value, reqMsg))
+	if (!validateFieldValueCount(name, values.size()))
 		return 400;
 		
+	// 3-3. field value중 RequestMessage의 메타데이터 처리
+	if (!handleFieldValue(name, value, reqMsg))
+		return 400;
+	
 	// 3-4. RequestMessage가 하나 이상의 field-line를 갖고 있으며, 아직 CRLF가 나오지 않음을 뜻함
 	reqMsg.setStatus(REQ_HEADER_FIELD);
 	return NONE_STATUS_CODE;
@@ -310,4 +315,6 @@ int RequestParser::cleanUpChunkedBody(const std::string &data, std::string &read
 			return 400;//status code: CRLF가 아닌, 단일 LF
 		}
 	}
+	readBuffer = "";
+	return 0;
 }

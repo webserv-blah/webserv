@@ -70,6 +70,10 @@ EnumSesStatus ClientSession::implementReqMsg(RequestParser &parser, const std::s
 	if (this->reqMsg_->getStatus() == REQ_HEADER_CRLF) {
 		const GlobalConfig &globalConfig = GlobalConfig::getInstance();
 		this->config_ = globalConfig.findRequestConfig(this->listenFd_, this->reqMsg_->getMetaHost(), this->reqMsg_->getTargetURI());
+		if (this->reqMsg_->getMetaHost().empty()) {
+			this->errorStatusCode_ = 400;
+			return REQUEST_ERROR;
+		}
 	}
 	if (this->errorStatusCode_ != NONE_STATUS_CODE)
 		return REQUEST_ERROR;

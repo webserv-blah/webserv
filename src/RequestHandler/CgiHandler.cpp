@@ -22,9 +22,13 @@ CgiHandler::~CgiHandler() {
 }
 
 // 요청된 URI가 CGI 실행 대상인지 확인하는 함수
-bool CgiHandler::isCGI(const std::string& targetUri) {
-    // URI가 "/cgi-bin/"으로 시작하면 CGI 스크립트로 간주
-    return targetUri.find("/cgi-bin/") == 0;
+bool CgiHandler::isCGI(const std::string& targetUri, const std::string& cgiExtension)
+{
+	// targetUri가 cgiExtension으로 끝나면 true 반환
+    if (targetUri.size() < cgiExtension.size()) {
+		return false;
+	}
+    return targetUri.compare(targetUri.size() - cgiExtension.size(), cgiExtension.size(), cgiExtension) == 0;
 }
 
 // 클라이언트의 요청을 처리하여 CGI 결과를 반환하는 함수

@@ -55,14 +55,15 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
         // 요청 데이터 수신이 완료된 경우
         RequestMessage  requestMsg = clientSession.getReqMsg();
         std::string     responseMsg;
+		RequestConfig&	reqConfig = clientSession.getConfig();
 
         // 요청 URI에 CGI 실행 대상이 포함되어 있는지 확인
-        if (cgiHandler_.isCGI(requestMsg.getTargetURI())) {
+        if (cgiHandler_.isCGI(requestMsg.getTargetURI(), reqConfig.cgiExtension_)) {
             // CGI 요청
             responseMsg = cgiHandler_.handleRequest(clientSession);
         } else {
             // 정적 파일 요청
-            responseMsg = staticHandler_.handleRequest(requestMsg, clientSession.getConfig());
+            responseMsg = staticHandler_.handleRequest(requestMsg, reqConfig);
         }
         // 생성된 응답 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
         clientSession.setWriteBuffer(responseMsg);

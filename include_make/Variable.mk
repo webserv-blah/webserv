@@ -1,7 +1,7 @@
 .DELETE_ON_ERROR:
 .DEFAULT_GOAL = all
 
-CFLAGS = -Wall -Wextra -Werror -std=c++98
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 ARFLAGS = rcs
 CPPFLAGS = -I$(TOPDIR)/include -I$(SRCDIR)/include
 

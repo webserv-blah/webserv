@@ -6,10 +6,13 @@
 #include <algorithm>
 #include <map>
 #include <sstream>
+#include <fstream>   // 파일 쓰기/읽기
+#include <cstdio>    // remove 함수
 
-using namespace FileUtilities; // validatePath, readFile 등이 이 네임스페이스에 있다고 가정
+using namespace FileUtilities;
 
-// POSIX의 dirent.h를 이용하여 디렉토리 목록을 반환
+// ─────────────────────────────────────────────────────────────────────────────────────
+// 유틸성 함수: 디렉토리 내 파일/폴더 목록 얻기
 static std::vector<std::string> getDirectoryListing(const std::string &directoryPath) {
 	std::vector<std::string> entries;
 	DIR* dir = opendir(directoryPath.c_str());
@@ -24,7 +27,7 @@ static std::vector<std::string> getDirectoryListing(const std::string &directory
 		if (name == "." || name == "..") {
 			continue;
 		}
-		// POSIX에서는 d_type가 항상 지원되지는 않지만, 지원되는 경우 디렉토리면 '/' 추가
+		// POSIX에서는 d_type이 항상 신뢰할 수는 없지만, 지원되는 경우 디렉토리면 '/' 추가
 		if (ent->d_type == DT_DIR) {
 			name.push_back('/');
 		}
@@ -34,7 +37,8 @@ static std::vector<std::string> getDirectoryListing(const std::string &directory
 	return entries;
 }
 
-// 생성자와 소멸자
+// ─────────────────────────────────────────────────────────────────────────────────────
+// 생성자/소멸자
 StaticHandler::StaticHandler(const ResponseBuilder& responseBuilder)
 : responseBuilder_(responseBuilder) {
 }
@@ -42,73 +46,173 @@ StaticHandler::StaticHandler(const ResponseBuilder& responseBuilder)
 StaticHandler::~StaticHandler() {
 }
 
-// 요청 처리의 메인 진입점
+// ─────────────────────────────────────────────────────────────────────────────────────
+// 메인 요청 처리 함수: GET / POST / DELETE 등 다양한 메소드를 분기
 std::string StaticHandler::handleRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
+	// 설정 블록에 리턴 지시자가 있는 경우
 	if (conf.returnStatus_ >= 100) {
 		if (conf.returnStatus_ == OK) {
-			//location block의 리턴 지시자가 text로 오는 경우. ex) "return OK text" ??
-		} else if (!conf.returnUrl_.empty() && (conf.returnStatus_ == FOUND || conf.returnStatus_ == MOVED_PERMANENTLY)) {
+			// location block에 "return 200 someText" 형태로 썼다면
+			// 특별 처리(예: 특정 문구 반환) 등의 로직을 넣을 수 있음(현재는 단순 통과)
+		} 
+		else if (!conf.returnUrl_.empty() && 
+			(conf.returnStatus_ == FOUND || conf.returnStatus_ == MOVED_PERMANENTLY)) {
+			// 리다이렉트 응답
 			return handleRedirction(conf);
-		} else {
+		} 
+		else {
+			// 그 외에는 에러 응답
 			return responseBuilder_.buildError(conf.returnStatus_, conf);
 		}
 	}
-	
-	std::string uri = reqMsg.getTargetURI();
-	std::string documentRoot = conf.root_;
-	std::string fullPath = documentRoot + uri;
-	
-	// path 유효성 체크
-	EnumValidationResult pathValidation = validatePath(fullPath);
-	
-	switch (pathValidation) {
-		case VALID_PATH:
-		return handleDirectory(fullPath, uri, conf);
-		case VALID_FILE:
-		return handleFile(fullPath, conf);
-		case PATH_NOT_FOUND:
-		case FILE_NOT_FOUND:
-		return responseBuilder_.buildError(NOT_FOUND, conf);
-		case PATH_NO_PERMISSION:
-		case FILE_NO_READ_PERMISSION:
-		case FILE_NO_EXEC_PERMISSION:
-		return responseBuilder_.buildError(FORBIDDEN, conf);
+
+	// 우선, 설정에서 현재 요청 메소드가 허용되는지 확인 (methods_ 벡터 사용)
+	EnumMethod method = reqMsg.getMethod();
+	if (!isMethodAllowed(method, conf)) {
+		// 허용되지 않은 메소드
+		return responseBuilder_.buildError(METHOD_NOT_ALLOWED, conf);
+	}
+
+	// GET, POST, DELETE 등 각각 분기 처리
+	switch (method) {
+		case GET:
+			return handleGetRequest(reqMsg, conf);
+		case POST:
+			return handlePostRequest(reqMsg, conf);
+		case DELETE:
+			return handleDeleteRequest(reqMsg, conf);
 		default:
-		return responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf);
+			// 미구현 메소드인 경우 (PUT 등)
+			return responseBuilder_.buildError(NOT_IMPLEMENTED, conf);
 	}
 }
 
+// ─────────────────────────────────────────────────────────────────────────────────────
+// GET 요청 처리
+std::string StaticHandler::handleGetRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
+	std::string uri = reqMsg.getTargetURI();
+	std::string documentRoot = conf.root_;
+	std::string fullPath = documentRoot + uri;
+
+	// path 유효성 체크
+	EnumValidationResult pathValidation = validatePath(fullPath);
+
+	switch (pathValidation) {
+		case VALID_PATH:
+			// 디렉토리이면 인덱스 파일 혹은 autoIndex 처리
+			return handleDirectory(fullPath, uri, conf);
+		case VALID_FILE:
+			// 정상 파일
+			return handleFile(fullPath, conf);
+		case PATH_NOT_FOUND:
+		case FILE_NOT_FOUND:
+			return responseBuilder_.buildError(NOT_FOUND, conf);
+		case PATH_NO_PERMISSION:
+		case FILE_NO_READ_PERMISSION:
+		case FILE_NO_EXEC_PERMISSION:
+			return handleFile(fullPath, conf);
+		default:
+			return responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf);
+	}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// POST 요청 처리 (단순화 버전)
+//  - 요청 바디를 그대로 특정 경로에 쓰거나, 혹은 설정에 따라 처리
+//  - 여기서는 단순히 fullPath 위치에 파일을 생성/덮어쓰기 한다고 가정
+std::string StaticHandler::handlePostRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
+	std::string uri = reqMsg.getTargetURI();
+	std::string documentRoot = conf.root_;
+	std::string fullPath = documentRoot + uri;
+
+	// 유효한 파일 경로인지 간단히 확인 (디렉토리면 업로드 불가 등)
+	EnumValidationResult pathValidation = validatePath(fullPath);
+
+	// 만약 디렉토리라면 바로 403
+	if (pathValidation == VALID_PATH) {
+		return responseBuilder_.buildError(FORBIDDEN, conf);
+	}
+
+	// 실제로 파일에 쓰기 시도
+	std::ofstream outFile(fullPath.c_str(), std::ios::binary);
+	if (!outFile.is_open()) {
+		// 파일 열기 실패 -> 권한 문제나 잘못된 경로 등
+		return responseBuilder_.buildError(FORBIDDEN, conf);
+	}
+	// 요청 바디 쓰기
+	outFile << reqMsg.getBody();
+	outFile.close();
+
+	// 파일이 새로 생성되었다면 201, 기존 파일 덮어썼다면 200 등으로 세분화 가능
+	// 여기서는 단순히 OK 응답
+	std::map<std::string, std::string> headers;
+	headers["Content-Type"] = "text/plain";
+	std::string body = "File uploaded: " + uri;
+	return responseBuilder_.build(OK, headers, body);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// DELETE 요청 처리
+//  - 파일만 삭제한다 가정 (디렉토리 삭제는 고려하지 않음)
+//  - 실제로 remove() 호출
+std::string StaticHandler::handleDeleteRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
+	std::string uri = reqMsg.getTargetURI();
+	std::string documentRoot = conf.root_;
+	std::string fullPath = documentRoot + uri;
+
+	// 경로 검사
+	EnumValidationResult pathValidation = validatePath(fullPath);
+
+	if (pathValidation == VALID_FILE || pathValidation == FILE_NO_EXEC_PERMISSION) {
+		// 파일 삭제 시도
+		if (std::remove(fullPath.c_str()) == 0) {
+			// 성공
+			std::map<std::string, std::string> headers;
+			std::string body = "File deleted: " + uri;
+			return responseBuilder_.build(OK, headers, body);
+		} else {
+			// 삭제 실패
+			return responseBuilder_.buildError(FORBIDDEN, conf);
+		}
+	}
+	// 디렉토리거나 없으면 에러
+	if (pathValidation == VALID_PATH) {
+		// 디렉토리
+		return responseBuilder_.buildError(FORBIDDEN, conf);
+	}
+	return responseBuilder_.buildError(NOT_FOUND, conf);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────
 // 디렉토리 처리: index.html 우선, autoIndex 기능, 그 외 403 반환
 std::string StaticHandler::handleDirectory(const std::string &dirPath,
 	const std::string &uri,
 	const RequestConfig &conf)
+{
+	std::string indexPath = dirPath;
+	if (!indexPath.empty() && indexPath[indexPath.size()-1] != '/') {
+		indexPath.push_back('/');
+	}
+	indexPath += conf.indexFile_;
+
+	EnumValidationResult indexValidation = validatePath(indexPath);
+
+	// index 파일이 존재하고 읽을 수 있다면
+	if (indexValidation == VALID_FILE) {
+		return handleFile(indexPath, conf);
+	}
+	// index 파일이 없고 autoIndex가 on이면 디렉토리 리스트 반환
+	else if ((indexValidation == FILE_NOT_FOUND || indexValidation == PATH_NOT_FOUND) &&
+		conf.autoIndex_.value() == 1)
 	{
-		std::string indexPath = dirPath;
-		if (!indexPath.empty() && indexPath[indexPath.size()-1] != '/') {
-			indexPath.push_back('/');
-		}
-		indexPath += conf.indexFile_;
-		
-		EnumValidationResult indexValidation = validatePath(indexPath);
-		
-		if (indexValidation == VALID_FILE) {
-			return handleFile(indexPath, conf);
-		} else if ((indexValidation == FILE_NOT_FOUND || indexValidation == PATH_NOT_FOUND) &&
-		conf.autoIndex_.value() == 1) {
-			return buildAutoIndexResponse(dirPath, uri);
-		}
-		
-		return responseBuilder_.buildError(FORBIDDEN, conf);
+		return buildAutoIndexResponse(dirPath, uri);
 	}
-	
-	// redirection 처리
-	std::string StaticHandler::handleRedirction(const RequestConfig& conf) {
-		std::string location = conf.returnUrl_;
-		std::map<std::string, std::string> headers;
-		headers["Location:"] = location;
-		return responseBuilder_.build(conf.returnStatus_, headers, "");
-	}
-	
+
+	// 나머지는 접근 불가
+	return responseBuilder_.buildError(FORBIDDEN, conf);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────
 // 파일 처리: 파일 읽기, MIME 타입 결정 후 응답
 std::string StaticHandler::handleFile(const std::string &filePath, const RequestConfig& conf) {
 	std::string content = readFile(filePath);
@@ -120,6 +224,7 @@ std::string StaticHandler::handleFile(const std::string &filePath, const Request
 	return responseBuilder_.build(OK, headers, content);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────────────
 // autoIndex가 켜진 경우, 디렉토리 목록을 HTML로 구성하여 반환
 std::string StaticHandler::buildAutoIndexResponse(const std::string &dirPath, const std::string &uri)
 {
@@ -135,12 +240,23 @@ std::string StaticHandler::buildAutoIndexResponse(const std::string &dirPath, co
 			 << *it << "\">" << *it << "</a></li>";
 	}
 	body << "</ul></body></html>";
+
 	std::map<std::string, std::string> headers;
 	headers["Content-Type"] = "text/html";
 	return responseBuilder_.build(OK, headers, body.str());
 }
 
-// 파일 확장자에 따른 MIME 타입 결정
+// ─────────────────────────────────────────────────────────────────────────────────────
+// 리다이렉션 처리
+std::string StaticHandler::handleRedirction(const RequestConfig& conf) {
+	std::string location = conf.returnUrl_;
+	std::map<std::string, std::string> headers;
+	headers["Location:"] = location;
+	return responseBuilder_.build(conf.returnStatus_, headers, "");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// 파일 확장자에 따른 MIME 타입 결정 (단순 매핑)
 std::string StaticHandler::determineContentType(const std::string &filePath) const {
 	std::string::size_type pos = filePath.find_last_of('.');
 	if (pos == std::string::npos) {
@@ -172,4 +288,26 @@ std::string StaticHandler::determineContentType(const std::string &filePath) con
 		return iter->second;
 	}
 	return "application/octet-stream";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// 현재 요청 메소드가 conf.methods_에 포함되는지 확인
+bool StaticHandler::isMethodAllowed(EnumMethod method, const RequestConfig &conf) const {
+	// RequestConfig::methods_는 문자열 벡터 예: {"GET", "POST", "DELETE"} 
+	// EnumMethod를 문자열로 변환하거나, conf.methods_를 enum화하여 비교하는 식으로 구현 가능
+	// 여기서는 간단히 문자열 비교 버전으로 가정
+	std::string methodStr;
+	switch (method) {
+		case GET:       methodStr = "GET";    break;
+		case POST:      methodStr = "POST";   break;
+		case DELETE:   methodStr = "DELETE"; break;
+		default:        methodStr = "UNKNOWN";break;
+	}
+
+	for (size_t i = 0; i < conf.methods_.size(); i++) {
+		if (conf.methods_[i] == methodStr) {
+			return true;
+		}
+	}
+	return false;
 }

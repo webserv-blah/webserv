@@ -48,6 +48,17 @@ class ServerManager {
         void removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler);
         // 서버 종료 시, 모든 클라이언트에 종료 응답 전송 및 연결 정리 함수
         void cleanUpConnections(ClientManager& clientManager, EventHandler& eventHandler);
+        // - ClientManager: 모든 클라이언트 세션 접근
+        // - EventHandler: 클라이언트에게 서버 종료 알림 전송
+
+		void processServerReadEvent(int fd, ClientManager& clientManager, \
+		EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor);
+
+		void processClientReadEvent(int fd, ClientManager& clientManager, \
+		EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor);
+
+		void processClientWriteEvent(int fd, ClientManager& clientManager, \
+		EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor);
 };
 
 #endif

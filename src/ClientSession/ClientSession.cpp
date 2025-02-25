@@ -76,7 +76,7 @@ EnumSesStatus ClientSession::implementReqMsg(RequestParser &parser, const std::s
 		const GlobalConfig &globalConfig = GlobalConfig::getInstance();
 		this->config_ = globalConfig.findRequestConfig(this->listenFd_, this->reqMsg_->getMetaHost(), this->reqMsg_->getTargetURI());
 		if (this->reqMsg_->getMetaHost().empty()) {
-			this->errorStatusCode_ = 400;
+			this->errorStatusCode_ = BAD_REQUEST;
 			return REQUEST_ERROR;
 		}
 		if (this->reqMsg_->getMetaContentLength() == 0

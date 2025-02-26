@@ -42,21 +42,19 @@ int KqueueDemultiplexer::waitForEventImpl() {
 
 // 소켓을 kqueue에 등록 (읽기 이벤트 및 예외 이벤트 추가)
 void KqueueDemultiplexer::addSocketImpl(int fd) {
-	struct kevent changes[2];
+	struct kevent change;
 
-	EV_SET(&changes[0], fd, EVFILT_READ, EV_ADD, 0, 0, nullptr);  // 읽기 이벤트 추가
-	EV_SET(&changes[1], fd, EVFILT_EXCEPT, EV_ADD, 0, 0, nullptr); // 예외 이벤트 추가
-	changedEvents_.insert(changedEvents_.end(), changes, changes + 2); // 변경 이벤트 목록에 추가
+	EV_SET(&change, fd, EVFILT_READ, EV_ADD, 0, 0, nullptr);
+	changedEvents_.push_back(change);
 }
 
 // 소켓을 kqueue에서 제거 (읽기, 예외, 쓰기 이벤트 삭제)
 void KqueueDemultiplexer::removeSocketImpl(int fd) {
-	struct kevent changes[3];
+	struct kevent changes[2];
 
 	EV_SET(&changes[0], fd, EVFILT_READ, EV_DELETE, 0, 0, nullptr);   // 읽기 이벤트 제거
-	EV_SET(&changes[1], fd, EVFILT_EXCEPT, EV_DELETE, 0, 0, nullptr); // 예외 이벤트 제거
-	EV_SET(&changes[2], fd, EVFILT_WRITE, EV_DELETE, 0, 0, nullptr);  // 쓰기 이벤트 제거
-	changedEvents_.insert(changedEvents_.end(), changes, changes + 3);
+	EV_SET(&changes[1], fd, EVFILT_WRITE, EV_DELETE, 0, 0, nullptr);  // 쓰기 이벤트 제거
+	changedEvents_.insert(changedEvents_.end(), changes, changes + 2);
 }
 
 // 쓰기 이벤트를 추가 (fd가 쓰기 가능할 때 감지)
@@ -78,14 +76,14 @@ void KqueueDemultiplexer::removeWriteEventImpl(int fd) {
 // 특정 이벤트의 타입을 반환
 EnumEvent KqueueDemultiplexer::getEventTypeImpl(int idx) {
 	if (idx < numEvents_) { // 유효한 인덱스인지 확인
-		if (eventList_[idx].filter == EVFILT_EXCEPT) {
-			return EXCEPTION_EVENT; // 예외 이벤트
-		}
 		if (eventList_[idx].filter == EVFILT_READ) {
 			return READ_EVENT; // 읽기 이벤트
 		}
 		if (eventList_[idx].filter == EVFILT_WRITE) {
 			return WRITE_EVENT; // 쓰기 이벤트
+		}
+		if (eventList_[idx].filter == EVFILT_EXCEPT) {
+			return EXCEPTION_EVENT; // 예외 이벤트
 		}
 	}
 	return UNKNOWN_EVENT; // 알 수 없는 이벤트

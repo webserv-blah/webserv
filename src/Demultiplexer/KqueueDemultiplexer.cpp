@@ -7,7 +7,7 @@
 KqueueDemultiplexer::KqueueDemultiplexer(std::set<int>& listenFds) : eventList_(MAX_EVENT) {
 	kq_ = kqueue(); // kqueue 인스턴스 생성
 	if (kq_ == -1) {
-		webserv::throwSystemError("kqueue", "Creating event queue", "KqueueDemultiplexer::KqueueDemultiplexer"); // kqueue 생성 실패 시 예외 발생
+		throw std::runtime_error("kqueue creation failed"); // kqueue 생성 실패 시 예외 발생
 	}
 
 	// 리스닝 소켓을 kqueue에 등록
@@ -32,7 +32,7 @@ int KqueueDemultiplexer::waitForEventImpl() {
 	// 반환값 : 감지된 이벤트 개수
 	numEvents_ = kevent(kq_, changedEvents, numChanges, &eventList_[0], MAX_EVENT, nullptr);
 	if (numEvents_ == -1) {
-		webserv::throwSystemError("kevent", "Waiting for events", "KqueueDemultiplexer::waitForEventImpl"); // kevent 호출 실패
+		throw std::runtime_error("kevent() failed"); // kevent 호출 실패
 	}
 	changedEvents_.clear(); // 변경된 이벤트 목록 초기화
 

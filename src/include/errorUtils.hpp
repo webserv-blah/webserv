@@ -12,6 +12,10 @@
 
 namespace webserv
 {
+// 에러 레벨 상수를 네임스페이스 내에서도 사용할 수 있도록 함
+using ::WARNING;  // 경고 (계속 진행 가능)
+using ::ERROR;    // 오류 (복구 필요)
+using ::FATAL;    // 치명적 오류 (프로그램 종료)
 
 // 에러 메시지 출력 (std::cerr 사용)
 inline void logError(EnumErrorLevel level, const std::string& cause, 

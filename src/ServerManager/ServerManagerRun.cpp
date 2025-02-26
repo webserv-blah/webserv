@@ -105,10 +105,8 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 	// 파일 디스크립터에 해당하는 클라이언트 세션을 획득
 	ClientSession* client = clientManager.accessClientSession(fd);
 	if (!client) {
-		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
-		webserv::logError(webserv::WARNING, "Invalid Value", 
-		                 "No clientSession corresponding to fd: " + std::to_string(fd), 
-		                 "ServerManager::processClientReadEvent");
+		// 유효하지 않은 클라이언트 FD인 경우 경고 메시지 출력 후 종료
+		std::cerr << "[WARNING] Invalid Value - No clientSession corresponding to fd (source: ServerManager::processClientReadEvent())" << std::endl;
 		return;
 	}
 
@@ -134,10 +132,8 @@ void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager
 	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
 	ClientSession* client = clientManager.accessClientSession(fd);
 	if (!client) {
-		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
-		webserv::logError(webserv::WARNING, "Invalid Value", 
-		                 "No clientSession corresponding to fd: " + std::to_string(fd), 
-		                 "ServerManager::processClientWriteEvent");
+		// 유효하지 않은 클라이언트 FD인 경우
+		std::cerr << "[WARNING] Invalid Value - No clientSession corresponding to fd (source: ServerManager::processClientWriteEvent())" << std::endl;
 		return;
 	}
 

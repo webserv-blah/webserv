@@ -1,6 +1,7 @@
 #include "RequestParser.hpp"
 #include "../utils/utils.hpp"
 #include "../GlobalConfig/GlobalConfig.hpp"
+#include "../ClientSession/ClientSession.hpp"
 #include <stdexcept>
 #include <sstream>
 

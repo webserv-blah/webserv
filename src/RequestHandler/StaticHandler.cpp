@@ -119,35 +119,35 @@ std::string StaticHandler::handleGetRequest(const RequestMessage& reqMsg, const 
 // ─────────────────────────────────────────────────────────────────────────────────────
 // POST 요청 처리 (단순화 버전)
 //  - 요청 바디를 그대로 특정 경로에 쓰거나, 혹은 설정에 따라 처리
-//  - 여기서는 단순히 fullPath 위치에 파일을 생성/덮어쓰기 한다고 가정
+//  - 여기서는 단순히 uploadPath 위치에 파일을 생성/덮어쓰기 한다고 가정
 std::string StaticHandler::handlePostRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
-	std::string uri = reqMsg.getTargetURI();
-	std::string documentRoot = conf.root_;
-	std::string fullPath = documentRoot + uri;
+	std::string uploadPath = conf.uploadPath_;
 
 	// 유효한 파일 경로인지 간단히 확인 (디렉토리면 업로드 불가 등)
-	EnumValidationResult pathValidation = validatePath(fullPath);
+	EnumValidationResult pathValidation = validatePath(uploadPath);
 
 	// 만약 디렉토리라면 바로 403
-	if (pathValidation == VALID_PATH) {
+	if (pathValidation == PATH_NOT_FOUND) {
 		return responseBuilder_.buildError(FORBIDDEN, conf);
-	}
+	} 
 
-	// 실제로 파일에 쓰기 시도
-	std::ofstream outFile(fullPath.c_str(), std::ios::binary);
-	if (!outFile.is_open()) {
-		// 파일 열기 실패 -> 권한 문제나 잘못된 경로 등
-		return responseBuilder_.buildError(FORBIDDEN, conf);
+	// 파일 이름 설정 (단순화된 방식, 실제로는 Content-Disposition 헤더 등을 참고할 수 있음)
+	std::string filename = "uploaded_file.txt";
+	std::string filePath = uploadPath + filename;
+
+	// 파일 저장
+	std::ofstream outFile(filePath.c_str(), std::ios::binary);
+	if (!outFile) {
+		return responseBuilder_.buildError(500, conf);
 	}
 	// 요청 바디 쓰기
 	outFile << reqMsg.getBody();
 	outFile.close();
 
-	// 파일이 새로 생성되었다면 201, 기존 파일 덮어썼다면 200 등으로 세분화 가능
 	// 여기서는 단순히 OK 응답
 	std::map<std::string, std::string> headers;
 	headers["Content-Type"] = "text/plain";
-	std::string body = "File uploaded: " + uri;
+	std::string body = "File uploaded: " + uploadPath;
 	return responseBuilder_.build(OK, headers, body);
 }
 

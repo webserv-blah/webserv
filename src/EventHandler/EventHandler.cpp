@@ -55,7 +55,7 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
         // 요청 데이터 수신이 완료된 경우
         RequestMessage  requestMsg = clientSession.getReqMsg();
         std::string     responseMsg;
-		RequestConfig&	reqConfig = clientSession.getConfig();
+		const RequestConfig&	reqConfig = clientSession.getConfig();
 
         // 요청 URI에 CGI 실행 대상이 포함되어 있는지 확인
         if (cgiHandler_.isCGI(requestMsg.getTargetURI(), reqConfig.cgiExtension_)) {

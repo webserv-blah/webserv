@@ -1,5 +1,5 @@
 #include "ResponseBuilder.hpp"	// ResponseBuilder 헤더 파일 포함
-#include "commonEnums.hpp"
+#include "../include/commonEnums.hpp"
 
 // 현재 GMT 시간의 RFC1123 형식 문자열 반환
 static std::string getCurrentDateString() {

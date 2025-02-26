@@ -1,5 +1,5 @@
 #include "ErrorPageResolver.hpp"
-#include "commonEnums.hpp"
+#include "../include/commonEnums.hpp"
 #include <algorithm>
 
 namespace ErrorPageResolver {

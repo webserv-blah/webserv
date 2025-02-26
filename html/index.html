@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webserv PHP CGI Examples</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #336699;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #444;
+            margin-top: 30px;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .description {
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Webserv PHP CGI Examples</h1>
+    
+    <p>Welcome to the demo page for PHP CGI scripts running on our custom webserver implementation.</p>
+    
+    <h2>Available Examples:</h2>
+    
+    <ul>
+        <li>
+            <a href="/cgi-bin/hello.php">Hello World</a>
+            <div class="description">A simple greeting script that demonstrates basic PHP functionality. Try adding a name parameter: <a href="/cgi-bin/hello.php?name=YourName">/cgi-bin/hello.php?name=YourName</a></div>
+        </li>
+        
+        <li>
+            <a href="/cgi-bin/info.php">Server Information</a>
+            <div class="description">Displays CGI environment variables, HTTP headers, and request information. Useful for debugging.</div>
+        </li>
+        
+        <li>
+            <a href="/cgi-bin/form.php">Form Processing</a>
+            <div class="description">Demonstrates form handling with both GET and POST methods in PHP.</div>
+        </li>
+    </ul>
+    
+    <h2>How It Works</h2>
+    
+    <p>These scripts showcase the integration between our webserver and PHP through the CGI interface. When you request a PHP script:</p>
+    
+    <ol>
+        <li>The webserver recognizes the script as a CGI resource</li>
+        <li>The server sets up environment variables and pipes for communication</li>
+        <li>The PHP interpreter executes the script and returns the response</li>
+        <li>The webserver forwards this response back to your browser</li>
+    </ol>
+    
+    <p>This implementation follows the CGI 1.1 specification, allowing seamless execution of PHP scripts on our custom server.</p>
+</body>
+</html>

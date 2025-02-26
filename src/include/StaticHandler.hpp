@@ -1,0 +1,1 @@
+/Users/seonseo/projects/webserv/src/RequestHandler/StaticHandler.hpp

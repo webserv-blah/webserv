@@ -15,9 +15,13 @@ DIRS := utils \
 		RequestMessage \
 		ClientSession \
 		RequestParser \
+		ResponseBuilder \
+		RequestHandler \
+		EventHandler \
+		TimeoutHandler \
 		ServerManager \
 		Demultiplexer \
-		TimeoutHandler
+		ClientManager
 
 SUBS := $(addsuffix .a,$(DIRS))
 

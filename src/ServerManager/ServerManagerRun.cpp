@@ -75,14 +75,44 @@ void ServerManager::run() {
 // 서버 종료 전에, 모든 클라이언트에게 종료 메시지(503:SERVICE_UNAVAILABLE)를 전송합니다.
 void ServerManager::notifyClientsShutdown(ClientManager& clientManager, EventHandler& eventHandler) {
 	ClientManager::TypeClientMap& clientList = clientManager.accessClientSessionMap();
-	ClientManager::TypeClientMap::iterator it;
-
+	
 	DEBUG_LOG("[ServerManager] Sending shutdown notice to " + std::to_string(clientList.size()) + " clients");
 
-	// 클라이언트 목록 전체를 순회하며 각 클라이언트에 종료 알림 전송
-	for (it = clientList.begin(); it != clientList.end(); ++it) {
-		DEBUG_LOG("[ServerManager] Sending SERVICE_UNAVAILABLE to client fd: " + std::to_string(it->first));
-		eventHandler.handleError(SERVICE_UNAVAILABLE, *it->second);
+	// 클라이언트가 없으면 바로 리턴
+	if (clientList.empty()) {
+		DEBUG_LOG("[ServerManager] No clients to notify");
+		return;
+	}
+
+	try {
+		// 클라이언트 목록의 복사본을 만들어 반복자 무효화 문제 방지
+		std::vector<int> clientFds;
+		for (ClientManager::TypeClientMap::iterator it = clientList.begin(); it != clientList.end(); ++it) {
+			if (it->second != NULL) {
+				clientFds.push_back(it->first);
+			}
+		}
+		
+		// 클라이언트 목록 전체를 순회하며 각 클라이언트에 종료 알림 전송
+		for (size_t i = 0; i < clientFds.size(); ++i) {
+			int fd = clientFds[i];
+			ClientSession* clientSession = clientManager.accessClientSession(fd);
+			
+			// NULL 체크를 통해 안전하게 접근
+			if (clientSession != NULL) {
+				DEBUG_LOG("[ServerManager] Sending SERVICE_UNAVAILABLE to client fd: " + std::to_string(fd));
+				
+				try {
+					// 안전하게 에러 전송 시도
+					eventHandler.handleError(SERVICE_UNAVAILABLE, *clientSession);
+				} catch (std::exception& e) {
+					DEBUG_LOG("[ServerManager] Failed to send error to client: " + std::string(e.what()));
+				}
+			}
+		}
+	} catch (std::exception& e) {
+		// 예외 발생 시 로그만 출력하고 계속 진행 (서버 종료 중에는 추가 예외를 발생시키지 않음)
+		DEBUG_LOG("[ServerManager] Exception during client shutdown notification: " + std::string(e.what()));
 	}
 }
 

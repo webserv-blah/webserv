@@ -85,11 +85,14 @@ namespace ErrorPageResolver {
 	std::string resolveErrorPage(int errorCode, const std::map<int, std::string>& errorPages) {
 		std::string bodyContent; // 에러 페이지의 내용(본문)을 저장할 변수
 
-		// 사용자 정의 에러 페이지를 먼저 찾아봅니다.
-		std::map<int, std::string>::const_iterator it = errorPages.find(errorCode);
-		if (it != errorPages.end()) {
-			const std::string& customPath = it->second;
-			bodyContent = FileUtilities::readFile(customPath);
+		// 에러 페이지 맵이 비어있지 않은 경우에만 찾기를 시도합니다.
+		if (!errorPages.empty()) {
+			// 사용자 정의 에러 페이지를 먼저 찾아봅니다.
+			std::map<int, std::string>::const_iterator it = errorPages.find(errorCode);
+			if (it != errorPages.end()) {
+				const std::string& customPath = it->second;
+				bodyContent = FileUtilities::readFile(customPath);
+			}
 		}
 
 		// 사용자 정의 에러 페이지가 없거나 내용이 비어있다면 기본 템플릿을 사용합니다.

@@ -1,8 +1,8 @@
 #ifndef REQUEST_PARSER_HPP
 #define REQUEST_PARSER_HPP
 
-#include "RequestMessage.hpp"
-#include "commonEnums.hpp"
+#include "../RequestMessage/RequestMessage.hpp"
+#include "../include/commonEnums.hpp"
 
 #define ONELINE_MAX_LENGTH	8190//8KB - 2bytes(\r\n)
 #define URI_MAX_LENGTH		2048//2KB

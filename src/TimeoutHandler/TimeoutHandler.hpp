@@ -1,9 +1,9 @@
 #ifndef TIMEOUT_HANDLER_HPP
 #define TIMEOUT_HANDLER_HPP
 
-#include "EventHandler.hpp"
-#include "KqueueDemultiplexer.hpp"
-#include "ClientManager.hpp"
+#include "../EventHandler/EventHandler.hpp"
+#include "../Demultiplexer/KqueueDemultiplexer.hpp"
+#include "../ClientManager/ClientManager.hpp"
 #include <map>
 
 // Nginx의 client_body_timeout 값과 동일 (초 단위 제한 시간)

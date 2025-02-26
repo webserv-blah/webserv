@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <cstring>
 #include <sstream>
+#include <cerrno>    // For errno
 #include "../include/errorUtils.hpp"
 
 // 프로그램 종료 시, 열려있는 소켓들을 닫기 위한 소멸자입니다.
@@ -92,6 +93,7 @@ int ServerManager::createListeningSocket(const ServerConfig &server) const {
         }
         // 소켓을 특정 주소와 포트에 바인딩합니다.
         if (bind(sockFd, currAddr->ai_addr, currAddr->ai_addrlen) < 0) {
+            DEBUG_LOG("[ServerManager] Bind error: " << strerror(errno) << " (errno: " << errno << ")");
             close(sockFd);
             continue;
         }
@@ -155,8 +157,21 @@ int ServerManager::setSocketOptions(int sockFd) const {
     int opt = 1;
     // SO_REUSEADDR 옵션을 활성화하여, 소켓을 빠르게 재사용할 수 있도록 합니다.
     if (setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        DEBUG_LOG("[ServerManager] Failed to set SO_REUSEADDR: " << strerror(errno));
         return -1;
     }
+    
+    // SO_REUSEPORT 옵션을 활성화하여, 여러 프로세스가 같은 포트에 바인딩할 수 있도록 합니다.
+    // macOS에서는 지원하지만, 일부 플랫폼에서는 지원하지 않을 수 있습니다.
+    #ifdef SO_REUSEPORT
+    if (setsockopt(sockFd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
+        DEBUG_LOG("[ServerManager] Failed to set SO_REUSEPORT: " << strerror(errno));
+        // 이 옵션이 실패해도 계속 진행합니다 (필수 옵션이 아님)
+    } else {
+        DEBUG_LOG("[ServerManager] Successfully set SO_REUSEPORT");
+    }
+    #endif
+    
     return 0;
 }
 

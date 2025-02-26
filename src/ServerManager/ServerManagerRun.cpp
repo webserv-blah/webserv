@@ -102,6 +102,12 @@ void ServerManager::addClientInfo(int clientFd, Demultiplexer& reactor, TimeoutH
 void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler) {
 	static std::set<int> removedFds; // 이미 제거된 fd 추적
 	
+	// 리스닝 소켓인지 확인 - 리스닝 소켓은 제거하지 않음
+	if (isListeningSocket(clientFd)) {
+		DEBUG_LOG("[ServerManager] Skipping removal of listening socket fd: " + std::to_string(clientFd));
+		return;
+	}
+	
 	// 이미 제거된 FD인지 확인
 	if (removedFds.find(clientFd) != removedFds.end()) {
 		DEBUG_LOG("[ServerManager] Skipping duplicate removal for fd " + std::to_string(clientFd));
@@ -174,6 +180,12 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
 	DEBUG_LOG("[ServerManager] Processing client read event for fd: " + std::to_string(fd));
 	
+	// 리스닝 소켓인지 확인 - 이 경우 에러 로그를 피하기 위해 빠르게 리턴
+	if (isListeningSocket(fd)) {
+		DEBUG_LOG("[ServerManager] Warning: Listening socket " + std::to_string(fd) + " triggered as client read event");
+		return;
+	}
+	
 	// 실제 소켓이 열려있는지 확인 (fcntl은 유효하지 않은 fd에 대해 -1 반환)
 	if (fcntl(fd, F_GETFD) == -1) {
 		DEBUG_LOG("[ServerManager] Error: fd " + std::to_string(fd) + " is not a valid file descriptor");
@@ -228,6 +240,12 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager,
 	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
 	DEBUG_LOG("[ServerManager] Processing client write event for fd: " + std::to_string(fd));
+	
+	// 리스닝 소켓인지 확인 - 이 경우 에러 로그를 피하기 위해 빠르게 리턴
+	if (isListeningSocket(fd)) {
+		DEBUG_LOG("[ServerManager] Warning: Listening socket " + std::to_string(fd) + " triggered as client write event");
+		return;
+	}
 	
 	// 실제 소켓이 열려있는지 확인 (fcntl은 유효하지 않은 fd에 대해 -1 반환)
 	if (fcntl(fd, F_GETFD) == -1) {

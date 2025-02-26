@@ -22,7 +22,7 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 		return CONNECTION_CLOSED;
 	} else {
 		// 해당 ClientSession의 RequestMessage를 파싱하기 전에 Body의 최대 길이를 설정
-		const RequestConfig *config = curSession.getConfig();
+		const RequestConfig *config = curSession.getConfigPtr();
 		const size_t bodyMax = (config == NULL) ? BODY_MAX_LENGTH : config->clientMaxBodySize_.value();
 		this->parser_.setConfigBodyLength(bodyMax);
 
@@ -33,7 +33,7 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 		// 파싱이 끝나고 나서, 에러 status code와 RequestMessage의 상태를 점검함
 		if (curSession.getErrorStatusCode() != NONE_STATUS_CODE)
 			return REQUEST_ERROR;
-		else if (curSession.getReqMsg()->getStatus() == REQ_DONE)
+		else if (curSession.getReqMsgPtr()->getStatus() == REQ_DONE)
 			return READ_COMPLETE;
 		return READ_CONTINUE;
 	}

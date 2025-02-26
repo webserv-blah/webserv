@@ -5,12 +5,11 @@
 #include <sstream>
 
 //Body크기에 제한 없이 테스트하고 싶은 경우, BODY_MAX_LENGTH대신 std::numeric_limits을 사용할 수 있음
-RequestParser::RequestParser() : oneLineMaxLength_(ONELINE_MAX_LENGTH), uriMaxLength_(URI_MAX_LENGTH), bodyMaxLength_(BODY_MAX_LENGTH) {}
+RequestParser::RequestParser() : uriMaxLength_(URI_MAX_LENGTH), bodyMaxLength_(BODY_MAX_LENGTH) {}
 RequestParser::~RequestParser() {}
 
 void RequestParser::setConfigBodyLength(size_t length) {
 	// TO-DO: config의 oneLineMaxLength_, uriMaxLength_ 적용
-	(void)this->oneLineMaxLength_;
 	(void)this->uriMaxLength_;
 	this->bodyMaxLength_ = length;
 }
@@ -24,7 +23,7 @@ void RequestParser::setConfigBodyLength(size_t length) {
 EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &curSession) {
 	// 새로운 요청일 때, RequestMessage 동적할당
 	if (curSession.getReqMsg() == NULL)
-		curSession.setReqMsg(new RequestMessage());// 이후 요청처리(handler&builder) 완료 후, delete 필요
+		curSession.setReqMsg(new RequestMessage());// 이후 요청처리(handler&builder) 완료 후, delete 필요 (ClientSession.resetRequest()메서드 사용)
 
 	RequestMessage &reqMsg = curSession.accessReqMsg();
 	std::string &readBuffer = curSession.accessReadBuffer();
@@ -86,7 +85,7 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 		}
 	}
 
-	// 
+	// Body를 처리해야하는 순서에서 readBuffer에 사용가능한 데이터가 없음
 	if (cursorBack+1 == readBuffer.size()) {
 		readBuffer = "";
 		return NONE_STATUS_CODE;

@@ -37,6 +37,11 @@ webserv::logError(webserv::ERROR, "File opening failed", "test.txt",
 
 ### 3. 시스템 호출 에러 로깅 (errno 자동 처리)
 ```cpp
+// WARNING 레벨 에러
+webserv::logSystemError(webserv::WARNING, "recv failed", 
+			                 "Client fd: " + std::to_string(curSession.getClientFd()), 
+			                 "EventHandler::recvRequest");
+// ERROR 레벨 에러
 webserv::logSystemError(webserv::ERROR, "fopen", "test.txt");
 ```
 

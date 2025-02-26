@@ -12,21 +12,28 @@ int main() {
                          "validateInput function");
         value = 0; // 기본값으로 복구
     }
+
+	// 2. WARNING 레벨 에러 로그 예시
+	ssize_t res = recv(curSession.getClientFd(), &buffer[0], BUFFER_SIZE, MSG_DONTWAIT);
+	if (res == -1) {
+		if (errno == EAGAIN
+		||  errno == EWOULDBLOCK
+		||  errno == EINTR) {
+			webserv::logSystemError(webserv::WARNING, "recv failed", 
+				"Client fd: " + std::to_string(curSession.getClientFd()), 
+				"EventHandler::recvRequest");
+			return READ_CONTINUE;
+		}
+	}
     
-    // 2. ERROR 레벨 에러 로그 예시 (파일 열기 실패)
+    // 3. ERROR 레벨 에러 로그 예시 (파일 열기 실패)
     std::ifstream file("non_existent_file.txt");
     if (!file.is_open()) {
         webserv::logError(webserv::ERROR, "File opening failed", "non_existent_file.txt", 
                          "errno " + std::to_string(errno) + ", " + std::strerror(errno));
         // 에러 발생 후 복구 시도 또는 대체 작업 수행
     }
-    
-    // 3. 시스템 호출 에러 로그 예시 (명시적으로 시스템 에러 형식 사용)
-    FILE* fp = fopen("another_file.txt", "r");
-    if (!fp) {
-        webserv::logSystemError(webserv::ERROR, "fopen", "another_file.txt");
-        // 에러 발생 후 복구 시도
-    }
+
     
     // 4. FATAL 에러 예외 발생 예시 (심각한 설정 오류)
     try {

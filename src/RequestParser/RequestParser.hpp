@@ -1,7 +1,7 @@
 #ifndef REQUEST_PARSER_HPP
 #define REQUEST_PARSER_HPP
 
-#include "RequestMessage.hpp"
+#include "ClientSession.hpp"
 #include "commonEnums.hpp"
 
 #define ONELINE_MAX_LENGTH	8190//8KB - 2bytes(\r\n)
@@ -13,11 +13,10 @@ class RequestParser {
 		RequestParser();
 		~RequestParser();
 
-		EnumStatusCode		parse(const std::string &readData, std::string &readBuffer, RequestMessage &reqMsg);
+		EnumStatusCode		parse(const std::string &readData, ClientSession &curSession);
 		void				setConfigBodyLength(size_t length);
 
 	private:
-		size_t				oneLineMaxLength_;
 		size_t				uriMaxLength_;
 		size_t				bodyMaxLength_;//Client마다 바뀌는 설정 값
 		
@@ -27,8 +26,8 @@ class RequestParser {
 		EnumStatusCode		parseFieldLine(const std::string &line, RequestMessage &reqMsg);
 		bool				validateFieldValueCount(const std::string &name, const int count);
 		bool				handleFieldValue(const std::string &name, const std::string &value, RequestMessage &reqMsg);
-		EnumStatusCode		cleanUpChunkedBody(const std::string &data, std::string &readBuffer, RequestMessage &reqMsg);
-		EnumStatusCode		parseBody(const std::string &line, std::string &readBuffer, RequestMessage &reqMsg);
+		EnumStatusCode		cleanUpChunkedBody(std::string &readBuffer, RequestMessage &reqMsg);
+		EnumStatusCode		parseBody(std::string &readBuffer, RequestMessage &reqMsg);
 };
 
 #endif

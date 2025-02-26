@@ -1,5 +1,5 @@
 #include "RequestMessage.hpp"
-#include "utils.hpp"
+#include "../utils/utils.hpp"
 #include <stdexcept>
 
 RequestMessage::RequestMessage() : method_(NONE), bodyLength_(0), status_(REQ_INIT), metaConnection_(KEEP_ALIVE), metaContentLength_(0), metaTransferEncoding_(NONE_ENCODING) {}

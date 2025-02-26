@@ -1,5 +1,5 @@
 #include "StaticHandler.hpp"
-#include "commonEnums.hpp"
+#include "../include/commonEnums.hpp"
 #include <dirent.h>
 #include <errno.h>
 #include <cctype>

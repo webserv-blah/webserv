@@ -1,5 +1,6 @@
 #include "ServerManager.hpp"
 #include "../include/errorUtils.hpp"
+#include <fcntl.h> // For F_GETFD
 
 // 서버의 메인 이벤트 루프를 실행합니다.
 // - EventHandler: 클라이언트 및 서버 이벤트 처리를 담당합니다.
@@ -99,14 +100,52 @@ void ServerManager::addClientInfo(int clientFd, Demultiplexer& reactor, TimeoutH
 
 // 클라이언트 연결 종료 또는 오류 발생 시 호출됩니다.
 void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler) {
+	static std::set<int> removedFds; // 이미 제거된 fd 추적
+	
+	// 이미 제거된 FD인지 확인
+	if (removedFds.find(clientFd) != removedFds.end()) {
+		DEBUG_LOG("[ServerManager] Skipping duplicate removal for fd " + std::to_string(clientFd));
+		return;
+	}
+	
 	DEBUG_LOG("[ServerManager] Removing client connection: fd " + std::to_string(clientFd));
 	
-	// 클라이언트 세션을 ClientManager에서 제거
-	clientManager.removeClient(clientFd);
-	// 타임아웃 관리 대상에서 클라이언트 삭제
-	timeoutHandler.removeConnection(clientFd);
-	// 리액터에서 클라이언트 소켓 제거
-	reactor.removeSocket(clientFd);
+	// 실제 소켓이 열려있는지 확인 (fcntl은 유효하지 않은 fd에 대해 -1 반환)
+	if (fcntl(clientFd, F_GETFD) == -1) {
+		DEBUG_LOG("[ServerManager] Warning: fd " + std::to_string(clientFd) + " already closed");
+		// clientFd가 이미 닫혔으므로 시스템 호출을 통한 close는 필요 없음
+	}
+	
+	// 각 구성 요소에서 안전하게 제거 시도
+	try {
+		// 클라이언트 세션을 ClientManager에서 제거
+		clientManager.removeClient(clientFd);
+	} catch (std::exception& e) {
+		DEBUG_LOG("[ServerManager] Error removing client from ClientManager: " + std::string(e.what()));
+	}
+	
+	try {
+		// 타임아웃 관리 대상에서 클라이언트 삭제
+		timeoutHandler.removeConnection(clientFd);
+	} catch (std::exception& e) {
+		DEBUG_LOG("[ServerManager] Error removing client from TimeoutHandler: " + std::string(e.what()));
+	}
+	
+	try {
+		// 리액터에서 클라이언트 소켓 제거 - 항상 실행되도록 함
+		reactor.removeSocket(clientFd);
+	} catch (std::exception& e) {
+		DEBUG_LOG("[ServerManager] Error removing socket from reactor: " + std::string(e.what()));
+	}
+	
+	// 제거된 fd 목록에 추가 (중복 제거 방지)
+	removedFds.insert(clientFd);
+	
+	// 메모리 관리를 위해 removedFds 크기 제한
+	if (removedFds.size() > 1000) {
+		// 오래된 항목 제거
+		removedFds.erase(removedFds.begin());
+	}
 	
 	DEBUG_LOG("[ServerManager] Client fd " + std::to_string(clientFd) + " removed from all systems");
 }
@@ -135,14 +174,23 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
 	DEBUG_LOG("[ServerManager] Processing client read event for fd: " + std::to_string(fd));
 	
+	// 실제 소켓이 열려있는지 확인 (fcntl은 유효하지 않은 fd에 대해 -1 반환)
+	if (fcntl(fd, F_GETFD) == -1) {
+		DEBUG_LOG("[ServerManager] Error: fd " + std::to_string(fd) + " is not a valid file descriptor");
+		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
+		return;
+	}
+	
 	// 파일 디스크립터에 해당하는 클라이언트 세션을 획득
 	ClientSession* client = clientManager.accessClientSession(fd);
 	if (!client) {
-		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
+		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 정리
 		DEBUG_LOG("[ServerManager] Error: No client session found for fd: " + std::to_string(fd));
 		webserv::logError(WARNING, "Invalid Value", 
 		                 "No clientSession corresponding to fd: " + std::to_string(fd), 
 		                 "ServerManager::processClientReadEvent");
+		// 클라이언트 세션이 없으면 모든 시스템에서 해당 fd 정리
+		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
 		return;
 	}
 
@@ -159,12 +207,20 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 		// - 타임아웃을 갱신
 		// - 해당 클라이언트에 대해 쓰기 이벤트를 추가
 		DEBUG_LOG("[ServerManager] Adding write event for client (fd: " + std::to_string(fd) + ")");
-		timeoutHandler.updateActivity(fd);
-		reactor.addWriteEvent(fd);
+		try {
+			timeoutHandler.updateActivity(fd);
+			reactor.addWriteEvent(fd);
+		} catch (std::exception& e) {
+			DEBUG_LOG("[ServerManager] Error updating client activity: " + std::string(e.what()));
+		}
 	} else { 
 		// 그 외, 타임아웃만 갱신
 		DEBUG_LOG("[ServerManager] Updating timeout for client (fd: " + std::to_string(fd) + ")");
-		timeoutHandler.updateActivity(fd);
+		try {
+			timeoutHandler.updateActivity(fd);
+		} catch (std::exception& e) {
+			DEBUG_LOG("[ServerManager] Error updating client activity: " + std::string(e.what()));
+		}
 	}
 }
 
@@ -173,13 +229,22 @@ void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager
 	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
 	DEBUG_LOG("[ServerManager] Processing client write event for fd: " + std::to_string(fd));
 	
+	// 실제 소켓이 열려있는지 확인 (fcntl은 유효하지 않은 fd에 대해 -1 반환)
+	if (fcntl(fd, F_GETFD) == -1) {
+		DEBUG_LOG("[ServerManager] Error: fd " + std::to_string(fd) + " is not a valid file descriptor");
+		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
+		return;
+	}
+	
 	ClientSession* client = clientManager.accessClientSession(fd);
 	if (!client) {
-		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
+		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 정리
 		DEBUG_LOG("[ServerManager] Error: No client session found for fd: " + std::to_string(fd));
 		webserv::logError(WARNING, "Invalid Value", 
 		                 "No clientSession corresponding to fd: " + std::to_string(fd), 
 		                 "ServerManager::processClientWriteEvent");
+		// 클라이언트 세션이 없으면 모든 시스템에서 해당 fd 정리
+		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
 		return;
 	}
 
@@ -194,7 +259,11 @@ void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager
 	} else if (status == WRITE_COMPLETE) { 
 		// 데이터 전송이 완료된 경우, 리액터에서 쓰기 이벤트를 제거하여 더 이상 쓰기 이벤트를 감시하지 않음
 		DEBUG_LOG("[ServerManager] Write complete, removing write event for fd: " + std::to_string(fd));
-		reactor.removeWriteEvent(fd);
+		try {
+			reactor.removeWriteEvent(fd);
+		} catch (std::exception& e) {
+			DEBUG_LOG("[ServerManager] Error removing write event: " + std::string(e.what()));
+		}
 	} else {
 		DEBUG_LOG("[ServerManager] Write in progress for fd: " + std::to_string(fd));
 	}

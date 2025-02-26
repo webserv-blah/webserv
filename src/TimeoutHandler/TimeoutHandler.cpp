@@ -83,10 +83,18 @@ void TimeoutHandler::removeConnection(int fd, TypeExpireQueueIter it) {
 
 // 외부에서 호출하는 연결 정보 제거 (by fd)
 void TimeoutHandler::removeConnection(int fd) {
+	// 이미 connections_에서 제거된 경우를 확인
+	if (connections_.find(fd) == connections_.end()) {
+		// 이미 제거됨, 에러 메시지 출력 안함
+		return;
+	}
+
 	TypeExpireIterMapIter eit = expireMap_.find(fd);
     if (eit == expireMap_.end()) { // 클라이언트(fd)의 만료 정보가 없을 경우
-        std::cerr << "[Error][TimeoutHandler][removeConnection] Fd Not Found" << std::endl;
-        return ;
+        std::cerr << "[Error][TimeoutHandler][removeConnection] Fd Not Found in expireMap" << std::endl;
+        // 그래도 connections_에서는 제거
+        connections_.erase(fd);
+        return;
     }
     TypeExpireQueueIter it = eit->second; 
     removeConnection(fd, it);

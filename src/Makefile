@@ -13,8 +13,8 @@ DIRS := utils \
 		GlobalConfig \
 		ConfigParser \
 		RequestMessage \
-		RequestParser \
 		ClientSession \
+		RequestParser \
 		ServerManager \
 		Demultiplexer \
 		TimeoutHandler

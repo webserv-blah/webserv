@@ -13,25 +13,27 @@ class ClientSession {
 		int						getListenFd() const;
 		int						getClientFd() const;
 		int						getErrorStatusCode() const;
-		EnumSesStatus			getStatus() const;
-		std::string				getClientIP() const;
+		const RequestMessage	*getReqMsg() const;
+		const RequestConfig		*getConfig() const;
 		std::string				getReadBuffer() const;
 		std::string				getWriteBuffer() const;
-		const RequestMessage	&getReqMsg() const;
-		const RequestConfig		&getConfig() const;
+		std::string				getClientIP() const;
 		void					setListenFd(const int &listenFd);
 		void					setClientFd(const int &clientFd);
-		void					setStatus(const EnumSesStatus &status);
+		void					setErrorStatusCode(const int &statusCode);
+		void					setReqMsg(RequestMessage *reqMsg);
+		void					setConfig(const RequestConfig *config);
 		void					setReadBuffer(const std::string &remainData);
 		void					setWriteBuffer(const std::string &remainData);
-		
-		EnumSesStatus			implementReqMsg(RequestParser &parser, const std::string &readData);
 
+		RequestMessage			&accessReqMsg();
+		std::string				&accessReadBuffer();
+		void					resetRequest();
+		
 	private:
 		int						listenFd_;
-		int						errorStatusCode_;
 		int						clientFd_;
-		EnumSesStatus			status_;
+		int						errorStatusCode_;
 		RequestMessage			*reqMsg_;
 		const RequestConfig		*config_;
 		std::string				readBuffer_;

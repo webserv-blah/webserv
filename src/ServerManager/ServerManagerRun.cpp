@@ -1,96 +1,149 @@
 #include "ServerManager.hpp"
 
-// EventLoop 실행 함수
+// 서버의 메인 이벤트 루프를 실행합니다.
+// - EventHandler: 클라이언트 및 서버 이벤트 처리를 담당합니다.
+// - ClientManager: 클라이언트 세션을 관리합니다.
+// - Demultiplexer: I/O 멀티플렉싱을 통해 여러 소켓의 이벤트를 감지합니다.
+// - TimeoutHandler: 클라이언트 연결의 타임아웃을 관리합니다.
+//
+// 서버가 실행되는 동안 발생하는 이벤트(EXCEPTION, READ, WRITE)를
+// 감지하여 각각의 처리 함수를 호출합니다.
 void ServerManager::run() {
-	Demultiplexer	reactor(listenFds_); // I/O 멀티플렉싱을 위한 리액터 객체
-	EventHandler 	eventHandler; // 이벤트 처리 담당 객체
-	TimeoutHandler	timeoutHandler; // 클라이언트 타임아웃 관리 객체
-	ClientManager	clientManager; // 클라이언트 세션 관리 객체
+	EventHandler 	eventHandler;
+	ClientManager	clientManager;
 
-	while (isServerRunning()) { // isServerRunning() 함수로 서버 실행 여부 확인 (전역변수 플래그 대체 가능)
-		int	numEvents = reactor.waitForEvent(); // 발생한 이벤트 개수 확인
+	try {
+		Demultiplexer	reactor(listenFds_);
+		TimeoutHandler	timeoutHandler;
 
-		for (int i = 0; i < numEvents; ++i) {
-			EnumEvent	type = reactor.getEventType(i); // 이벤트 타입 확인
-			int 		fd = reactor.getSocketFd(i); // 이벤트가 발생한 소켓 FD 확인
+		while (isServerRunning()) {
+			// 발생한 이벤트의 개수를 확인
+			int	numEvents = reactor.waitForEvent();
 
-			if (type == EXCEPTION_EVENT) { // 예외(오류) 이벤트 발생 시
-				removeClientInfo(fd, clientManager, reactor, timeoutHandler); // 클라이언트 제거
-			} else if (type == READ_EVENT) { // 읽기(수신) 이벤트 발생 시
-				if (isListeningSocket(fd)) { // 서버 소켓이라면 새 클라이언트 연결 처리
-					int clientFd = eventHandler.handleServerReadEvent(fd);
+			// 발생한 각 이벤트를 순회하며 처리
+			for (int i = 0; i < numEvents; ++i) {
+				EnumEvent	type = reactor.getEventType(i);
+				int 		fd = reactor.getSocketFd(i);
 
-					if (clientFd > 0) { // 새로운 클라이언트가 정상적으로 연결됨
-						addClientInfo(fd, clientFd, clientManager, reactor, timeoutHandler);
-					}
-
-				} else { // 클라이언트 소켓에서 데이터 수신 처리
-					ClientSession*	client = clientManager.accessClientSession(fd);
-					if (!client) {
-						perror("Invalid Client Fd");
-						continue ;
-					}
-
-					EnumSesStatus	status = eventHandler.handleClientReadEvent(*client);
-					if (status == CONNECTION_CLOSED) { // 클라이언트가 연결 종료
-						removeClientInfo(fd, clientManager, reactor, timeoutHandler);
-					} else if (status == WRITE_CONTINUE) { // 추가적인 쓰기 작업 필요
-						timeoutHandler.updateActivity(fd); // 타임아웃 갱신
-						reactor.addWriteEvent(fd); // 쓰기 이벤트 추가
-					} else { // 데이터 수신 후 타임아웃 갱신
-						timeoutHandler.updateActivity(fd);
-					}
-				}
-
-			} else if (type == WRITE_EVENT) { // 쓰기(송신) 이벤트 발생 시
-				ClientSession*	client = clientManager.accessClientSession(fd);
-				if (!client) {
-					perror("Invalid Client Fd");
-					continue ;
-				}
-
-				EnumSesStatus	status = eventHandler.handleClientWriteEvent(*client);
-				if (status == CONNECTION_CLOSED) { // 클라이언트가 연결 종료
+				if (type == EXCEPTION_EVENT) {
+					// 예외 이벤트 발생: 소켓 오류 등으로 인해 클라이언트 연결을 종료
 					removeClientInfo(fd, clientManager, reactor, timeoutHandler);
-				} else if (status == WRITE_COMPLETE) { // 데이터 전송 완료
-					timeoutHandler.updateActivity(fd); // 타임아웃 갱신((지울지 여부 판단 필요))
-					reactor.removeWriteEvent(fd); // 쓰기 이벤트 제거
-				} else { // 쓰기 작업 진행 중 -> 타임아웃 갱신
-					timeoutHandler.updateActivity(fd); // 타임아웃 갱신((지울지 여부 판단 필요))
+				} else if (type == READ_EVENT) {
+					if (isListeningSocket(fd)) {
+						// 리스닝 소켓에서 읽기 이벤트 발생: 새로운 클라이언트의 연결 요청 처리
+						processServerReadEvent(
+							fd, clientManager, eventHandler, timeoutHandler, reactor);
+					} else {
+						// 기존 클라이언트 소켓에서 읽기 이벤트 발생: 클라이언트로부터 데이터 수신 처리
+						processClientReadEvent(
+							fd, clientManager, eventHandler, timeoutHandler, reactor);
+					}
+				} else if (type == WRITE_EVENT) {
+					// 쓰기 이벤트 발생: 클라이언트에게 데이터를 전송하는 작업 처리
+					processClientWriteEvent(
+						fd, clientManager, eventHandler, timeoutHandler, reactor);
 				}
-
 			}
+			// 타임아웃된 클라이언트 확인 후 처리
+			timeoutHandler.checkTimeouts(eventHandler, reactor, clientManager);
 		}
-		// 타임아웃된 클라이언트 처리
-		timeoutHandler.checkTimeouts(eventHandler, reactor, clientManager);
+	} catch (std::exception& e) {
+	    // 예외 발생 시, 서버 비정상 종료에 대비하여 연결된 모든 클라이언트에게 종료 알림을 전송
+		notifyClientsShutdown(clientManager, eventHandler);
+		throw; // 원래 예외 그대로 throw
 	}
-
-	// 서버 종료 시, 연결된 클라이언트 정리
-	cleanUpConnections(clientManager, eventHandler);
+	// 서버가 정상 종료된 시 모든 클라이언트에게 종료 알림 전송
+	notifyClientsShutdown(clientManager, eventHandler);
 }
 
-// 서버 종료 전, 모든 클라이언트에 종료 응답을 전송하고 연결된 리소스를 정리하는 함수
-void ServerManager::cleanUpConnections(ClientManager& clientManager, EventHandler& eventHandler) {
-	ClientManager::TypeClientMap&			clientList = clientManager.accessClientSessionMap();
-	ClientManager::TypeClientMap::iterator	it;
+// 서버 종료 전에, 모든 클라이언트에게 종료 메시지(503:SERVICE_UNAVAILABLE)를 전송합니다.
+void ServerManager::notifyClientsShutdown(ClientManager& clientManager, EventHandler& eventHandler) {
+	ClientManager::TypeClientMap& clientList = clientManager.accessClientSessionMap();
+	ClientManager::TypeClientMap::iterator it;
 
-	for (it = clientList.begin(); it != clientList.end(); ) {
-		eventHandler.handleError(503, *it->second); // 클라이언트에게 서버 종료 알림
-		it = clientManager.removeClient(it->first); // 클라이언트 세션 삭제
+	// 클라이언트 목록 전체를 순회하며 각 클라이언트에 종료 알림 전송
+	for (it = clientList.begin(); it != clientList.end(); ++it) {
+		eventHandler.handleError(SERVICE_UNAVAILABLE, *it->second);
 	}
 }
 
-// ((ServerManager 멤버 함수로 둘지, 별도의 함수로 만들지 고민 필요))
-// 새로운 클라이언트 정보 추가 함수
-void ServerManager::addClientInfo(int listenFd, int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler) {
-	clientManager.addClient(listenFd, clientFd); // 클라이언트 추가
-	timeoutHandler.addConnection(clientFd); // 타임아웃 관리 추가
-	reactor.addSocket(clientFd); // 리액터(이벤트 루프)에 소켓 등록
+// 새로운 클라이언트가 연결되었을 때 호출됩니다.
+void ServerManager::addClientInfo(int clientFd, Demultiplexer& reactor, TimeoutHandler& timeoutHandler) {
+	// 클라이언트의 타임아웃 관리를 시작
+	timeoutHandler.addConnection(clientFd);
+	// 리액터에 클라이언트 소켓을 추가하여 이벤트 감시 대상에 포함
+	reactor.addSocket(clientFd);
 }
 
-// 기존 클라이언트 정보 삭제 함수
+// 클라이언트 연결 종료 또는 오류 발생 시 호출됩니다.
 void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler) {
-	clientManager.removeClient(clientFd); // 클라이언트 제거
-	timeoutHandler.removeConnection(clientFd); // 타임아웃 관리 제거
-	reactor.removeSocket(clientFd); // 리액터에서 소켓 제거
+	// 클라이언트 세션을 ClientManager에서 제거
+	clientManager.removeClient(clientFd);
+	// 타임아웃 관리 대상에서 클라이언트 삭제
+	timeoutHandler.removeConnection(clientFd);
+	// 리액터에서 클라이언트 소켓 제거
+	reactor.removeSocket(clientFd);
+}
+
+// 리스닝 소켓에서 읽기 이벤트가 발생하면 새로운 클라이언트의 연결 요청을 처리합니다.
+// handleServerReadEvent()가 새 클라이언트 연결을 수락하고, 새 클라이언트 FD를 반환합니다.
+// 반환된 FD가 유효하면 addClientInfo()를 통해 클라이언트 정보를 등록합니다.
+void ServerManager::processServerReadEvent(int fd, ClientManager& clientManager,
+	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
+	// 새로운 클라이언트 연결 요청 처리 및 소켓 FD 반환
+	int clientFd = eventHandler.handleServerReadEvent(fd, clientManager);
+
+	// 새로 연결된 클라이언트의 소켓 FD가 유효한 경우 클라이언트 정보 등록
+	if (clientFd > 0) {
+		addClientInfo(clientFd, reactor, timeoutHandler);
+	}
+}
+
+// 기존 클라이언트 소켓에서 읽기 이벤트가 발생한 경우, 클라이언트 데이터를 처리합니다.
+void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
+	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
+	// 파일 디스크립터에 해당하는 클라이언트 세션을 획득
+	ClientSession* client = clientManager.accessClientSession(fd);
+	if (!client) {
+		// 유효하지 않은 클라이언트 FD인 경우 경고 메시지 출력 후 종료
+		std::cerr << "[WARNING] Invalid Value - No clientSession corresponding to fd (source: ServerManager::processClientReadEvent())" << std::endl;
+		return;
+	}
+
+	// 클라이언트로부터 데이터를 읽어 처리한 후 반환 상태를 확인
+	EnumSesStatus status = eventHandler.handleClientReadEvent(*client);
+	if (status == CONNECTION_CLOSED) { 
+		// 클라이언트가 연결을 종료한 경우, 관련 정보를 삭제
+		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
+	} else if (status == WRITE_CONTINUE) { 
+		// 추가적인 쓰기 작업이 필요한 경우:
+		// - 타임아웃을 갱신
+		// - 해당 클라이언트에 대해 쓰기 이벤트를 추가
+		timeoutHandler.updateActivity(fd);
+		reactor.addWriteEvent(fd);
+	} else { 
+		// 그 외, 타임아웃만 갱신
+		timeoutHandler.updateActivity(fd);
+	}
+}
+
+// 클라이언트 소켓에 쓰기(전송) 이벤트가 발생한 경우 데이터를 전송합니다.
+void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager,
+	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
+	ClientSession* client = clientManager.accessClientSession(fd);
+	if (!client) {
+		// 유효하지 않은 클라이언트 FD인 경우
+		std::cerr << "[WARNING] Invalid Value - No clientSession corresponding to fd (source: ServerManager::processClientWriteEvent())" << std::endl;
+		return;
+	}
+
+	// 클라이언트에 데이터 전송 후 반환된 상태 확인
+	EnumSesStatus status = eventHandler.handleClientWriteEvent(*client);
+	if (status == CONNECTION_CLOSED) { 
+		// 클라이언트가 연결을 종료한 경우, 관련 정보를 삭제
+		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
+	} else if (status == WRITE_COMPLETE) { 
+		// 데이터 전송이 완료된 경우, 리액터에서 쓰기 이벤트를 제거하여 더 이상 쓰기 이벤트를 감시하지 않음
+		reactor.removeWriteEvent(fd);
+	}
 }

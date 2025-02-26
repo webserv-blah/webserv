@@ -74,7 +74,8 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
         // Http 상태 코드(에러)를 가져와서 에러 응답 전송
         int statusCode = clientSession.getErrorStatusCode();
         handleError(statusCode, clientSession);
-    }
+        status = CONNECTION_CLOSED;
+    } 
 
     return status;
 }

@@ -28,21 +28,21 @@
 ### 2. 일반 에러 로깅
 ```cpp
 // WARNING 레벨 에러
-webserv::logError(webserv::WARNING, "Invalid value", "Input is negative", "validateInput function");
+webserv::logError(WARNING, "Invalid value", "Input is negative", "validateInput function");
 
 // ERROR 레벨 에러
-webserv::logError(webserv::ERROR, "File opening failed", "test.txt", 
+webserv::logError(ERROR, "File opening failed", "test.txt", 
                  "errno " + std::to_string(errno) + ", " + std::strerror(errno));
 ```
 
 ### 3. 시스템 호출 에러 로깅 (errno 자동 처리)
 ```cpp
 // WARNING 레벨 에러
-webserv::logSystemError(webserv::WARNING, "recv failed", 
+webserv::logSystemError(WARNING, "recv failed", 
 			                 "Client fd: " + std::to_string(curSession.getClientFd()), 
 			                 "EventHandler::recvRequest");
 // ERROR 레벨 에러
-webserv::logSystemError(webserv::ERROR, "fopen", "test.txt");
+webserv::logSystemError(ERROR, "fopen", "test.txt");
 ```
 
 ### 4. 예외 발생 (FATAL 에러)

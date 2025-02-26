@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "../include/errorUtils.hpp"
 
 // ResponseBuilder를 인자로 하여 정적 핸들러와 CGI 핸들러를 초기화합니다.
 EventHandler::EventHandler() : staticHandler_(rspBuilder_), cgiHandler_(rspBuilder_) {
@@ -27,7 +28,7 @@ int EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
     int clientFd = accept(fd, reinterpret_cast<struct sockaddr*>(&clientAddr), &addrLen);
     if (clientFd < 0) {
         // 연결 수락 실패 - 시스템 호출 에러를 로깅
-        webserv::logSystemError(webserv::ERROR, "accept", 
+        webserv::logSystemError(ERROR, "accept", 
                               "Server fd: " + std::to_string(fd), 
                               "EventHandler::handleServerReadEvent");
         return -1;

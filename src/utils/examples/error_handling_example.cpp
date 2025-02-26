@@ -8,7 +8,7 @@ int main() {
     // 1. WARNING 레벨 에러 로그 예시 (파라미터 검증)
     int value = -10;
     if (value < 0) {
-        webserv::logError(webserv::WARNING, "Invalid value", "Input is negative", 
+        webserv::logError(WARNING, "Invalid value", "Input is negative", 
                          "validateInput function");
         value = 0; // 기본값으로 복구
     }
@@ -19,7 +19,7 @@ int main() {
 		if (errno == EAGAIN
 		||  errno == EWOULDBLOCK
 		||  errno == EINTR) {
-			webserv::logSystemError(webserv::WARNING, "recv failed", 
+			webserv::logSystemError(WARNING, "recv failed", 
 				"Client fd: " + std::to_string(curSession.getClientFd()), 
 				"EventHandler::recvRequest");
 			return READ_CONTINUE;
@@ -29,7 +29,7 @@ int main() {
     // 3. ERROR 레벨 에러 로그 예시 (파일 열기 실패)
     std::ifstream file("non_existent_file.txt");
     if (!file.is_open()) {
-        webserv::logError(webserv::ERROR, "File opening failed", "non_existent_file.txt", 
+        webserv::logError(ERROR, "File opening failed", "non_existent_file.txt", 
                          "errno " + std::to_string(errno) + ", " + std::strerror(errno));
         // 에러 발생 후 복구 시도 또는 대체 작업 수행
     }

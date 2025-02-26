@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <cstring>
 #include <sstream>
+#include "../include/errorUtils.hpp"
 
 // 프로그램 종료 시, 열려있는 소켓들을 닫기 위한 소멸자입니다.
 ServerManager::~ServerManager() {
@@ -184,4 +185,3 @@ void ServerManager::print() const {
 bool ServerManager::isListeningSocket(int fd) {
 	return listenFds_.find(fd) != listenFds_.end();
 }
-

@@ -1,4 +1,5 @@
 #include "ClientManager.hpp"
+#include "../include/errorUtils.hpp"
 
 ClientManager::ClientManager() {
 	// 생성자
@@ -25,7 +26,7 @@ ClientManager::TypeClientMap::iterator ClientManager::removeClient(int fd) {
 	TypeClientMap::iterator it = clientList_.find(fd);
 	if (it == clientList_.end()) {
 		// 존재하지 않는 fd에 대한 요청 시 오류 로깅
-		webserv::logError(webserv::WARNING, "Client Fd Not Found", 
+		webserv::logError(WARNING, "Client Fd Not Found", 
 		                 "fd: " + std::to_string(fd), 
 		                 "ClientManager::removeClient");
 		return clientList_.end(); // 유효하지 않은 반복자 반환

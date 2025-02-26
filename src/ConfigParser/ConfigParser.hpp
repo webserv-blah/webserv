@@ -4,13 +4,14 @@
 #include "../GlobalConfig/GlobalConfig.hpp"
 #include "utils.hpp"
 
-#include <string>            // std::string
-#include <vector>            // std::vector
-#include <map>               // std::map
-#include <fstream>           // std::ifstream
-#include <stdexcept>         // std::runtime_error
-#include <cctype>            // std::isdigit, std::isxdigit, std::isspace, std::tolower
-#include <iterator>          // std::iterator
+#include <string>			// std::string
+#include <vector>			// std::vector
+#include <map>				// std::map
+#include <fstream>			// std::ifstream
+#include <stdexcept>		// std::runtime_error
+#include <cctype>			// std::isdigit, std::isxdigit, std::isspace, std::tolower
+#include <iterator>			// std::iterator
+#include <cstdlib>			// strtoul
 
 class GlobalConfig;
 class ServerConfig;

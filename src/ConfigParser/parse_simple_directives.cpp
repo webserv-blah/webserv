@@ -14,7 +14,7 @@ void ConfigParser::parseErrorPage(std::ifstream& configFile, std::map<int, std::
 		} else if (utils::all_of(nextToken.begin(), nextToken.end(), ::isdigit)) {
 			// 에러 코드는 3자리여야 함
 			if (nextToken.size() == 3) {
-				int errorCode = std::stoi(nextToken);
+				int errorCode = utils::stoi(nextToken);
 				errorCodes.push_back(errorCode);
 			} else {
 				throw std::runtime_error("Invalid error code for error_page directive");
@@ -49,7 +49,7 @@ void ConfigParser::parseReturn(std::ifstream& configFile, std::string& returnUrl
 	if (utils::all_of(nextToken.begin(), nextToken.end(), ::isdigit)) {
 		if (nextToken.size() == 3) {
 			// 토큰을 int로 변환 후 returnStatus에 저장
-			returnStatus = std::stoi(nextToken);
+			returnStatus = utils::stoi(nextToken);
 		} else {
 			// 3자리가 아니면 예외 발생
 			throw std::runtime_error("Invalid HTTP status code for return directive");
@@ -128,7 +128,7 @@ void ConfigParser::parseClientMaxBodySize(std::ifstream& configFile, Optional<si
 		throw std::runtime_error("Unexpected end of file in client_max_body_size directive");
 	} else if (utils::all_of(nextToken.begin(), nextToken.end(), ::isdigit)) {
 		// 토큰을 unsigned long 형태로 변환 후 clientMaxBody에 저장
-		clientMaxBody = std::stoul(nextToken);
+		clientMaxBody = strtoul(nextToken.c_str(), nullptr, 10);
 	} else {
 		throw std::runtime_error("Expected numeric value for client_max_body_size directive");
 	}

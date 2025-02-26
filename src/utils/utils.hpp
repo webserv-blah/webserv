@@ -11,6 +11,7 @@
 #include <csignal>
 #include <iostream>
 #include <limits>
+#include <cstdlib>
 
 // 유틸리티 함수들을 담는 네임스페이스
 namespace utils {

@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <cstring>
+#include <sstream>
 
 // 프로그램 종료 시, 열려있는 소켓들을 닫기 위한 소멸자입니다.
 ServerManager::~ServerManager() {
@@ -33,7 +34,7 @@ void ServerManager::setupListeningSockets() {
     for (size_t i = 0; i < globalConfig.servers_.size(); ++i) {
         ServerConfig &server = globalConfig.servers_[i];
         // 현재 서버의 호스트와 포트 정보를 키로 생성합니다.
-        std::pair<std::string, int> key = std::make_pair(server.host_, server.port_);
+        std::pair<std::string, int> key(server.host_, server.port_);
 
         int sockFd;
         // 해당 호스트/포트 조합에 대해 이미 소켓이 생성되었는지 확인합니다.
@@ -53,19 +54,23 @@ void ServerManager::setupListeningSockets() {
     }
 }
 
-// 새 TCP 소켓을 생성하는 함수입니다.
-int ServerManager::createListeningSocket(const ServerConfig &server)
-{
+// 서버 구성에 따라 소켓을 생성하고 바인딩하고 수신 대기 상태로 전환하는 함수입니다.
+int ServerManager::createListeningSocket(const ServerConfig &server) const {
+    int sockFd = -1;
     struct addrinfo hints, *result, *currAddr;
-    char portStr[6];
     
     // 주소 정보를 위한 힌트 구조체를 초기화합니다.
     initAddrInfo(hints);
+    
     // 포트 번호를 문자열로 변환합니다.
-    snprintf(portStr, sizeof(portStr), "%d", server.port_);
-
+	std::stringstream ss;
+	ss << server.port_;
+	std::string portStr = ss.str();
+	const char* portCStr = portStr.c_str();
+    
     // 서버의 호스트명과 포트 번호를 기반으로 주소 정보를 가져옵니다.
-    if (getaddrinfo(server.host_.c_str(), portStr, &hints, &result)) {
+	int s = getaddrinfo(server.host_.c_str(), portCStr, &hints, &result);
+    if (s != 0) {
         throw std::runtime_error(std::string("getaddrinfo: ") + gai_strerror(s));
     }
 
@@ -105,7 +110,7 @@ int ServerManager::createListeningSocket(const ServerConfig &server)
 }
 
 // addrinfo 구조체의 힌트를 초기화하는 함수입니다.
-void ServerManager::initAddrInfo(struct addrinfo &hints) {
+void ServerManager::initAddrInfo(struct addrinfo &hints) const {
     // hints 구조체의 모든 필드를 0으로 초기화합니다.
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;			// IPv4 허용
@@ -114,7 +119,7 @@ void ServerManager::initAddrInfo(struct addrinfo &hints) {
 }
 
 // 소켓 옵션과 논블로킹 모드를 설정하는 함수입니다.
-int ServerManager::configureSocket(int sockFd) {
+int ServerManager::configureSocket(int sockFd) const {
     if (setSocketOptions(sockFd) < 0) {
         return -1;
     }
@@ -125,7 +130,7 @@ int ServerManager::configureSocket(int sockFd) {
 }
 
 // 소켓을 논블로킹 모드로 설정하는 함수입니다.
-int ServerManager::setNonBlocking(int sockFd) {
+int ServerManager::setNonBlocking(int sockFd) const {
     // 현재 파일 디스크립터의 플래그를 가져옵니다.
     int flags = fcntl(sockFd, F_GETFL, 0);
     if (flags == -1) {
@@ -139,7 +144,7 @@ int ServerManager::setNonBlocking(int sockFd) {
 }
 
 // 로컬 주소 재사용을 허용하는 소켓 옵션을 설정하는 함수입니다.
-int ServerManager::setSocketOptions(int sockFd) {
+int ServerManager::setSocketOptions(int sockFd) const {
     int opt = 1;
     // SO_REUSEADDR 옵션을 활성화하여, 소켓을 빠르게 재사용할 수 있도록 합니다.
     if (setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
@@ -171,5 +176,10 @@ void ServerManager::print() const {
 			std::cout << "server: " << it->second[i]->host_ << ":" << it->second[i]->port_ << std::endl;
 		}
 	}
+}
+
+// 주어진 파일 디스크립터(fd)가 수신 소켓인지 판단하는 함수
+bool ServerManager::isListeningSocket(int fd) {
+	return listenFds_.find(fd) != listenFds_.end();
 }
 

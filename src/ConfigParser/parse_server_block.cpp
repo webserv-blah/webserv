@@ -207,7 +207,7 @@ namespace {
 		}
 
 		// '-'는 시작이나 끝에 위치하면 안 됨
-		if (name.front() == '-' || name.back() == '-') {
+		if (name[0] == '-' || name[name.size() - 1] == '-') {
 			return false;
 		}
 

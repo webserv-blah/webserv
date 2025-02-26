@@ -20,7 +20,7 @@ namespace utils {
 	int stoi(const std::string& str) {
 		char* end; // 숫자열의 끝을 가리킬 포인터
 		errno = 0; // 호출 전에 errno를 초기화
-		long result = std::strtol(str.c_str(), &end, 10); // 10진수로 변환
+		long result = strtol(str.c_str(), &end, 10); // 10진수로 변환
 
 		// 오버플로우 처리
 		if (errno == ERANGE || result > INT_MAX || result < INT_MIN) {
@@ -39,7 +39,7 @@ namespace utils {
 	size_t sto_size_t(const std::string& str) {
 		char* end;
 		errno = 0;
-		unsigned long result = std::strtoul(str.c_str(), &end, 10);
+		unsigned long result = strtoul(str.c_str(), &end, 10);
 
 		// 오버플로우 처리
 		if (errno == ERANGE || result > std::numeric_limits<size_t>::max()) {

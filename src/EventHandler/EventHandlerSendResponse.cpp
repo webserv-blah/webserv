@@ -1,5 +1,5 @@
 #include "EventHandler.hpp"
-#include "ClientSession.hpp"
+#include "../ClientSession/ClientSession.hpp"
 #include <errno.h>
 #include <algorithm>
 

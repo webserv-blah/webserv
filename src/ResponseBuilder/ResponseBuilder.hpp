@@ -1,7 +1,7 @@
 #ifndef RESPONSE_BUILDER_HPP
 #define RESPONSE_BUILDER_HPP
 
-#include "GlobalConfig.hpp"
+#include "../GlobalConfig/GlobalConfig.hpp"
 #include "ErrorPageResolver.hpp"
 
 #include <map>

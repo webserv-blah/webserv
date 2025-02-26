@@ -1,9 +1,9 @@
 #ifndef CLIENT_SESSION_HPP
 #define CLIENT_SESSION_HPP
 
-#include "commonEnums.hpp"
-#include "GlobalConfig.hpp"
-#include "RequestMessage.hpp"
+#include "../RequestParser/RequestParser.hpp"
+#include "../GlobalConfig/GlobalConfig.hpp"
+#include "../include/commonEnums.hpp"
 
 class ClientSession {
 	public:

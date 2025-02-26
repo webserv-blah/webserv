@@ -25,11 +25,11 @@ int ClientSession::getErrorStatusCode() const {
 }
 
 const RequestMessage &ClientSession::getReqMsg() const {
-	return this->reqMsg_;
+	return *this->reqMsg_;
 }
 
 const RequestConfig &ClientSession::getConfig() const {
-	return this->config_;
+	return *this->config_;
 }
 
 const RequestMessage *ClientSession::getReqMsgPtr() const {

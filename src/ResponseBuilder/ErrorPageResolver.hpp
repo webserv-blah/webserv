@@ -1,7 +1,7 @@
 #ifndef ERROR_PAGE_RESOLVER_HPP
 #define ERROR_PAGE_RESOLVER_HPP
 
-#include "file_utils.hpp"
+#include "../utils/file_utils.hpp"
 #include <sstream>
 #include <map>
 #include <string>

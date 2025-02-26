@@ -2,7 +2,7 @@
 #define CONFIG_PARSER_HPP
 
 #include "../GlobalConfig/GlobalConfig.hpp"
-#include "utils.hpp"
+#include "../utils/utils.hpp"
 
 #include <string>			// std::string
 #include <vector>			// std::vector

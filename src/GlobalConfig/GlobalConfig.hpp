@@ -1,7 +1,7 @@
 #ifndef GLOBAL_CONFIG_HPP
 #define GLOBAL_CONFIG_HPP
 
-#include "Optional.hpp"
+#include "../utils/Optional.hpp"
 #include "../ConfigParser/ConfigParser.hpp"
 #include <string>
 #include <vector>

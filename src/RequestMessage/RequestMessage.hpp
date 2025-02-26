@@ -5,6 +5,10 @@
 #include <map>
 #include <vector>
 
+#define CR "\r"
+#define LF "\n"
+#define CRLF "\r\n"
+
 enum EnumMethod { NONE, GET, POST, DELETE };
 typedef enum EnumConnection { KEEP_ALIVE, CLOSE } EnumConnect;
 typedef enum EnumTransferEncoding { NONE_ENCODING, CHUNK } EnumTransEnc;

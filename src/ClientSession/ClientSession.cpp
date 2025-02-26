@@ -1,6 +1,12 @@
 #include "ClientSession.hpp"
 
-ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : listenFd_(listenFd), clientFd_(clientFd), status_(READ_CONTINUE), reqMsg_(NULL), config_(NULL), clientIP_(clientIP) {}
+#ifndef BUFFER_SIZE
+#define BUFFER_SIZE 8192
+#endif
+
+ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : listenFd_(listenFd), clientFd_(clientFd), status_(READ_CONTINUE), reqMsg_(NULL), config_(NULL), clientIP_(clientIP) {
+	this->readBuffer_.reserve(BUFFER_SIZE * 2);
+}
 ClientSession::~ClientSession() {
 	if (this->reqMsg_ != NULL)
 		delete this->reqMsg_;
@@ -32,10 +38,6 @@ const RequestConfig *ClientSession::getConfig() const {
 
 std::string ClientSession::getReadBuffer() const {
 	return this->readBuffer_;
-}
-
-size_t ClientSession::getReadCursor() const {
-	return this->readCursor_;
 }
 
 std::string ClientSession::getWriteBuffer() const {
@@ -72,10 +74,6 @@ void ClientSession::setConfig(const RequestConfig *config) {
 
 void ClientSession::setReadBuffer(const std::string &remainData) {
 	this->readBuffer_ = remainData;
-}
-
-void ClientSession::setReadCursor(const size_t &curCursor) {
-	this->readCursor_ = curCursor;
 }
 
 void ClientSession::setWriteBuffer(const std::string &remainData) {

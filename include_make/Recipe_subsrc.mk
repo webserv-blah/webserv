@@ -1,25 +1,21 @@
 all: 
-	$(Q)$(call color_printf,$(YELLOW),$(NAME),🎯 starting compile $(NAME))
-	$(Q)$(MAKE) $(NAME)
-	$(Q)$(call color_printf,$(BLUE),$(NAME),🔰 done!)
+	$(Q)$(MAKE) $(NAME) >/dev/null
 
 $(NAME): $(OBJS)
-	$(Q)$(call color_printf,$(GREEN),$(NAME),📚 archive object)
 	$(Q)$(AR) $(ARFLAGS) $@ $^
-	$(Q)$(MAKE) files=$(NAME) src_dir=`pwd` dst_dir=$(SRCDIR) link_files
-	$(Q)$(foreach head,$(HEAD), $(MAKE) files=$(head) src_dir=`pwd` dst_dir=$(SRCDIR)/include link_files;)
+	$(Q)$(MAKE) files=$(NAME) src_dir=`pwd` dst_dir=$(SRCDIR) link_files >/dev/null
+	$(Q)$(foreach head,$(HEAD), $(MAKE) files=$(head) src_dir=`pwd` dst_dir=$(SRCDIR)/include link_files >/dev/null;)
 
 clean:
-	$(Q)$(MAKE) files=$(NAME) src_dir=`pwd` dst_dir=$(SRCDIR) unlink_files
-	$(Q)$(foreach head,$(HEAD), $(MAKE) files=$(head) src_dir=`pwd` dst_dir=$(SRCDIR)/include unlink_files;)
-	$(Q)$(Q)$(call color_printf,$(RED),$(NAME),🗑️  remove Objects && Dependency file)
+	$(Q)$(MAKE) files=$(NAME) src_dir=`pwd` dst_dir=$(SRCDIR) unlink_files >/dev/null
+	$(Q)$(foreach head,$(HEAD), $(MAKE) files=$(head) src_dir=`pwd` dst_dir=$(SRCDIR)/include unlink_files >/dev/null;)
 	$(Q)$(RM) $(OBJS) $(DEPS)
 	$(Q)$(RM) $(NAME)
 
 fclean: clean
 
 re:
-	$(Q)$(MAKE) fclean
-	$(Q)$(MAKE) all
+	$(Q)$(MAKE) fclean >/dev/null
+	$(Q)$(MAKE) all >/dev/null
 
 .PHONY: all clean fclean re

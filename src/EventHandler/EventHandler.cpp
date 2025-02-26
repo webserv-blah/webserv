@@ -26,8 +26,10 @@ int EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
     // accept() 호출을 통해 클라이언트 연결 수락
     int clientFd = accept(fd, reinterpret_cast<struct sockaddr*>(&clientAddr), &addrLen);
     if (clientFd < 0) {
-        // 연결 수락 실패
-        std::cerr << "[ERROR] Invalid Value - Failed accepting client (source: EventHandler.handleServerReadEvent)";
+        // 연결 수락 실패 - 시스템 호출 에러를 로깅
+        webserv::logSystemError(webserv::ERROR, "accept", 
+                              "Server fd: " + std::to_string(fd), 
+                              "EventHandler::handleServerReadEvent");
         return -1;
     }
 

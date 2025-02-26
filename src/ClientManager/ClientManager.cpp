@@ -24,8 +24,10 @@ void ClientManager::addClient(int listenFd, int clientFd, std::string clientAddr
 ClientManager::TypeClientMap::iterator ClientManager::removeClient(int fd) {
 	TypeClientMap::iterator it = clientList_.find(fd);
 	if (it == clientList_.end()) {
-		// 존재하지 않는 fd에 대한 요청 시 오류 출력
-		perror("Client Fd Not Found");
+		// 존재하지 않는 fd에 대한 요청 시 오류 로깅
+		webserv::logError(webserv::WARNING, "Client Fd Not Found", 
+		                 "fd: " + std::to_string(fd), 
+		                 "ClientManager::removeClient");
 		return clientList_.end(); // 유효하지 않은 반복자 반환
 	}
 

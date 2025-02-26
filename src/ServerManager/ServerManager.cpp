@@ -71,7 +71,9 @@ int ServerManager::createListeningSocket(const ServerConfig &server) const {
     // 서버의 호스트명과 포트 번호를 기반으로 주소 정보를 가져옵니다.
 	int s = getaddrinfo(server.host_.c_str(), portCStr, &hints, &result);
     if (s != 0) {
-        throw std::runtime_error(std::string("getaddrinfo: ") + gai_strerror(s));
+        webserv::throwError("getaddrinfo failed", 
+                        server.host_ + ":" + portCStr, 
+                        std::string("gai_error: ") + gai_strerror(s));
     }
 
     // 얻어온 주소 정보 리스트를 순회하며 소켓 생성 및 바인딩을 시도합니다.

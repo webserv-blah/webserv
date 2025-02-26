@@ -28,29 +28,32 @@ inline void throwError(const std::string& cause,
 
 // 시스템 호출 실패에 대한 에러 메시지 생성 (errno 사용)
 inline std::string systemErrorMessage(EnumErrorLevel level, const std::string& syscall, 
-                                     const std::string& context = "") {
+                                     const std::string& context = "", const std::string& location = "") {
     std::ostringstream oss;
     std::string cause = syscall + " failed";
-    std::string source = "errno " + std::to_string(errno) + ", " + std::strerror(errno);
+    std::string source = (location.empty() ? "" : location + ", ") + 
+                        "errno " + std::to_string(errno) + ", " + std::strerror(errno);
     return errorMessage(level, cause, context, source);
 }
 
 // 시스템 호출 실패 로깅 (errno 값과 설명 포함)
 inline void logSystemError(EnumErrorLevel level, const std::string& syscall, 
-                          const std::string& context = "") {
+                          const std::string& context = "", const std::string& location = "") {
     int err = errno; // 현재 errno 값 저장 (다른 함수 호출로 변경될 수 있음)
     std::ostringstream oss;
     std::string cause = syscall + " failed";
-    std::string source = "errno " + std::to_string(err) + ", " + std::strerror(err);
+    std::string source = (location.empty() ? "" : location + ", ") + 
+                        "errno " + std::to_string(err) + ", " + std::strerror(err);
     std::cerr << errorMessage(level, cause, context, source) << std::endl;
 }
 
 // 시스템 호출 실패로 예외 던지기 (errno 값과 설명 포함)
-inline void throwSystemError(const std::string& syscall, const std::string& context = "") {
+inline void throwSystemError(const std::string& syscall, const std::string& context = "", const std::string& location = "") {
     int err = errno; // 현재 errno 값 저장 (다른 함수 호출로 변경될 수 있음)
     std::ostringstream oss;
     std::string cause = syscall + " failed";
-    std::string source = "errno " + std::to_string(err) + ", " + std::strerror(err);
+    std::string source = (location.empty() ? "" : location + ", ") + 
+                        "errno " + std::to_string(err) + ", " + std::strerror(err);
     std::string errorMsg = errorMessage(FATAL, cause, context, source);
     throw std::runtime_error(errorMsg);
 }

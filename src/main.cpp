@@ -1,7 +1,7 @@
 #include <iostream>
-#include "utils.hpp"
-#include "GlobalConfig.hpp"
-#include "ServerManager.hpp"
+#include "utils/utils.hpp"
+#include "GlobalConfig/GlobalConfig.hpp"
+#include "ServerManager/ServerManager.hpp"
 
 volatile bool globalServerRunning = true;
 

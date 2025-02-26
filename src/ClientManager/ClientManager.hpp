@@ -1,7 +1,7 @@
 #ifndef CLIENT_MANAGER_HPP
 #define CLIENT_MANAGER_HPP
 
-#include "ClientSession.hpp"
+#include "../ClientSession/ClientSession.hpp"
 #include <map>
 #include <unistd.h>
 

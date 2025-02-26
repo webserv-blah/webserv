@@ -1,9 +1,9 @@
 #include "CgiHandler.hpp"               // CgiHandler 클래스 선언 헤더 포함
-#include "ClientSession.hpp"            // 클라이언트 세션 관련 클래스 포함
-#include "file_utils.hpp"               // 파일 관련 유틸리티 포함
-#include "RequestMessage.hpp"           // 요청 메시지 클래스 포함
-#include "GlobalConfig.hpp"             // 전역 설정 정보 포함
-#include "ResponseBuilder.hpp"          // 응답 빌더 클래스 포함
+#include "../ClientSession/ClientSession.hpp"            // 클라이언트 세션 관련 클래스 포함
+#include "../utils/file_utils.hpp"               // 파일 관련 유틸리티 포함
+#include "../RequestMessage/RequestMessage.hpp"           // 요청 메시지 클래스 포함
+#include "../GlobalConfig/GlobalConfig.hpp"             // 전역 설정 정보 포함
+#include "../ResponseBuilder/ResponseBuilder.hpp"          // 응답 빌더 클래스 포함
 
 #include <sys/wait.h>                   // 프로세스 대기 관련 헤더 포함
 #include <unistd.h>                     // POSIX API 관련 헤더 포함

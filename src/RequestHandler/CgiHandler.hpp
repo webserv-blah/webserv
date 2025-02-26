@@ -1,8 +1,8 @@
 #ifndef CGI_HANDLER_HPP
 #define CGI_HANDLER_HPP
 
-#include "ResponseBuilder.hpp"      // 응답 빌더 클래스 선언 포함
-#include "ClientSession.hpp"        // 클라이언트 세션 클래스 선언 포함
+#include "../ResponseBuilder/ResponseBuilder.hpp"      // 응답 빌더 클래스 선언 포함
+#include "../ClientSession/ClientSession.hpp"        // 클라이언트 세션 클래스 선언 포함
 #include <string>                   // 문자열 사용을 위한 헤더 포함
 #include <vector>                   // 벡터 사용을 위한 헤더 포함
 

@@ -4,7 +4,7 @@
 #define BUFFER_SIZE 8192
 #endif
 
-ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : listenFd_(listenFd), clientFd_(clientFd), status_(READ_CONTINUE), reqMsg_(NULL), config_(NULL), clientIP_(clientIP) {
+ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : listenFd_(listenFd), clientFd_(clientFd), reqMsg_(NULL), config_(NULL), clientIP_(clientIP) {
 	this->readBuffer_.reserve(BUFFER_SIZE * 2);
 }
 ClientSession::~ClientSession() {
@@ -22,10 +22,6 @@ int ClientSession::getClientFd() const {
 
 int ClientSession::getErrorStatusCode() const {
 	return this->errorStatusCode_;
-}
-
-EnumSesStatus ClientSession::getStatus() const {
-	return this->status_;
 }
 
 const RequestMessage *ClientSession::getReqMsg() const {
@@ -58,10 +54,6 @@ void ClientSession::setClientFd(const int &clientFd) {
 
 void ClientSession::setErrorStatusCode(const int &statusCode) {
 	this->errorStatusCode_ = statusCode;
-}
-
-void ClientSession::setStatus(const EnumSesStatus &status) {
-	this->status_ = status;
 }
 
 void ClientSession::setReqMsg(RequestMessage *reqMsg) {

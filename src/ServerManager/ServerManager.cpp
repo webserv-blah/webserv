@@ -34,7 +34,7 @@ void ServerManager::setupListeningSockets() {
     for (size_t i = 0; i < globalConfig.servers_.size(); ++i) {
         ServerConfig &server = globalConfig.servers_[i];
         // 현재 서버의 호스트와 포트 정보를 키로 생성합니다.
-        std::pair<std::string, int> key = std::make_pair(server.host_, server.port_);
+        std::pair<std::string, int> key(server.host_, server.port_);
 
         int sockFd;
         // 해당 호스트/포트 조합에 대해 이미 소켓이 생성되었는지 확인합니다.
@@ -56,17 +56,18 @@ void ServerManager::setupListeningSockets() {
 
 // 서버 구성에 따라 소켓을 생성하고 바인딩하고 수신 대기 상태로 전환하는 함수입니다.
 int ServerManager::createListeningSocket(const ServerConfig &server) const {
-    int sockFd;
+    int sockFd = -1;
     struct addrinfo hints, *result, *currAddr;
     
     // 주소 정보를 위한 힌트 구조체를 초기화합니다.
     initAddrInfo(hints);
+    
     // 포트 번호를 문자열로 변환합니다.
 	std::stringstream ss;
 	ss << server.port_;
 	std::string portStr = ss.str();
 	const char* portCStr = portStr.c_str();
-
+    
     // 서버의 호스트명과 포트 번호를 기반으로 주소 정보를 가져옵니다.
 	int s = getaddrinfo(server.host_.c_str(), portCStr, &hints, &result);
     if (s != 0) {
@@ -175,5 +176,10 @@ void ServerManager::print() const {
 			std::cout << "server: " << it->second[i]->host_ << ":" << it->second[i]->port_ << std::endl;
 		}
 	}
+}
+
+// 주어진 파일 디스크립터(fd)가 수신 소켓인지 판단하는 함수
+bool ServerManager::isListeningSocket(int fd) {
+	return listenFds_.find(fd) != listenFds_.end();
 }
 

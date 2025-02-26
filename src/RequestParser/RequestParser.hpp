@@ -17,7 +17,6 @@ class RequestParser {
 		void				setConfigBodyLength(size_t length);
 
 	private:
-		size_t				oneLineMaxLength_;
 		size_t				uriMaxLength_;
 		size_t				bodyMaxLength_;//Client마다 바뀌는 설정 값
 		

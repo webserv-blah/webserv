@@ -1,4 +1,5 @@
 #include "ConfigParser.hpp"
+#include "../include/errorUtils.hpp"
 
 // globalConfig와 파일 경로를 받아 설정 파일을 파싱하는 함수
 void ConfigParser::parse(GlobalConfig& globalConfig, const char* path) {
@@ -6,7 +7,7 @@ void ConfigParser::parse(GlobalConfig& globalConfig, const char* path) {
 	std::ifstream configFile(path);
 	if (!configFile.is_open()) {
 		// 파일을 열지 못하면 예외 발생
-		throw std::runtime_error("Failed to open config file");
+		webserv::throwError("Failed to open config file", std::string(path), "ConfigParser::parse");
 	}
 
 	std::string token;

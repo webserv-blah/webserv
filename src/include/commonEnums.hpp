@@ -39,4 +39,10 @@ enum EnumStatusCode {
 	SERVICE_UNAVAILABLE = 503
 };
 
+enum EnumErrorLevel {
+	WARNING, // 경고 (계속 진행 가능)
+	ERROR,   // 오류 (복구 필요)
+	FATAL    // 치명적 오류 (프로그램 종료)
+};
+
 #endif

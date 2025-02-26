@@ -13,13 +13,21 @@ void ServerManager::run() {
 	EventHandler 	eventHandler;
 	ClientManager	clientManager;
 
+	DEBUG_LOG("[ServerManager] Starting server");
+	
 	try {
 		Demultiplexer	reactor(listenFds_);
 		TimeoutHandler	timeoutHandler;
+		
+		DEBUG_LOG("[ServerManager] Initialized components, entering main event loop");
 
 		while (isServerRunning()) {
 			// 발생한 이벤트의 개수를 확인
 			int	numEvents = reactor.waitForEvent();
+			
+			if (numEvents > 0) {
+				DEBUG_LOG("[ServerManager] Detected " + std::to_string(numEvents) + " events");
+			}
 
 			// 발생한 각 이벤트를 순회하며 처리
 			for (int i = 0; i < numEvents; ++i) {
@@ -28,19 +36,23 @@ void ServerManager::run() {
 
 				if (type == EXCEPTION_EVENT) {
 					// 예외 이벤트 발생: 소켓 오류 등으로 인해 클라이언트 연결을 종료
+					DEBUG_LOG("[ServerManager] Exception event on fd: " + std::to_string(fd));
 					removeClientInfo(fd, clientManager, reactor, timeoutHandler);
 				} else if (type == READ_EVENT) {
 					if (isListeningSocket(fd)) {
 						// 리스닝 소켓에서 읽기 이벤트 발생: 새로운 클라이언트의 연결 요청 처리
+						DEBUG_LOG("[ServerManager] Connection request on listening socket: " + std::to_string(fd));
 						processServerReadEvent(
 							fd, clientManager, eventHandler, timeoutHandler, reactor);
 					} else {
 						// 기존 클라이언트 소켓에서 읽기 이벤트 발생: 클라이언트로부터 데이터 수신 처리
+						DEBUG_LOG("[ServerManager] Read event on client socket: " + std::to_string(fd));
 						processClientReadEvent(
 							fd, clientManager, eventHandler, timeoutHandler, reactor);
 					}
 				} else if (type == WRITE_EVENT) {
 					// 쓰기 이벤트 발생: 클라이언트에게 데이터를 전송하는 작업 처리
+					DEBUG_LOG("[ServerManager] Write event on client socket: " + std::to_string(fd));
 					processClientWriteEvent(
 						fd, clientManager, eventHandler, timeoutHandler, reactor);
 				}
@@ -50,10 +62,12 @@ void ServerManager::run() {
 		}
 	} catch (std::exception& e) {
 	    // 예외 발생 시, 서버 비정상 종료에 대비하여 연결된 모든 클라이언트에게 종료 알림을 전송
+		DEBUG_LOG("[ServerManager] Exception caught: " + std::string(e.what()));
 		notifyClientsShutdown(clientManager, eventHandler);
 		throw; // 원래 예외 그대로 throw
 	}
 	// 서버가 정상 종료된 시 모든 클라이언트에게 종료 알림 전송
+	DEBUG_LOG("[ServerManager] Server shutting down, notifying clients");
 	notifyClientsShutdown(clientManager, eventHandler);
 }
 
@@ -62,28 +76,39 @@ void ServerManager::notifyClientsShutdown(ClientManager& clientManager, EventHan
 	ClientManager::TypeClientMap& clientList = clientManager.accessClientSessionMap();
 	ClientManager::TypeClientMap::iterator it;
 
+	DEBUG_LOG("[ServerManager] Sending shutdown notice to " + std::to_string(clientList.size()) + " clients");
+
 	// 클라이언트 목록 전체를 순회하며 각 클라이언트에 종료 알림 전송
 	for (it = clientList.begin(); it != clientList.end(); ++it) {
+		DEBUG_LOG("[ServerManager] Sending SERVICE_UNAVAILABLE to client fd: " + std::to_string(it->first));
 		eventHandler.handleError(SERVICE_UNAVAILABLE, *it->second);
 	}
 }
 
 // 새로운 클라이언트가 연결되었을 때 호출됩니다.
 void ServerManager::addClientInfo(int clientFd, Demultiplexer& reactor, TimeoutHandler& timeoutHandler) {
+	DEBUG_LOG("[ServerManager] Adding new client connection: fd " + std::to_string(clientFd));
+	
 	// 클라이언트의 타임아웃 관리를 시작
 	timeoutHandler.addConnection(clientFd);
 	// 리액터에 클라이언트 소켓을 추가하여 이벤트 감시 대상에 포함
 	reactor.addSocket(clientFd);
+	
+	DEBUG_LOG("[ServerManager] Client fd " + std::to_string(clientFd) + " added to monitoring");
 }
 
 // 클라이언트 연결 종료 또는 오류 발생 시 호출됩니다.
 void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler) {
+	DEBUG_LOG("[ServerManager] Removing client connection: fd " + std::to_string(clientFd));
+	
 	// 클라이언트 세션을 ClientManager에서 제거
 	clientManager.removeClient(clientFd);
 	// 타임아웃 관리 대상에서 클라이언트 삭제
 	timeoutHandler.removeConnection(clientFd);
 	// 리액터에서 클라이언트 소켓 제거
 	reactor.removeSocket(clientFd);
+	
+	DEBUG_LOG("[ServerManager] Client fd " + std::to_string(clientFd) + " removed from all systems");
 }
 
 // 리스닝 소켓에서 읽기 이벤트가 발생하면 새로운 클라이언트의 연결 요청을 처리합니다.
@@ -91,22 +116,30 @@ void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager,
 // 반환된 FD가 유효하면 addClientInfo()를 통해 클라이언트 정보를 등록합니다.
 void ServerManager::processServerReadEvent(int fd, ClientManager& clientManager,
 	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
+	DEBUG_LOG("[ServerManager] Processing new connection request on listening socket " + std::to_string(fd));
+	
 	// 새로운 클라이언트 연결 요청 처리 및 소켓 FD 반환
 	int clientFd = eventHandler.handleServerReadEvent(fd, clientManager);
 
 	// 새로 연결된 클라이언트의 소켓 FD가 유효한 경우 클라이언트 정보 등록
 	if (clientFd > 0) {
+		DEBUG_LOG("[ServerManager] New client connected with fd: " + std::to_string(clientFd));
 		addClientInfo(clientFd, reactor, timeoutHandler);
+	} else {
+		DEBUG_LOG("[ServerManager] Failed to accept new client connection");
 	}
 }
 
 // 기존 클라이언트 소켓에서 읽기 이벤트가 발생한 경우, 클라이언트 데이터를 처리합니다.
 void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
+	DEBUG_LOG("[ServerManager] Processing client read event for fd: " + std::to_string(fd));
+	
 	// 파일 디스크립터에 해당하는 클라이언트 세션을 획득
 	ClientSession* client = clientManager.accessClientSession(fd);
 	if (!client) {
 		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
+		DEBUG_LOG("[ServerManager] Error: No client session found for fd: " + std::to_string(fd));
 		webserv::logError(WARNING, "Invalid Value", 
 		                 "No clientSession corresponding to fd: " + std::to_string(fd), 
 		                 "ServerManager::processClientReadEvent");
@@ -115,17 +148,22 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 
 	// 클라이언트로부터 데이터를 읽어 처리한 후 반환 상태를 확인
 	EnumSesStatus status = eventHandler.handleClientReadEvent(*client);
+	DEBUG_LOG("[ServerManager] Client read event handled, status: " + std::to_string(status));
+	
 	if (status == CONNECTION_CLOSED) { 
 		// 클라이언트가 연결을 종료한 경우, 관련 정보를 삭제
+		DEBUG_LOG("[ServerManager] Client connection closed (fd: " + std::to_string(fd) + ")");
 		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
 	} else if (status == WRITE_CONTINUE) { 
 		// 추가적인 쓰기 작업이 필요한 경우:
 		// - 타임아웃을 갱신
 		// - 해당 클라이언트에 대해 쓰기 이벤트를 추가
+		DEBUG_LOG("[ServerManager] Adding write event for client (fd: " + std::to_string(fd) + ")");
 		timeoutHandler.updateActivity(fd);
 		reactor.addWriteEvent(fd);
 	} else { 
 		// 그 외, 타임아웃만 갱신
+		DEBUG_LOG("[ServerManager] Updating timeout for client (fd: " + std::to_string(fd) + ")");
 		timeoutHandler.updateActivity(fd);
 	}
 }
@@ -133,9 +171,12 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 // 클라이언트 소켓에 쓰기(전송) 이벤트가 발생한 경우 데이터를 전송합니다.
 void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager,
 	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
+	DEBUG_LOG("[ServerManager] Processing client write event for fd: " + std::to_string(fd));
+	
 	ClientSession* client = clientManager.accessClientSession(fd);
 	if (!client) {
 		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
+		DEBUG_LOG("[ServerManager] Error: No client session found for fd: " + std::to_string(fd));
 		webserv::logError(WARNING, "Invalid Value", 
 		                 "No clientSession corresponding to fd: " + std::to_string(fd), 
 		                 "ServerManager::processClientWriteEvent");
@@ -144,11 +185,17 @@ void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager
 
 	// 클라이언트에 데이터 전송 후 반환된 상태 확인
 	EnumSesStatus status = eventHandler.handleClientWriteEvent(*client);
+	DEBUG_LOG("[ServerManager] Client write event handled, status: " + std::to_string(status));
+	
 	if (status == CONNECTION_CLOSED) { 
 		// 클라이언트가 연결을 종료한 경우, 관련 정보를 삭제
+		DEBUG_LOG("[ServerManager] Client disconnected during write (fd: " + std::to_string(fd) + ")");
 		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
 	} else if (status == WRITE_COMPLETE) { 
 		// 데이터 전송이 완료된 경우, 리액터에서 쓰기 이벤트를 제거하여 더 이상 쓰기 이벤트를 감시하지 않음
+		DEBUG_LOG("[ServerManager] Write complete, removing write event for fd: " + std::to_string(fd));
 		reactor.removeWriteEvent(fd);
+	} else {
+		DEBUG_LOG("[ServerManager] Write in progress for fd: " + std::to_string(fd));
 	}
 }

@@ -19,6 +19,7 @@ void ClientManager::addClient(int listenFd, int clientFd, std::string clientAddr
 	// 중복 검사 필요 여부 고려
 	ClientSession* newClient = new ClientSession(listenFd, clientFd, clientAddr);
 	clientList_.insert(std::make_pair(clientFd, newClient)); // clientFd를 key로 하여 추가
+	DEBUG_LOG("[ClientManager] New client added: " << clientAddr << " (fd: " << clientFd << ", listen fd: " << listenFd << ")");
 }
 
 // clientSession 제거 및 목록에서 삭제
@@ -34,6 +35,7 @@ ClientManager::TypeClientMap::iterator ClientManager::removeClient(int fd) {
 
 	delete it->second; // 동적으로 할당된 ClientSession 해제
 	close(fd); // 해당 클라이언트의 소켓 닫기
+	DEBUG_LOG("[ClientManager] Client removed (fd: " << fd << ")");
 
 	// 해당 요소를 map에서 삭제하고 다음 요소의 반복자 반환
 	TypeClientMap::iterator nextIt = clientList_.erase(it);

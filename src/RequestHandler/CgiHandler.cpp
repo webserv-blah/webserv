@@ -4,6 +4,7 @@
 #include "../RequestMessage/RequestMessage.hpp"           // 요청 메시지 클래스 포함
 #include "../GlobalConfig/GlobalConfig.hpp"             // 전역 설정 정보 포함
 #include "../ResponseBuilder/ResponseBuilder.hpp"          // 응답 빌더 클래스 포함
+#include "../include/errorUtils.hpp"              // 에러 처리 및 로깅
 
 #include <sys/wait.h>                   // 프로세스 대기 관련 헤더 포함
 #include <unistd.h>                     // POSIX API 관련 헤더 포함
@@ -33,16 +34,23 @@ bool CgiHandler::isCGI(const std::string& targetUri, const std::string& cgiExten
 
 // 클라이언트의 요청을 처리하여 CGI 결과를 반환하는 함수
 std::string CgiHandler::handleRequest(const ClientSession& clientSession) {
+    DEBUG_LOG("[CgiHandler] Handling CGI request for client fd: " << clientSession.getClientFd());
     // 클라이언트 요청 메시지와 설정 정보 가져옴
     const RequestMessage& reqMsg = clientSession.getReqMsg();
     const RequestConfig& conf = clientSession.getConfig();
 
     // URI를 파싱하여 스크립트 경로, 쿼리 문자열 등 추출
     UriParts parts = parseUri(conf.root_, reqMsg.getTargetURI());
+    DEBUG_LOG("[CgiHandler] Parsed URI - scriptPath: " << parts.scriptPath 
+             << ", pathInfo: " << parts.pathInfo << ", queryString: " << parts.queryString);
+    
     // 추출한 스크립트 경로의 유효성을 검사함
     EnumValidationResult vr = validatePath(parts.scriptPath);
+    DEBUG_LOG("[CgiHandler] Script path validation result: " << vr);
+    
     if (vr != VALID_FILE) {
         // 파일이 없거나 경로가 올바르지 않으면 404 또는 403 에러 반환
+        DEBUG_LOG("[CgiHandler] Invalid script path, returning error response");
         return (vr == FILE_NOT_FOUND || vr == PATH_NOT_FOUND) ? 
                responseBuilder_.buildError(NOT_FOUND, conf) : 
                responseBuilder_.buildError(FORBIDDEN, conf);
@@ -50,14 +58,28 @@ std::string CgiHandler::handleRequest(const ClientSession& clientSession) {
 
     // POST 요청이면 요청 본문을, 아니면 빈 문자열을 사용
     std::string requestBody = (reqMsg.getMethod() == POST) ? reqMsg.getBody() : "";
+    if (reqMsg.getMethod() == POST) {
+        DEBUG_LOG("[CgiHandler] POST request with body size: " << requestBody.size() << " bytes");
+    }
+    
     // CGI 실행에 필요한 환경 변수를 저장할 벡터 생성
     std::vector<std::string> cgiEnv;
     // 환경 변수 설정 함수 호출
     buildCgiEnv(clientSession, parts, cgiEnv);
+    DEBUG_LOG("[CgiHandler] Built " << cgiEnv.size() << " environment variables for CGI");
+    
     // CGI 스크립트를 실행하고 결과를 받아옴
+    DEBUG_LOG("[CgiHandler] Executing CGI script: " << parts.scriptPath);
     std::string cgiResult = executeCgi(parts.scriptPath, cgiEnv, requestBody);
+    
     // 실행 결과가 없으면 500 에러, 있으면 결과 반환
-    return cgiResult.empty() ? responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf) : cgiResult;
+    if (cgiResult.empty()) {
+        DEBUG_LOG("[CgiHandler] CGI execution failed, returning 500 error");
+        return responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf);
+    } else {
+        DEBUG_LOG("[CgiHandler] CGI execution successful, response size: " << cgiResult.size() << " bytes");
+        return cgiResult;
+    }
 }
 
 // CGI 실행에 필요한 환경 변수를 설정하는 함수

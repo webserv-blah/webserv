@@ -8,6 +8,7 @@
 #include <sstream>
 #include <fstream>   // 파일 쓰기/읽기
 #include <cstdio>    // remove 함수
+#include "../include/errorUtils.hpp"
 
 using namespace FileUtilities;
 
@@ -49,8 +50,13 @@ StaticHandler::~StaticHandler() {
 // ─────────────────────────────────────────────────────────────────────────────────────
 // 메인 요청 처리 함수: GET / POST / DELETE 등 다양한 메소드를 분기
 std::string StaticHandler::handleRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
+	DEBUG_LOG("[StaticHandler] Handling request for URI: " << reqMsg.getTargetURI() << ", method: " 
+	        << (reqMsg.getMethod() == GET ? "GET" : reqMsg.getMethod() == POST ? "POST" : 
+	           reqMsg.getMethod() == DELETE ? "DELETE" : "UNKNOWN"));
+	
 	// 설정 블록에 리턴 지시자가 있는 경우
 	if (conf.returnStatus_ >= 100) {
+		DEBUG_LOG("[StaticHandler] Return directive found with status: " << conf.returnStatus_);
 		if (conf.returnStatus_ == OK) {
 			// location block에 "return 200 someText" 형태로 썼다면
 			// 특별 처리(예: 특정 문구 반환) 등의 로직을 넣을 수 있음(현재는 단순 통과)
@@ -58,10 +64,12 @@ std::string StaticHandler::handleRequest(const RequestMessage& reqMsg, const Req
 		else if (!conf.returnUrl_.empty() && 
 			(conf.returnStatus_ == FOUND || conf.returnStatus_ == MOVED_PERMANENTLY)) {
 			// 리다이렉트 응답
+			DEBUG_LOG("[StaticHandler] Redirecting to: " << conf.returnUrl_);
 			return handleRedirction(conf);
 		} 
 		else {
 			// 그 외에는 에러 응답
+			DEBUG_LOG("[StaticHandler] Returning error response for status: " << conf.returnStatus_);
 			return responseBuilder_.buildError(conf.returnStatus_, conf);
 		}
 	}
@@ -70,6 +78,8 @@ std::string StaticHandler::handleRequest(const RequestMessage& reqMsg, const Req
 	EnumMethod method = reqMsg.getMethod();
 	if (!isMethodAllowed(method, conf)) {
 		// 허용되지 않은 메소드
+		DEBUG_LOG("[StaticHandler] Method not allowed: " << 
+		    (method == GET ? "GET" : method == POST ? "POST" : method == DELETE ? "DELETE" : "UNKNOWN"));
 		return responseBuilder_.buildError(METHOD_NOT_ALLOWED, conf);
 	}
 
@@ -93,25 +103,33 @@ std::string StaticHandler::handleGetRequest(const RequestMessage& reqMsg, const 
 	std::string uri = reqMsg.getTargetURI();
 	std::string documentRoot = conf.root_;
 	std::string fullPath = documentRoot + uri;
+	
+	DEBUG_LOG("[StaticHandler] GET request for URI: " << uri << ", full path: " << fullPath);
 
 	// path 유효성 체크
 	EnumValidationResult pathValidation = validatePath(fullPath);
+	DEBUG_LOG("[StaticHandler] Path validation result: " << pathValidation);
 
 	switch (pathValidation) {
 		case VALID_PATH:
 			// 디렉토리이면 인덱스 파일 혹은 autoIndex 처리
+			DEBUG_LOG("[StaticHandler] Path is a directory, handling directory: " << fullPath);
 			return handleDirectory(fullPath, uri, conf);
 		case VALID_FILE:
 			// 정상 파일
+			DEBUG_LOG("[StaticHandler] Path is a valid file, serving: " << fullPath);
 			return handleFile(fullPath, conf);
 		case PATH_NOT_FOUND:
 		case FILE_NOT_FOUND:
+			DEBUG_LOG("[StaticHandler] Path or file not found: " << fullPath);
 			return responseBuilder_.buildError(NOT_FOUND, conf);
 		case PATH_NO_PERMISSION:
 		case FILE_NO_READ_PERMISSION:
 		case FILE_NO_EXEC_PERMISSION:
+			DEBUG_LOG("[StaticHandler] Permission issue with file: " << fullPath);
 			return handleFile(fullPath, conf);
 		default:
+			DEBUG_LOG("[StaticHandler] Internal server error for path: " << fullPath);
 			return responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf);
 	}
 }
@@ -189,38 +207,47 @@ std::string StaticHandler::handleDirectory(const std::string &dirPath,
 	const std::string &uri,
 	const RequestConfig &conf)
 {
+	DEBUG_LOG("[StaticHandler] Handling directory: " << dirPath << ", URI: " << uri);
 	std::string indexPath = dirPath;
 	if (!indexPath.empty() && indexPath[indexPath.size()-1] != '/') {
 		indexPath.push_back('/');
 	}
 	indexPath += conf.indexFile_;
+	DEBUG_LOG("[StaticHandler] Looking for index file: " << indexPath);
 
 	EnumValidationResult indexValidation = validatePath(indexPath);
 
 	// index 파일이 존재하고 읽을 수 있다면
 	if (indexValidation == VALID_FILE) {
+		DEBUG_LOG("[StaticHandler] Index file found, serving: " << indexPath);
 		return handleFile(indexPath, conf);
 	}
 	// index 파일이 없고 autoIndex가 on이면 디렉토리 리스트 반환
 	else if ((indexValidation == FILE_NOT_FOUND || indexValidation == PATH_NOT_FOUND) &&
 		conf.autoIndex_.value() == 1)
 	{
+		DEBUG_LOG("[StaticHandler] No index file, autoIndex is enabled, generating directory listing");
 		return buildAutoIndexResponse(dirPath, uri);
 	}
 
 	// 나머지는 접근 불가
+	DEBUG_LOG("[StaticHandler] No index file and autoIndex disabled, returning 403 Forbidden");
 	return responseBuilder_.buildError(FORBIDDEN, conf);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────
 // 파일 처리: 파일 읽기, MIME 타입 결정 후 응답
 std::string StaticHandler::handleFile(const std::string &filePath, const RequestConfig& conf) {
+	DEBUG_LOG("[StaticHandler] Handling file: " << filePath);
 	std::string content = readFile(filePath);
 	if (content.empty()) {
+		DEBUG_LOG("[StaticHandler] Failed to read file or file is empty: " << filePath);
 		return responseBuilder_.buildError(NOT_FOUND, conf);
 	}
 	std::map<std::string, std::string> headers;
-	headers["Content-Type"] = determineContentType(filePath);
+	std::string contentType = determineContentType(filePath);
+	headers["Content-Type"] = contentType;
+	DEBUG_LOG("[StaticHandler] Serving file: " << filePath << ", size: " << content.size() << " bytes, type: " << contentType);
 	return responseBuilder_.build(OK, headers, content);
 }
 

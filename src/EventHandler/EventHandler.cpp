@@ -20,6 +20,7 @@ EventHandler::~EventHandler() {
 // - 연결 수락에 실패하면 -1을 반환합니다.
 //---------------------------------------------------------------------
 int EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
+    DEBUG_LOG("[EventHandler] Handling server read event on listen fd: " << fd);
     
     struct sockaddr_in clientAddr;              // 클라이언트 주소 정보(IPv4)
     socklen_t addrLen = sizeof(clientAddr);     // 클라이언트 주소 구조체의 크기
@@ -36,6 +37,8 @@ int EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
 
     // 클라이언트의 IP 주소 문자열로 변환
     std::string clientIP(inet_ntoa(clientAddr.sin_addr));
+    
+    DEBUG_LOG("[EventHandler] New connection accepted from " << clientIP << " assigned to fd: " << clientFd);
 
     // ClientManager에 새 클라이언트 정보를 추가
     clientManager.addClient(fd, clientFd, clientIP);
@@ -51,6 +54,7 @@ int EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
 // - 요청 처리 중 에러가 발생하면 에러 응답을 전송합니다.
 //---------------------------------------------------------------------
 EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) {
+    DEBUG_LOG("[EventHandler] Handling client read event on fd: " << clientSession.getClientFd());
     // 클라이언트의 요청 데이터를 수신
     EnumSesStatus status = recvRequest(clientSession);
 
@@ -63,9 +67,11 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
         // 요청 URI에 CGI 실행 대상이 포함되어 있는지 확인
         if (cgiHandler_.isCGI(requestMsg.getTargetURI(), reqConfig.cgiExtension_)) {
             // CGI 요청
+            DEBUG_LOG("[EventHandler] Processing CGI request for URI: " << requestMsg.getTargetURI());
             responseMsg = cgiHandler_.handleRequest(clientSession);
         } else {
             // 정적 파일 요청
+            DEBUG_LOG("[EventHandler] Processing static file request for URI: " << requestMsg.getTargetURI());
             responseMsg = staticHandler_.handleRequest(requestMsg, reqConfig);
         }
         // 생성된 응답 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
@@ -77,6 +83,7 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
         // 요청 처리 도중 에러가 발생한 경우
         // Http 상태 코드(에러)를 가져와서 에러 응답 전송
         int statusCode = clientSession.getErrorStatusCode();
+        DEBUG_LOG("[EventHandler] Request error detected, status code: " << statusCode << " for client fd: " << clientSession.getClientFd());
         handleError(statusCode, clientSession);
         status = CONNECTION_CLOSED;
     } 
@@ -89,6 +96,7 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
 // - 클라이언트에게 응답 데이터를 전송합니다.
 //---------------------------------------------------------------------
 EnumSesStatus EventHandler::handleClientWriteEvent(ClientSession& clientSession) {
+    DEBUG_LOG("[EventHandler] Handling client write event on fd: " << clientSession.getClientFd());
     // 클라이언트에게 응답 전송을 시도하고, 전송 결과 상태를 반환
     EnumSesStatus status = sendResponse(clientSession);
     
@@ -100,6 +108,7 @@ EnumSesStatus EventHandler::handleClientWriteEvent(ClientSession& clientSession)
 // - 에러 상태 코드에 따라 적절한 에러 응답 메시지를 생성 및 전송합니다.
 //---------------------------------------------------------------------
 void EventHandler::handleError(int statusCode, ClientSession& clientSession) {
+    DEBUG_LOG("[EventHandler] Building error response for status code: " << statusCode << " for client fd: " << clientSession.getClientFd());
     // ResponseBuilder를 사용하여 상태 코드에 맞는 에러 응답 메시지 생성
     std::string errorMsg = rspBuilder_.buildError(statusCode, clientSession.getConfig());
 

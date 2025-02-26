@@ -26,6 +26,7 @@ ServerManager::~ServerManager() {
 
 // 서버 매니저를 초기화하고 수신 소켓을 설정하는 함수입니다.
 void ServerManager::setupListeningSockets() {
+    DEBUG_LOG("[ServerManager] Setting up listening sockets...");
     // 전역 설정(GlobalConfig) 인스턴스를 가져와 수정할 수 있도록 const_cast를 사용합니다.
     GlobalConfig &globalConfig = const_cast<GlobalConfig&>(GlobalConfig::getInstance());
     // (호스트, 포트) 쌍을 키로, 소켓 파일 디스크립터를 값으로 하는 맵을 생성합니다.
@@ -57,6 +58,7 @@ void ServerManager::setupListeningSockets() {
 
 // 서버 구성에 따라 소켓을 생성하고 바인딩하고 수신 대기 상태로 전환하는 함수입니다.
 int ServerManager::createListeningSocket(const ServerConfig &server) const {
+    DEBUG_LOG("[ServerManager] Creating listening socket for " << server.host_ << ":" << server.port_);
     int sockFd = -1;
     struct addrinfo hints, *result, *currAddr;
     
@@ -94,6 +96,7 @@ int ServerManager::createListeningSocket(const ServerConfig &server) const {
             continue;
         }
         // 바인딩에 성공하면 반복문을 종료합니다.
+        DEBUG_LOG("[ServerManager] Socket " << sockFd << " successfully bound to " << server.host_ << ":" << server.port_);
         break;
     }
     // 사용한 주소 정보 메모리를 해제합니다.
@@ -108,6 +111,7 @@ int ServerManager::createListeningSocket(const ServerConfig &server) const {
         close(sockFd);
         throw std::runtime_error("Failed to listen on socket");
     }
+    DEBUG_LOG("[ServerManager] Socket " << sockFd << " now listening (SOMAXCONN: " << SOMAXCONN << ")");
     // 생성된 소켓 파일 디스크립터를 반환합니다.
     return sockFd;
 }

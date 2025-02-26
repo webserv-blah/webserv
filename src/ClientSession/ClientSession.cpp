@@ -1,4 +1,5 @@
 #include "ClientSession.hpp"
+#include "../include/errorUtils.hpp"
 
 #ifndef BUFFER_SIZE
 #define BUFFER_SIZE 8192
@@ -6,6 +7,7 @@
 
 ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : listenFd_(listenFd), clientFd_(clientFd), reqMsg_(NULL), config_(NULL), clientIP_(clientIP) {
 	this->readBuffer_.reserve(BUFFER_SIZE * 2);
+	DEBUG_LOG("[ClientSession] New session created");
 }
 ClientSession::~ClientSession() {
 	if (this->reqMsg_ != NULL)
@@ -74,10 +76,12 @@ void ClientSession::setConfig(const RequestConfig *config) {
 
 void ClientSession::setReadBuffer(const std::string &remainData) {
 	this->readBuffer_ = remainData;
+	DEBUG_LOG("[ClientSession] Updated read buffer");
 }
 
 void ClientSession::setWriteBuffer(const std::string &remainData) {
 	this->writeBuffer_ = remainData;
+	DEBUG_LOG("[ClientSession] Updated write buffer");
 }
 
 RequestMessage &ClientSession::accessReqMsg() {
@@ -92,4 +96,5 @@ void ClientSession::resetRequest() {
 	delete this->reqMsg_;
 	this->reqMsg_ = NULL;
 	this->config_ = NULL;
+	DEBUG_LOG("[ClientSession] Request reset for client");
 }

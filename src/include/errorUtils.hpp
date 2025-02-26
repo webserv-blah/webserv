@@ -10,6 +10,14 @@
 #include "commonEnums.hpp"
 #include "../utils/utils.hpp"
 
+#ifdef DEBUG
+    // For debug build: outputs debug messages to stderr
+    #define DEBUG_LOG(x) do { std::cerr << x << std::endl; } while(0)
+#else
+    // For normal build: do nothing (optimized out)
+    #define DEBUG_LOG(x) ((void)0)
+#endif
+
 namespace webserv
 {
 

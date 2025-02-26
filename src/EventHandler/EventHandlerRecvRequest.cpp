@@ -13,6 +13,8 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 	buffer.resize(BUFFER_SIZE);
 
 	ssize_t res = recv(curSession.getClientFd(), &buffer[0], BUFFER_SIZE, MSG_DONTWAIT);
+	DEBUG_LOG("[EventHandler] recv() from client fd:" << curSession.getClientFd() << " returned " << res << " bytes");
+	
 	if (res == -1) {
 		if (errno == EAGAIN
 		||  errno == EWOULDBLOCK	//errno)non-blocking 모드에서 읽을 데이터가 없어 즉시 반환된 경우
@@ -40,12 +42,18 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 		// 이전에 버퍼 저장해놓은 데이터와 새로운 요청 데이터를 가지고 파싱
 		EnumStatusCode statusCode = this->parser_.parse(buffer.substr(res), curSession);
 		curSession.setErrorStatusCode(statusCode);
+		
+		DEBUG_LOG("[EventHandler] Request parsing status: " << statusCode);
 
 		// 파싱이 끝나고 나서, 에러 status code와 RequestMessage의 상태를 점검함
-		if (curSession.getErrorStatusCode() != NONE_STATUS_CODE)
+		if (curSession.getErrorStatusCode() != NONE_STATUS_CODE) {
+			DEBUG_LOG("[EventHandler] Request error detected: " << curSession.getErrorStatusCode());
 			return REQUEST_ERROR;
-		else if (curSession.getReqMsgPtr()->getStatus() == REQ_DONE)
+		}
+		else if (curSession.getReqMsgPtr()->getStatus() == REQ_DONE) {
+			DEBUG_LOG("[EventHandler] Request fully received and parsed for client fd:" << curSession.getClientFd());
 			return READ_COMPLETE;
+		}
 		return READ_CONTINUE;
 	}
 }

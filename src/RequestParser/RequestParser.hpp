@@ -4,6 +4,9 @@
 #include "../RequestMessage/RequestMessage.hpp"
 #include "../include/commonEnums.hpp"
 
+// 전방 선언으로 순환 참조 방지
+class ClientSession;
+
 #define ONELINE_MAX_LENGTH	8190//8KB - 2bytes(\r\n)
 #define URI_MAX_LENGTH		2048//2KB
 #define BODY_MAX_LENGTH		1048576//1MB

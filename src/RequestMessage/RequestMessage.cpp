@@ -124,24 +124,26 @@ void RequestMessage::printResult() const {
 	this->printBody();
 	this->printMetaData();
 }
+
 void RequestMessage::printFields(void) const {
-	std::cout << "\033[32;7m Fields :\033[0m"<<std::endl;
-	for (auto it : this->fieldLines_) {
+	std::cout << "\033[32;7m Fields :\033[0m"<< std::endl;
+	for (std::map<std::string, std::vector<std::string> >::const_iterator it = this->fieldLines_.begin(); it != this->fieldLines_.end(); ++it) {
 		int cnt = 0;
-		std::cout <<it.first<<": {";
-		for (auto itt : it.second) {
+		std::cout << it->first << ": {";
+		for (std::vector<std::string>::const_iterator itt = it->second.begin(); itt != it->second.end(); ++itt) {
 			if (cnt != 0)
-			std::cout << ", ";
-			std::cout << itt;
+				std::cout << ", ";
+			std::cout << *itt;
 			cnt++;
 		}
-		std::cout <<"};"<<std::endl;
+		std::cout <<"};"<< std::endl;
 	}
 }
+
 void RequestMessage::printBody(void) const {
-	std::cout << "\033[32;7m Body :\033[0m"<<std::endl;
-	std::cout <<"\033[37;2mcount: "<<this->body_.length()<<"\033[0m\n";
-	for (auto it = this->body_.begin(); it != this->body_.end(); ++it) {
+	std::cout << "\033[32;7m Body :\033[0m"<< std::endl;
+	std::cout << "\033[37;2mcount: " << this->body_.length() << "\033[0m\n";
+	for (std::string::const_iterator it = this->body_.begin(); it != this->body_.end(); ++it) {
 		if (*it == '\n')
 			std::cout << "\\n" << std::endl;
 		else if (*it == '\r')
@@ -152,15 +154,38 @@ void RequestMessage::printBody(void) const {
 }
 void RequestMessage::printMetaData(void) const {
 	std::cout << "\033[37;7m MetaData :\033[0m"<<std::endl;
-	std::cout <<"\033[37;2mHost_: "<<this->metaHost_ <<";\033[0m\n";
+	std::cout <<"\033[37;2mHost_: ";
+	if (this->metaHost_.empty())
+		std::cout <<this->metaHost_ <<";\033[0m\n";
+	else
+		std::cout <<"(none);\033[0m\n";
+		
 	std::cout <<"\033[37;2mConnection_: ";
 	const char *connection;
 	switch (this->metaConnection_) {
 		case KEEP_ALIVE:
 			connection = "keep-alive";
+			break;
 		case CLOSE:
 			connection = "close";
+			break;
 	}
 	std::cout<<connection <<";\033[0m\n";
 	std::cout <<"\033[37;2mContentLength_: "<<this->metaContentLength_ <<";\033[0m\n";
+	std::cout <<"\033[37;2mTransferEncoding_: ";
+	const char *encoding;
+	switch (this->metaTransferEncoding_) {
+		case NONE_ENCODING:
+			encoding = "(none)";
+			break;
+		case CHUNK:
+			encoding = "chunked";
+			break;
+	}
+	std::cout<< encoding <<";\033[0m\n";
+	std::cout <<"\033[37;2mContentType_: ";
+		if (this->metaContentType_.empty())
+		std::cout <<this->metaContentType_ <<";\033[0m\n";
+	else
+		std::cout <<"(none);\033[0m\n";
 }

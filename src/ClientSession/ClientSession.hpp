@@ -17,7 +17,6 @@ class ClientSession {
 		const RequestMessage	*getReqMsg() const;
 		const RequestConfig		*getConfig() const;
 		std::string				getReadBuffer() const;
-		size_t					getReadCursor() const;
 		std::string				getWriteBuffer() const;
 		std::string				getClientIP() const;
 		void					setListenFd(const int &listenFd);
@@ -27,7 +26,6 @@ class ClientSession {
 		void					setReqMsg(RequestMessage *reqMsg);
 		void					setConfig(const RequestConfig *config);
 		void					setReadBuffer(const std::string &remainData);
-		void					setReadCursor(const size_t &curCursor);
 		void					setWriteBuffer(const std::string &remainData);
 
 		RequestMessage			&accessReqMsg();
@@ -42,7 +40,6 @@ class ClientSession {
 		RequestMessage			*reqMsg_;
 		const RequestConfig		*config_;
 		std::string				readBuffer_;
-		size_t					readCursor_;
 		std::string				writeBuffer_;
 		std::string				clientIP_;
 };

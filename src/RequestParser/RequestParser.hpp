@@ -27,8 +27,8 @@ class RequestParser {
 		EnumStatusCode		parseFieldLine(const std::string &line, RequestMessage &reqMsg);
 		bool				validateFieldValueCount(const std::string &name, const int count);
 		bool				handleFieldValue(const std::string &name, const std::string &value, RequestMessage &reqMsg);
-		EnumStatusCode		cleanUpChunkedBody(const std::string &data, std::string &readBuffer, RequestMessage &reqMsg);
-		EnumStatusCode		parseBody(const std::string &line, std::string &readBuffer, RequestMessage &reqMsg);
+		EnumStatusCode		cleanUpChunkedBody(std::string &readBuffer, RequestMessage &reqMsg);
+		EnumStatusCode		parseBody(std::string &readBuffer, RequestMessage &reqMsg);
 };
 
 #endif

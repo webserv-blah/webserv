@@ -10,6 +10,7 @@ SRCS := $(wildcard *.cpp)
 
 # SRCS(in SRCDIR) ------
 DIRS := utils \
+		Test \
 		GlobalConfig \
 		ConfigParser \
 		RequestMessage \

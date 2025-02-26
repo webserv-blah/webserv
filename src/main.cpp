@@ -1,3 +1,5 @@
+#include "Test.hpp"
+
 #include <iostream>
 #include "utils.hpp"
 #include "GlobalConfig.hpp"
@@ -37,7 +39,7 @@ int main(int argc, char** argv) {
 	ses.resetRequest();
 
 	std::cout << "================== START ==================" << std::endl;
-	std::cout << "ses.getReadBuffer(): " << ses.getReadBuffer() << ";\n";
+	functfunct("MIDDLE BUFFER", ses.getReadBuffer());
 	sessionStatus = recvRequest(ses);
 	std::cout << "================== RESULT =================" << std::endl;
 	std::cout << "(STATUSCODE: " << ses.getErrorStatusCode() << ")&";

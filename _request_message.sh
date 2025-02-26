@@ -3,7 +3,6 @@
 BASIC="\
 GET /index.html HTTP/1.1\r\n\
 Host: localhost\r\n\
-Connection: keep-alive\r\n\
 Content-Length: 4\r\n\
 \r\n\
 hi\r\n\
@@ -24,13 +23,20 @@ pedia\n\r\n\
 0\r\n\
 "
 
-ERROR="\
+ERR_1="\
 GET /index.html HTTP/1.1\r\n\
 Host: localhost\r\n\
 Connection: keep-alive\r\n\
 \r\n\
 hi\r\n\
 "
+ERR_2="\
+GET /index.html HTTP/1.1\r\n\
+Connection: keep-alive\r\n\
+Content-Length: 4\r\n\
+\r\n\
+hi\r\n\
+"
 #여기 에러케이스 더 작성해봐야함...
 
-export HTTP_REQUEST=$(printf "%b" "$ERROR")
+export HTTP_REQUEST=$(printf "%b" "$BASIC")

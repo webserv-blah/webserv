@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sys/event.h>
 #include <unistd.h>
+#include "../include/errorUtils.hpp"
 
 // 생성자: kqueue를 생성하고, 리스닝 소켓들을 이벤트 감지 목록에 추가
 KqueueDemultiplexer::KqueueDemultiplexer(std::set<int>& listenFds) : eventList_(MAX_EVENT) {

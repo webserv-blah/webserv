@@ -1,4 +1,5 @@
 #include "ServerManager.hpp"
+#include "../include/errorUtils.hpp"
 
 // 서버의 메인 이벤트 루프를 실행합니다.
 // - EventHandler: 클라이언트 및 서버 이벤트 처리를 담당합니다.
@@ -106,7 +107,7 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 	ClientSession* client = clientManager.accessClientSession(fd);
 	if (!client) {
 		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
-		webserv::logError(webserv::WARNING, "Invalid Value", 
+		webserv::logError(WARNING, "Invalid Value", 
 		                 "No clientSession corresponding to fd: " + std::to_string(fd), 
 		                 "ServerManager::processClientReadEvent");
 		return;
@@ -135,7 +136,7 @@ void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager
 	ClientSession* client = clientManager.accessClientSession(fd);
 	if (!client) {
 		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
-		webserv::logError(webserv::WARNING, "Invalid Value", 
+		webserv::logError(WARNING, "Invalid Value", 
 		                 "No clientSession corresponding to fd: " + std::to_string(fd), 
 		                 "ServerManager::processClientWriteEvent");
 		return;

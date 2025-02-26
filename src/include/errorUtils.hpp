@@ -8,6 +8,7 @@
 #include <cerrno>
 #include <cstring>
 #include "commonEnums.hpp"
+#include "../utils/utils.hpp"
 
 namespace webserv
 {
@@ -34,15 +35,23 @@ inline std::string systemErrorMessage(EnumErrorLevel level, const std::string& s
     return errorMessage(level, cause, context, source);
 }
 
-// 시스템 호출 실패 로깅
+// 시스템 호출 실패 로깅 (errno 값과 설명 포함)
 inline void logSystemError(EnumErrorLevel level, const std::string& syscall, 
                           const std::string& context = "") {
-    std::cerr << systemErrorMessage(level, syscall, context) << std::endl;
+    int err = errno; // 현재 errno 값 저장 (다른 함수 호출로 변경될 수 있음)
+    std::ostringstream oss;
+    std::string cause = syscall + " failed";
+    std::string source = "errno " + std::to_string(err) + ", " + std::strerror(err);
+    std::cerr << errorMessage(level, cause, context, source) << std::endl;
 }
 
-// 시스템 호출 실패로 예외 던지기
+// 시스템 호출 실패로 예외 던지기 (errno 값과 설명 포함)
 inline void throwSystemError(const std::string& syscall, const std::string& context = "") {
-    std::string errorMsg = systemErrorMessage(FATAL, syscall, context);
+    int err = errno; // 현재 errno 값 저장 (다른 함수 호출로 변경될 수 있음)
+    std::ostringstream oss;
+    std::string cause = syscall + " failed";
+    std::string source = "errno " + std::to_string(err) + ", " + std::strerror(err);
+    std::string errorMsg = errorMessage(FATAL, cause, context, source);
     throw std::runtime_error(errorMsg);
 }
 

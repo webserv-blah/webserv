@@ -1,1 +1,0 @@
-/Users/seonseo/projects/webserv/src/GlobalConfig/GlobalConfig.hpp

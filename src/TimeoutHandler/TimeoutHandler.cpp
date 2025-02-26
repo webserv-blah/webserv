@@ -2,7 +2,9 @@
 #include <iostream>
 
 TimeoutHandler::TimeoutHandler() {
-
+	connections_.clear();
+	expireQueue_.clear();
+	expireMap_.clear();
 }
 
 TimeoutHandler::~TimeoutHandler() {
@@ -24,7 +26,7 @@ void TimeoutHandler::updateActivity(int fd) {
 	// fd에 대응하는 연결 정보 찾기
     TypeConnectionIter cit = connections_.find(fd);
     if (cit == connections_.end()) { // 연결 정보가 존재하지 않을 경우
-        std::cerr << "[Error][TimeoutHandler][updateActivity] Connection Not Found" << std::endl;
+        std::cerr << "[Error][TimeoutHandler][updateActivity] Connection Not Found : " << fd << std::endl;
         return;
     }
     
@@ -58,10 +60,11 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
         }
 
         // 만료된 연결 응답처리
-        int fd = it->second;     
+        int fd = it->second;   
+		std::clog << "Timeout on fd: " << fd <<std::endl;  
         ClientSession* client = clientManager.accessClientSession(fd);
         if (!client) { 
-            std::cerr << "[Error][TimeoutHandler][checkTimeouts] Invalid Client Fd" << std::endl;
+            std::cerr << "[Error][TimeoutHandler][checkTimeouts] Invalid Client Fd : " << fd << std::endl;
         } else {
             // HTTP 408 Request Timeout 처리
             eventHandler.handleError(408, *client);
@@ -85,7 +88,7 @@ void TimeoutHandler::removeConnection(int fd, TypeExpireQueueIter it) {
 void TimeoutHandler::removeConnection(int fd) {
 	TypeExpireIterMapIter eit = expireMap_.find(fd);
     if (eit == expireMap_.end()) { // 클라이언트(fd)의 만료 정보가 없을 경우
-        std::cerr << "[Error][TimeoutHandler][removeConnection] Fd Not Found" << std::endl;
+        std::cerr << "[Error][TimeoutHandler][removeConnection] Fd Not Found : " << fd << std::endl;
         return ;
     }
     TypeExpireQueueIter it = eit->second; 

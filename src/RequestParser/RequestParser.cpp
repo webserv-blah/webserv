@@ -20,6 +20,9 @@ void RequestParser::setConfigBodyLength(size_t length) {
 //     readBuffer_: 기존 요청데이터를 파싱하고 남은 데이터
 //     readCursor_: 버퍼의 마지막 위치를 기록
 EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &curSession) {
+	std::clog <<"[Parse] Request: " << std::endl;
+	std::clog << readData << std::endl;
+
 	// 새로운 요청일 때, RequestMessage 동적할당
 	if (curSession.getReqMsgPtr() == NULL)
 		curSession.setReqMsg(new RequestMessage());// 이후 요청처리(handler&builder) 완료 후, delete 필요 (ClientSession.resetRequest()메서드 사용)
@@ -32,8 +35,10 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 	size_t cursorBack = readBuffer.size();
 	
 	readBuffer.append(readData);
-	if (readData.size() == 1)
+	if (readData.size() == 1) {
+		std::clog << "readData 사이즈 1" << std::endl;
 		return NONE_STATUS_CODE;
+	}
 	
 	// 1-1. Body가 아닌, start-line이나 field-line인 경우
 	while (status != REQ_HEADER_CRLF && status != REQ_BODY) {
@@ -48,6 +53,7 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 		} else {// \n이 나오지 않고 readData가 끝난 상태. 다음 loop로 넘어감
 			if (readBuffer.find(LF, cursorBack) != std::string::npos)
 				return BAD_REQUEST;//status code: CRLF가 아닌, 단일 LF
+			std::clog << "1-1 NONE_STATUS_CODE" << std::endl;
 			return NONE_STATUS_CODE;
 		}
 		
@@ -56,12 +62,16 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 			status = this->handleCRLFLine(reqMsg.getStatus());
 			reqMsg.setStatus(status);
 			// 올바르지 않은 CRLF줄 에러
-			if (status == REQ_ERROR)
+			if (status == REQ_ERROR) {
 				return BAD_REQUEST;//status code: 유효하지 않은 CRLF 위치
+			}
 			// field-line까지 다 읽은 후, 요청메시지에 맞는 RequestConfig를 설정하고 Host헤더필드 유무를 검증함
 			if (status == REQ_HEADER_CRLF) {
 				// ClientSession에 Config설정
 				const GlobalConfig &globalConfig = GlobalConfig::getInstance();
+				std::clog << "listen fd : " << curSession.getListenFd() 
+				<< "\nMeta Host: " << reqMsg.getMetaHost()
+				<< "\nTarget URI: " << reqMsg.getTargetURI() << std::endl;
 				curSession.setConfig(globalConfig.findRequestConfig(curSession.getListenFd(), reqMsg.getMetaHost(), reqMsg.getTargetURI()));
 
 				// 헤더필드 검증 및 처리
@@ -73,6 +83,7 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 				&&  reqMsg.getMetaTransferEncoding() == NONE_ENCODING) {
 					reqMsg.setStatus(REQ_DONE);
 					readBuffer.erase(0, cursorBack+2);
+					std::clog << "REQ_HEADER_CRLF -2) NONE_STATUS_CODE" << std::endl;
 					return NONE_STATUS_CODE;
 				}
 				break ;

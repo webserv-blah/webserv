@@ -25,6 +25,9 @@ class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 		int							numEvents_;
 		std::vector<struct kevent>	eventList_;
 		std::vector<struct kevent>	changedEvents_;
+		std::set<int>				writeEvents_;
+		
+		bool 						isWriteEventRegistered(int fd) const;
 	
 };
 

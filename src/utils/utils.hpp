@@ -1,50 +1,45 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
-#include <string>
-#include <vector>
-#include <sstream>
+#include <string>       // std::string
+#include <stdexcept>    // std::invalid_argument, std::overflow_error
+#include <cerrno>       // errno
+#include <climits>      // INT_MAX, INT_MIN
+#include <csignal>
 #include <iostream>
-#include <cstring>
-#include <cerrno>
 #include <limits>
 #include <csignal>
-#include "../include/commonEnums.hpp"
+#include <iostream>
+#include <limits>
+#include <cstdlib>
 
-// 전역 함수
-void signalHandler(int signum);
-void setupSignalHandlers();
+// 유틸리티 함수들을 담는 네임스페이스
+namespace utils {
 
-namespace webserv
-{
+	// 문자열을 int로 변환하는 함수
+	int stoi(const std::string& str);
+	// 문자열을 size_t로 변환하는 함수
+	size_t sto_size_t(const std::string& str);
+	// 문자열의 양쪽 공백을 제거하는 함수
+	std::string strtrim(const std::string& str);
 
-void stringTrim(std::string& str);
-void stringToUppercase(std::string& str);
-void stringToLowercase(std::string& str);
-void stringSplit(const std::string& str, char delim, std::vector<std::string>& tokens);
-void appendString(std::string& target, const std::vector<char>& source, size_t len);
-void intToString(int num, std::string& str);
+	// 입력 반복자 [first, last) 범위 내의 모든 요소가
+	// 주어진 조건(pred)을 만족하는지 확인하는 템플릿 함수
+	template <typename InputIterator, typename Predicate>
+	bool	all_of(InputIterator first, InputIterator last, Predicate pred) {
+		for ( ; first != last; ++first) {
+			if (!pred(*first)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
-std::string errorMessage(EnumErrorLevel level, const std::string& cause, 
-                        const std::string& context, const std::string& source);
-
-} // namespace webserv
-
-namespace utils 
-{
-    int stoi(const std::string& str);
-    size_t sto_size_t(const std::string& str);
-    std::string strtrim(const std::string& str);
-    
-    template <typename InputIt, typename UnaryPredicate>
-    bool all_of(InputIt first, InputIt last, UnaryPredicate p) {
-        for (; first != last; ++first) {
-            if (!p(*first)) {
-                return false;
-            }
-        }
-        return true;
-    }
 }
+
+// 시그널 핸들러 함수
+void signalHandler(int signum);
+// 시그널 핸들러 설정 함수
+void setupSignalHandlers();
 
 #endif

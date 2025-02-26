@@ -41,6 +41,7 @@ std::string ResponseBuilder::getReasonPhrase(int errorCode) const {
 
 std::string ResponseBuilder::assembleResponse(int statusCode, const std::string& reasonPhrase, 
 	const std::map<std::string, std::string>& headers, const std::string& body) const {
+	std::clog << "Start assemble Resp" << std::endl;
 	// 최종 HTTP/1.1 응답 메시지 조립
 	std::ostringstream oss;	// 응답 메시지 스트림 생성
 	oss << "HTTP/1.1 " << statusCode << " " << reasonPhrase << "\r\n";	// 상태 라인 추가
@@ -54,6 +55,7 @@ std::string ResponseBuilder::assembleResponse(int statusCode, const std::string&
 	oss << "\r\n";	// 헤더와 바디 구분을 위한 빈 줄 추가
 	oss << body;	// 응답 바디 추가
 
+	std::clog << "End assemble Resp" << std::endl;
 	return oss.str();	// 완성된 응답 메시지 반환
 }
 
@@ -76,8 +78,10 @@ std::string ResponseBuilder::build(	int statusCode,
 std::string ResponseBuilder::buildError(int errorStatusCode, const RequestConfig& currConf) const {
 	// 에러 응답 메시지 생성
 	std::string errorReason = getReasonPhrase(errorStatusCode);	// 에러 코드에 따른 이유 구문 결정
+	std::clog << "[buildError] Done getReasonPhrase: " << errorReason << std::endl;
 	std::map<std::string, std::string> headers;					// 헤더 저장용 맵
 	std::string body = ErrorPageResolver::resolveErrorPage(errorStatusCode, currConf.errorPages_);	// 에러 페이지 HTML 내용 불러오기
+	std::clog << "[buildError] Done resolveErrorPage: " << body << std::endl;
 
 	headers["Content-Type"] = "text/html";	// Content-Type 헤더 설정
 	setContentLength(headers, body);			// Content-Length 헤더 설정

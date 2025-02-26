@@ -26,15 +26,14 @@ int EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
     // accept() 호출을 통해 클라이언트 연결 수락
     int clientFd = accept(fd, reinterpret_cast<struct sockaddr*>(&clientAddr), &addrLen);
     if (clientFd < 0) {
-        // 연결 수락 실패 - 시스템 호출 에러를 로깅
-        webserv::logSystemError(webserv::ERROR, "accept", 
-                              "Server fd: " + std::to_string(fd), 
-                              "EventHandler::handleServerReadEvent");
+        // 연결 수락 실패
+        std::cerr << "[ERROR] Invalid Value - Failed accepting client (source: EventHandler.handleServerReadEvent)";
         return -1;
     }
 
     // 클라이언트의 IP 주소 문자열로 변환
     std::string clientIP(inet_ntoa(clientAddr.sin_addr));
+	std::clog << "ClientIP = " << clientIP << std::endl;
 
     // ClientManager에 새 클라이언트 정보를 추가
     clientManager.addClient(fd, clientFd, clientIP);
@@ -51,9 +50,12 @@ int EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
 //---------------------------------------------------------------------
 EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) {
     // 클라이언트의 요청 데이터를 수신
+	std::clog << "HandleClientReadEvent" << std::endl;
     EnumSesStatus status = recvRequest(clientSession);
+	std::clog << "status after Recv: " << status << std::endl;
 
     if (status == READ_COMPLETE) {
+		std::clog << "READ_COMP" << std::endl;
         // 요청 데이터 수신이 완료된 경우
         RequestMessage  requestMsg = clientSession.getReqMsg();
         std::string     responseMsg;
@@ -67,18 +69,22 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
             // 정적 파일 요청
             responseMsg = staticHandler_.handleRequest(requestMsg, reqConfig);
         }
+
+		std::clog << "respMsg: " << responseMsg << std::endl;
         // 생성된 응답 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
         clientSession.setWriteBuffer(responseMsg);
         
         // 클라이언트에게 응답 전송을 시도하고, 전송 결과에 따라 상태 갱신
         status = sendResponse(clientSession);
     } else if (status == REQUEST_ERROR) {
+		std::clog << "REQ_ERR" << std::endl;
         // 요청 처리 도중 에러가 발생한 경우
         // Http 상태 코드(에러)를 가져와서 에러 응답 전송
         int statusCode = clientSession.getErrorStatusCode();
         handleError(statusCode, clientSession);
         status = CONNECTION_CLOSED;
     } 
+	std::cout << "status after SEND: " << status << std::endl;
 
     return status;
 }
@@ -99,12 +105,15 @@ EnumSesStatus EventHandler::handleClientWriteEvent(ClientSession& clientSession)
 // - 에러 상태 코드에 따라 적절한 에러 응답 메시지를 생성 및 전송합니다.
 //---------------------------------------------------------------------
 void EventHandler::handleError(int statusCode, ClientSession& clientSession) {
+	std::cout << "Handle Error : " << statusCode <<std::endl;
     // ResponseBuilder를 사용하여 상태 코드에 맞는 에러 응답 메시지 생성
     std::string errorMsg = rspBuilder_.buildError(statusCode, clientSession.getConfig());
-
+	std::clog << "errorMsg : " << errorMsg << std::endl;
     // 생성된 에러 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
     clientSession.setWriteBuffer(errorMsg);
+	std::clog << "set WriteBuf" << std::endl;
 
     // 클라이언트에게 에러 응답 전송
     sendResponse(clientSession);
+	std::clog << "sent Response" << std::endl;
 }

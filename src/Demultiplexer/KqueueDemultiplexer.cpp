@@ -7,7 +7,7 @@
 KqueueDemultiplexer::KqueueDemultiplexer(std::set<int>& listenFds) : eventList_(MAX_EVENT) {
 	kq_ = kqueue(); // kqueue 인스턴스 생성
 	if (kq_ == -1) {
-		webserv::throwSystemError("kqueue", "Creating event queue", "KqueueDemultiplexer::KqueueDemultiplexer"); // kqueue 생성 실패 시 예외 발생
+		throw std::runtime_error("kqueue creation failed"); // kqueue 생성 실패 시 예외 발생
 	}
 
 	// 리스닝 소켓을 kqueue에 등록
@@ -15,6 +15,7 @@ KqueueDemultiplexer::KqueueDemultiplexer(std::set<int>& listenFds) : eventList_(
 	for (it = listenFds.begin(); it != listenFds.end(); ++it) {
 		addSocketImpl(*it);
 	}
+	eventList_.clear();
 }
 
 // 소멸자: kqueue 파일 디스크립터 닫기
@@ -32,7 +33,7 @@ int KqueueDemultiplexer::waitForEventImpl() {
 	// 반환값 : 감지된 이벤트 개수
 	numEvents_ = kevent(kq_, changedEvents, numChanges, &eventList_[0], MAX_EVENT, nullptr);
 	if (numEvents_ == -1) {
-		webserv::throwSystemError("kevent", "Waiting for events", "KqueueDemultiplexer::waitForEventImpl"); // kevent 호출 실패
+		throw std::runtime_error("kevent() failed"); // kevent 호출 실패
 	}
 	changedEvents_.clear(); // 변경된 이벤트 목록 초기화
 
@@ -41,21 +42,32 @@ int KqueueDemultiplexer::waitForEventImpl() {
 
 // 소켓을 kqueue에 등록 (읽기 이벤트 및 예외 이벤트 추가)
 void KqueueDemultiplexer::addSocketImpl(int fd) {
-	struct kevent changes[2];
+	// struct kevent changes[2];
 
-	EV_SET(&changes[0], fd, EVFILT_READ, EV_ADD, 0, 0, nullptr);  // 읽기 이벤트 추가
-	EV_SET(&changes[1], fd, EVFILT_EXCEPT, EV_ADD, 0, 0, nullptr); // 예외 이벤트 추가
-	changedEvents_.insert(changedEvents_.end(), changes, changes + 2); // 변경 이벤트 목록에 추가
+	// EV_SET(&changes[0], fd, EVFILT_READ, EV_ADD, 0, 0, nullptr);  // 읽기 이벤트 추가
+	// EV_SET(&changes[1], fd, EVFILT_EXCEPT, EV_ADD, 0, 0, nullptr); // 예외 이벤트 추가
+	// changedEvents_.insert(changedEvents_.end(), changes, changes + 2); // 변경 이벤트 목록에 추가
+	struct kevent change;
+
+	EV_SET(&change, fd, EVFILT_READ, EV_ADD, 0, 0, nullptr);
+	changedEvents_.push_back(change);
 }
 
 // 소켓을 kqueue에서 제거 (읽기, 예외, 쓰기 이벤트 삭제)
 void KqueueDemultiplexer::removeSocketImpl(int fd) {
-	struct kevent changes[3];
 
-	EV_SET(&changes[0], fd, EVFILT_READ, EV_DELETE, 0, 0, nullptr);   // 읽기 이벤트 제거
-	EV_SET(&changes[1], fd, EVFILT_EXCEPT, EV_DELETE, 0, 0, nullptr); // 예외 이벤트 제거
-	EV_SET(&changes[2], fd, EVFILT_WRITE, EV_DELETE, 0, 0, nullptr);  // 쓰기 이벤트 제거
-	changedEvents_.insert(changedEvents_.end(), changes, changes + 3);
+	if (isWriteEventRegistered(fd)) {
+		struct kevent changes[2];
+		EV_SET(&changes[0], fd, EVFILT_READ, EV_DELETE, 0, 0, nullptr);   // 읽기 이벤트 제거
+		EV_SET(&changes[1], fd, EVFILT_WRITE, EV_DELETE, 0, 0, nullptr); // 예외 이벤트 제거
+		changedEvents_.insert(changedEvents_.end(), changes, changes + 2);
+    } else {
+		struct kevent change;
+
+		EV_SET(&change, fd, EVFILT_READ, EV_DELETE, 0, 0, nullptr);
+		changedEvents_.push_back(change);
+	}
+
 }
 
 // 쓰기 이벤트를 추가 (fd가 쓰기 가능할 때 감지)
@@ -64,6 +76,7 @@ void KqueueDemultiplexer::addWriteEventImpl(int fd) {
 
 	EV_SET(&change, fd, EVFILT_WRITE, EV_ADD, 0, 0, nullptr);
 	changedEvents_.push_back(change);
+	writeEvents_.insert(fd);
 }
 
 // 쓰기 이벤트를 제거
@@ -72,6 +85,7 @@ void KqueueDemultiplexer::removeWriteEventImpl(int fd) {
 	
 	EV_SET(&change, fd, EVFILT_WRITE, EV_DELETE, 0, 0, nullptr);
 	changedEvents_.push_back(change);
+	writeEvents_.erase(fd);
 }
 
 // 특정 이벤트의 타입을 반환
@@ -96,4 +110,8 @@ int KqueueDemultiplexer::getSocketFdImpl(int idx) {
 		return eventList_[idx].ident; // 해당 이벤트의 fd 반환
 	}
 	return -1; // 유효하지 않은 경우 -1 반환
+}
+
+bool KqueueDemultiplexer::isWriteEventRegistered(int fd) const {
+	return (writeEvents_.find(fd) != writeEvents_.end());
 }

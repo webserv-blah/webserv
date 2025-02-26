@@ -1,6 +1,5 @@
 #include "file_utils.hpp"
-#include "../include/errorUtils.hpp"
-
+#include <iostream>
 namespace FileUtilities {
 	EnumValidationResult validatePath(const std::string& path)
 	{
@@ -11,14 +10,8 @@ namespace FileUtilities {
 			// 경로가 존재하지 않는 경우
 			// "마지막 문자가 '/'이면 디렉터리로 간주, 아니면 파일"로 구분
 			if (!path.empty() && path[path.size() - 1] == '/') {
-				webserv::logError(webserv::WARNING, "Path not found", 
-				                 path, 
-				                 "FileUtilities::validatePath, errno: " + std::to_string(errno));
 				return PATH_NOT_FOUND;
 			} else {
-				webserv::logError(webserv::WARNING, "File not found", 
-				                 path, 
-				                 "FileUtilities::validatePath, errno: " + std::to_string(errno));
 				return FILE_NOT_FOUND;
 			}
 		}
@@ -51,14 +44,12 @@ namespace FileUtilities {
 
 	// 파일을 읽어 문자열로 반환하는 함수
 	std::string readFile(const std::string &filePath) {
+		std::clog << "Start readFile()" << std::endl;
 		// 파일을 바이너리 모드로 열고, 파일 끝에 위치하여 크기를 측정
 		std::ifstream file(filePath.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
 
-		// 파일을 열지 못한 경우 에러 로깅 후 빈 문자열 반환
+		// 파일을 열지 못한 경우 빈 문자열 반환
 		if (!file.is_open()) {
-			webserv::logError(webserv::ERROR, "File opening failed", 
-			                 filePath, 
-			                 "FileUtilities::readFile, errno: " + std::to_string(errno));
 			return "";
 		}
 
@@ -67,25 +58,20 @@ namespace FileUtilities {
 		// 파일 포인터를 파일의 시작 위치로 이동
 		file.seekg(0, std::ios::beg);
 
-		// 파일 크기가 음수인 경우(비정상적인 상태) 에러 로깅 후 빈 문자열 반환
+		// 파일 크기가 음수인 경우(비정상적인 상태) 빈 문자열 반환
 		if (fileSize < 0) {
-			webserv::logError(webserv::ERROR, "Invalid file size", 
-			                 filePath + ", size: " + std::to_string(fileSize), 
-			                 "FileUtilities::readFile");
 			return "";
 		}
 
 		// 파일 크기만큼의 버퍼를 생성
 		std::vector<char> buffer(static_cast<size_t>(fileSize));
 
-		// 파일을 읽고, 실패 시 에러 로깅 후 빈 문자열 반환
+		// 파일을 읽고, 실패 시 빈 문자열 반환
 		if (!file.read(&buffer[0], fileSize)) {
-			webserv::logError(webserv::ERROR, "File read failed", 
-			                 filePath + ", requested size: " + std::to_string(fileSize), 
-			                 "FileUtilities::readFile");
 			return "";
 		}
 
+		std::clog << "Ended readFile()" << std::endl;
 		// 버퍼를 문자열로 변환하여 반환
 		return std::string(buffer.begin(), buffer.end());
 	}

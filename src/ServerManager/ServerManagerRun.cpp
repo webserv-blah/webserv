@@ -1,5 +1,5 @@
 #include "ServerManager.hpp"
-
+#include "sys/socket.h"
 // 서버의 메인 이벤트 루프를 실행합니다.
 // - EventHandler: 클라이언트 및 서버 이벤트 처리를 담당합니다.
 // - ClientManager: 클라이언트 세션을 관리합니다.
@@ -11,12 +11,14 @@
 void ServerManager::run() {
 	EventHandler 	eventHandler;
 	ClientManager	clientManager;
-
+	
+	std::clog << "serverRun()" << std::endl;
 	try {
 		Demultiplexer	reactor(listenFds_);
 		TimeoutHandler	timeoutHandler;
 
 		while (isServerRunning()) {
+			std::clog << "\n\n#####EventLoop#####" << std::endl;
 			// 발생한 이벤트의 개수를 확인
 			int	numEvents = reactor.waitForEvent();
 
@@ -27,19 +29,33 @@ void ServerManager::run() {
 
 				if (type == EXCEPTION_EVENT) {
 					// 예외 이벤트 발생: 소켓 오류 등으로 인해 클라이언트 연결을 종료
-					removeClientInfo(fd, clientManager, reactor, timeoutHandler);
+
+					std::cerr << "Exception Event - fd: " << fd << std::endl;
+					int error = 0;
+					socklen_t len = sizeof(error);
+					if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len) == 0 && error != 0) {
+						std::cerr << "Socket Error on fd: " << fd << " - " << strerror(error) << std::endl;
+					}
+
+					if (!isListeningSocket(fd)) {
+						std::cerr << "rm Client info" << std::endl;
+						removeClientInfo(fd, clientManager, reactor, timeoutHandler);
+					}
 				} else if (type == READ_EVENT) {
 					if (isListeningSocket(fd)) {
 						// 리스닝 소켓에서 읽기 이벤트 발생: 새로운 클라이언트의 연결 요청 처리
+						std::clog << "ServerReadEvent - fd: " << fd << std::endl;
 						processServerReadEvent(
 							fd, clientManager, eventHandler, timeoutHandler, reactor);
 					} else {
 						// 기존 클라이언트 소켓에서 읽기 이벤트 발생: 클라이언트로부터 데이터 수신 처리
+						std::clog << "ClientReadEvent - fd: " << fd << std::endl;
 						processClientReadEvent(
 							fd, clientManager, eventHandler, timeoutHandler, reactor);
 					}
 				} else if (type == WRITE_EVENT) {
 					// 쓰기 이벤트 발생: 클라이언트에게 데이터를 전송하는 작업 처리
+					std::clog << "ClientWriteEvent - fd: " << fd << std::endl;
 					processClientWriteEvent(
 						fd, clientManager, eventHandler, timeoutHandler, reactor);
 				}
@@ -49,11 +65,11 @@ void ServerManager::run() {
 		}
 	} catch (std::exception& e) {
 	    // 예외 발생 시, 서버 비정상 종료에 대비하여 연결된 모든 클라이언트에게 종료 알림을 전송
-		notifyClientsShutdown(clientManager, eventHandler);
+		// notifyClientsShutdown(clientManager, eventHandler);
 		throw; // 원래 예외 그대로 throw
 	}
 	// 서버가 정상 종료된 시 모든 클라이언트에게 종료 알림 전송
-	notifyClientsShutdown(clientManager, eventHandler);
+	// notifyClientsShutdown(clientManager, eventHandler);
 }
 
 // 서버 종료 전에, 모든 클라이언트에게 종료 메시지(503:SERVICE_UNAVAILABLE)를 전송합니다.
@@ -61,10 +77,13 @@ void ServerManager::notifyClientsShutdown(ClientManager& clientManager, EventHan
 	ClientManager::TypeClientMap& clientList = clientManager.accessClientSessionMap();
 	ClientManager::TypeClientMap::iterator it;
 
+	std::clog << "Start noti"<<std::endl;
 	// 클라이언트 목록 전체를 순회하며 각 클라이언트에 종료 알림 전송
 	for (it = clientList.begin(); it != clientList.end(); ++it) {
+		std::clog << "to " << it->first << std::endl;
 		eventHandler.handleError(SERVICE_UNAVAILABLE, *it->second);
 	}
+	std::clog << "End noti"<<std::endl;
 }
 
 // 새로운 클라이언트가 연결되었을 때 호출됩니다.
@@ -77,12 +96,15 @@ void ServerManager::addClientInfo(int clientFd, Demultiplexer& reactor, TimeoutH
 
 // 클라이언트 연결 종료 또는 오류 발생 시 호출됩니다.
 void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler) {
-	// 클라이언트 세션을 ClientManager에서 제거
-	clientManager.removeClient(clientFd);
-	// 타임아웃 관리 대상에서 클라이언트 삭제
-	timeoutHandler.removeConnection(clientFd);
 	// 리액터에서 클라이언트 소켓 제거
 	reactor.removeSocket(clientFd);
+	std::clog << "reactor Removed Client" << std::endl;
+	// 타임아웃 관리 대상에서 클라이언트 삭제
+	timeoutHandler.removeConnection(clientFd);
+	std::clog << "th Removed Client" << std::endl;
+	// 클라이언트 세션을 ClientManager에서 제거
+	clientManager.removeClient(clientFd);
+	std::clog << "cm Removed Client" << std::endl;
 }
 
 // 리스닝 소켓에서 읽기 이벤트가 발생하면 새로운 클라이언트의 연결 요청을 처리합니다.
@@ -96,6 +118,7 @@ void ServerManager::processServerReadEvent(int fd, ClientManager& clientManager,
 	// 새로 연결된 클라이언트의 소켓 FD가 유효한 경우 클라이언트 정보 등록
 	if (clientFd > 0) {
 		addClientInfo(clientFd, reactor, timeoutHandler);
+		std::clog << "Added Client - fd: " << clientFd << std::endl;
 	}
 }
 
@@ -105,10 +128,8 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 	// 파일 디스크립터에 해당하는 클라이언트 세션을 획득
 	ClientSession* client = clientManager.accessClientSession(fd);
 	if (!client) {
-		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
-		webserv::logError(webserv::WARNING, "Invalid Value", 
-		                 "No clientSession corresponding to fd: " + std::to_string(fd), 
-		                 "ServerManager::processClientReadEvent");
+		// 유효하지 않은 클라이언트 FD인 경우 경고 메시지 출력 후 종료
+		std::cerr << "[WARNING] Invalid Value - No clientSession corresponding to fd (source: ServerManager::processClientReadEvent())" << std::endl;
 		return;
 	}
 
@@ -134,10 +155,8 @@ void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager
 	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
 	ClientSession* client = clientManager.accessClientSession(fd);
 	if (!client) {
-		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
-		webserv::logError(webserv::WARNING, "Invalid Value", 
-		                 "No clientSession corresponding to fd: " + std::to_string(fd), 
-		                 "ServerManager::processClientWriteEvent");
+		// 유효하지 않은 클라이언트 FD인 경우
+		std::cerr << "[WARNING] Invalid Value - No clientSession corresponding to fd (source: ServerManager::processClientWriteEvent())" << std::endl;
 		return;
 	}
 

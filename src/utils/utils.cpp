@@ -10,42 +10,9 @@ void signalHandler(int signum) {
 
 // 시그널 핸들러 설정 함수
 void setupSignalHandlers() {
-	signal(SIGINT, signalHandler);
-    signal(SIGTERM, signalHandler);
-    signal(SIGQUIT, signalHandler);
-}
-
-namespace webserv {
-    std::string errorMessage(EnumErrorLevel level, const std::string& cause, 
-                            const std::string& context, const std::string& source) {
-        std::ostringstream oss;
-        
-        // 에러 레벨에 따라 메시지 시작 설정
-        switch (level) {
-            case WARNING:
-                oss << "[WARNING]";
-                break;
-            case ERROR:
-                oss << "[ERROR]";
-                break;
-            case FATAL:
-                oss << "[FATAL]";
-                break;
-        }
-        
-        // 표준 형식으로 메시지 조합
-        oss << " : " << cause;
-        
-        if (!context.empty()) {
-            oss << " - " << context;
-        }
-        
-        if (!source.empty()) {
-            oss << " (Source: " << source << ")";
-        }
-        
-        return oss.str();
-    }
+	std::signal(SIGINT, signalHandler);
+    std::signal(SIGTERM, signalHandler);
+    std::signal(SIGQUIT, signalHandler);
 }
 
 namespace utils {

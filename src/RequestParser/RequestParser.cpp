@@ -9,8 +9,6 @@ RequestParser::RequestParser() : uriMaxLength_(URI_MAX_LENGTH), bodyMaxLength_(B
 RequestParser::~RequestParser() {}
 
 void RequestParser::setConfigBodyLength(size_t length) {
-	// TO-DO: config의 oneLineMaxLength_, uriMaxLength_ 적용
-	(void)this->uriMaxLength_;
 	this->bodyMaxLength_ = length;
 }
 
@@ -146,11 +144,13 @@ EnumStatusCode RequestParser::parseStartLine(const std::string &line, RequestMes
 		return BAD_REQUEST;
 	}
 
-	if (std::getline(iss, buffer, ' '))
+	if (std::getline(iss, buffer, ' ')) {
+		if (buffer.size() > this->uriMaxLength_)
+			return URI_TOO_LONG;//status code: URI가 서버지원사이즈보다 큼
 		reqMsg.setTargetURI(buffer);
-	else
-		return BAD_REQUEST;//status code: "URI version" 형식이 유효하지 않음
-	//MUST TO DO: URI길이 제한 
+	} else {
+		return BAD_REQUEST;//status code: start-line의 "method URI version" 형식이 유효하지 않음
+	}
 
 	iss >> buffer;
 	if (buffer == "HTTP/1.1")

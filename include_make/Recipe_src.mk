@@ -1,6 +1,6 @@
 all:
-	$(Q)$(foreach dir,$(DIRS),$(MAKE) TOPDIR=$(TOPDIR) SRCDIR=`pwd` -C $(dir) $@ >/dev/null;)
-	$(Q)$(MAKE) $(NAME) >/dev/null
+	$(Q)$(foreach dir,$(DIRS),$(MAKE) TOPDIR=$(TOPDIR) SRCDIR=`pwd` DEBUG=$(DEBUG) ADDRESS=$(ADDRESS) -C $(dir) $@ >/dev/null;)
+	$(Q)$(MAKE) DEBUG=$(DEBUG) ADDRESS=$(ADDRESS) $(NAME) >/dev/null
 	@$(call color_printf,$(BOLD_PURPLE),$(NAME),✨ compiled!)
 
 $(NAME): $(OBJS) $(SUBS)

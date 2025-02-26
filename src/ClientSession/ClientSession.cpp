@@ -24,11 +24,19 @@ int ClientSession::getErrorStatusCode() const {
 	return this->errorStatusCode_;
 }
 
-const RequestMessage *ClientSession::getReqMsg() const {
+const RequestMessage &ClientSession::getReqMsg() const {
 	return this->reqMsg_;
 }
 
-const RequestConfig *ClientSession::getConfig() const {
+const RequestConfig &ClientSession::getConfig() const {
+	return this->config_;
+}
+
+const RequestMessage *ClientSession::getReqMsgPtr() const {
+	return this->reqMsg_;
+}
+
+const RequestConfig *ClientSession::getConfigPtr() const {
 	return this->config_;
 }
 

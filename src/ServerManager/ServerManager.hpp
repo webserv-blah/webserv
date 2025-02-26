@@ -19,7 +19,7 @@ class ServerManager {
         // 서버 실행 함수: 메인 이벤트 루프를 돌며 클라이언트 연결 및 데이터 송수신, 타임아웃 관리 등을 수행
         void run();
         // 서버 실행 여부 확인 함수: 서버가 정상적으로 실행 중인지 판단
-        bool isServerRunning();
+        bool isServerRunning() const;
 		// 디버깅을 위한 현재 수신 소켓 정보 출력 함수
 		void print() const;
 

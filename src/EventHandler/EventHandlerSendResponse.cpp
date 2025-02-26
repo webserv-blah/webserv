@@ -2,6 +2,7 @@
 #include "../ClientSession/ClientSession.hpp"
 #include <errno.h>
 #include <algorithm>
+#include <sys/socket.h>
 
 #ifndef BUFFER_SIZE
 #define BUFFER_SIZE 8192
@@ -13,7 +14,6 @@ EnumSesStatus EventHandler::sendResponse(ClientSession& session) {
 
     // 보낼 내용이 없으면 바로 완료 상태로 설정
     if (writeBuffer.empty()) {
-        session.setStatus(WRITE_COMPLETE);
         return WRITE_COMPLETE;
     }
 
@@ -24,11 +24,9 @@ EnumSesStatus EventHandler::sendResponse(ClientSession& session) {
     if (sent < 0) {
         // 재시도 가능한 오류인 경우 (EINTR, EAGAIN, EWOULDBLOCK)는 WRITE_CONTINUE 상태로 처리
         if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) {
-            session.setStatus(WRITE_CONTINUE);
             return WRITE_CONTINUE;
         }
         // 그 외의 오류는 치명적 오류로 간주하여 CONNECTION_CLOSED 상태로 처리
-        session.setStatus(CONNECTION_CLOSED);
         return CONNECTION_CLOSED;
     }
 
@@ -38,6 +36,5 @@ EnumSesStatus EventHandler::sendResponse(ClientSession& session) {
     
     // 업데이트된 버퍼와 상태를 세션에 반영
     session.setWriteBuffer(writeBuffer);
-    session.setStatus(status);
     return status;
 }

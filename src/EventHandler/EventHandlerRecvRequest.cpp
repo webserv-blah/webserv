@@ -40,7 +40,7 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 		this->parser_.setConfigBodyLength(bodyMax);
 
 		// 이전에 버퍼 저장해놓은 데이터와 새로운 요청 데이터를 가지고 파싱
-		EnumStatusCode statusCode = this->parser_.parse(buffer.substr(res), curSession);
+		EnumStatusCode statusCode = this->parser_.parse(buffer.substr(0, res), curSession);
 		curSession.setErrorStatusCode(statusCode);
 		
 		DEBUG_LOG("[EventHandler] Request parsing status: " << statusCode);

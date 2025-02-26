@@ -76,7 +76,7 @@ void CgiHandler::buildCgiEnv(const ClientSession& clientSession,
     envVars.push_back(makeEnvVar("SCRIPT_NAME", uriParts.scriptPath.substr(conf.root_.length())));  // 스크립트 이름 설정 (루트 이후 경로)
     envVars.push_back(makeEnvVar("PATH_INFO", uriParts.pathInfo));      // 추가 경로 정보 설정
     envVars.push_back(makeEnvVar("QUERY_STRING", uriParts.queryString));  // 쿼리 문자열 설정
-    envVars.push_back(makeEnvVar("REMOTE_ADDR", clientSession.getIpAddress()));  // 클라이언트 IP 주소 설정
+    envVars.push_back(makeEnvVar("REMOTE_ADDR", clientSession.getClientIP()));  // 클라이언트 IP 주소 설정
     std::string host = reqMsg.getMetaHost();   // 요청 헤더에서 호스트 정보 추출
     std::string::size_type colonPos = host.find(':');  // 호스트 문자열에서 ':' 위치 탐색
     if (colonPos != std::string::npos) {

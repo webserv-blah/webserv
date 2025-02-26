@@ -13,8 +13,10 @@ class ClientSession {
 		int						getListenFd() const;
 		int						getClientFd() const;
 		int						getErrorStatusCode() const;
-		const RequestMessage	*getReqMsg() const;
-		const RequestConfig		*getConfig() const;
+		const RequestMessage	&getReqMsg() const;
+		const RequestConfig		&getConfig() const;
+		const RequestMessage	*getReqMsgPtr() const;
+		const RequestConfig		*getConfigPtr() const;
 		std::string				getReadBuffer() const;
 		std::string				getWriteBuffer() const;
 		std::string				getClientIP() const;

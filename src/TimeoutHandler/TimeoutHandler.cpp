@@ -9,6 +9,21 @@ TimeoutHandler::~TimeoutHandler() {
 
 }
 
+// 이벤트루프의 타임아웃 주기 관리를 위해 가장 임박한 만료시간 반환 메소드
+timespec* TimeoutHandler::getEarliestTimeout() {
+    if (expireQueue_.empty()) {
+        return NULL;
+    }
+
+    // 만약 관리중인 클라이언트 존재 시, 가장 임박한 만료시간까지 남은 시간 세팅
+    time_t  currentTime = getTime();
+    time_t  expireTime = expireQueue_.begin()->first;
+
+    timeout_.tv_sec = expireTime - currentTime;  
+    timeout_.tv_nsec = 0;
+    return &timeout_;
+}
+
 // TimeoutHandler 객체에서 관리할 클라이언트(fd) 연결시간 정보 추가
 void TimeoutHandler::addConnection(int fd) {
     time_t lastActivity = getTime();
@@ -49,6 +64,8 @@ void TimeoutHandler::updateActivity(int fd) {
 void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& reactor, ClientManager& clientManager) {
     time_t currentTime = getTime();
 
+    std::clog << "⏱️ Checking Timeouts : " << currentTime << std::endl;
+
     while (!expireQueue_.empty()) {
         TypeExpireQueueIter it = expireQueue_.begin();
 
@@ -58,13 +75,17 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
         }
 
         // 만료된 연결 응답처리
-        int fd = it->second;     
+        int fd = it->second;
+        std::clog << "  Connection Expired : " << fd << std::endl;
+
         ClientSession* client = clientManager.accessClientSession(fd);
         if (!client) { 
             std::cerr << "[Error][TimeoutHandler][checkTimeouts] Invalid Client Fd" << std::endl;
         } else {
             // HTTP 408 Request Timeout 처리
             eventHandler.handleError(408, *client);
+            // config 접근시 터지는 문제로, 테스트시 위를 주석처리, 아래를 주석해제
+            //(void)eventHandler;
         }
 
         // client 정보 삭제 및 정리

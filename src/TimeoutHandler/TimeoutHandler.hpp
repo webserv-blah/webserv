@@ -19,12 +19,14 @@ class TimeoutHandler {
         TimeoutHandler();
         ~TimeoutHandler();
 
-        void addConnection(int fd);
-        void updateActivity(int fd);
-        void checkTimeouts(EventHandler& eventHandler, Demultiplexer& reactor, ClientManager& clientManager);
-        void removeConnection(int fd);
+        timespec*   getEarliestTimeout();
+        void        addConnection(int fd);
+        void        updateActivity(int fd);
+        void        checkTimeouts(EventHandler& eventHandler, Demultiplexer& reactor, ClientManager& clientManager);
+        void        removeConnection(int fd);
 
     private:
+        timespec                    timeout_;
         std::map<int, time_t>       connections_; // 연결 정보 (fd -> 마지막 활동 시간)
         std::multimap<time_t, int>  expireQueue_; // 만료 시간 기준으로 오름차순 정렬된 연결 목록
         TypeExpireIterMap           expireMap_;   // fd -> expireQueue_의 iterator

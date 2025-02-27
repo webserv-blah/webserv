@@ -38,14 +38,26 @@ namespace FileUtilities {
 				return FILE_NO_READ_PERMISSION;
 			}
 			// 다음으로 실행 권한(X_OK) 체크
-			if (access(path.c_str(), X_OK) != 0) {
-				return FILE_NO_EXEC_PERMISSION;
-			}
+			// if (access(path.c_str(), X_OK) != 0) {
+			// 	return FILE_NO_EXEC_PERMISSION;
+			// }
 			return VALID_FILE;
 		}
 		// 4) 그 밖의 유형(심볼릭 링크, 소켓, 파이프 등)은 "정규파일이 아니다"로 처리
 		else {
 			return FILE_NOT_FOUND;
+		}
+	}
+
+	// 파일의 실행 권한을 확인하는 함수
+	bool hasExecutePermission(const std::string& filePath) {
+		if (access(filePath.c_str(), X_OK) == 0) {
+			return true;
+		} else {
+			webserv::logError(WARNING, "No execute permission", 
+			                 filePath, 
+			                 "FileUtilities::hasExecutePermission, errno: " + std::to_string(errno));
+			return false;
 		}
 	}
 

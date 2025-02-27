@@ -47,7 +47,9 @@ std::string CgiHandler::handleRequest(const ClientSession& clientSession) {
                responseBuilder_.buildError(NOT_FOUND, conf) : 
                responseBuilder_.buildError(FORBIDDEN, conf);
     }
-
+    if (vr == VALID_FILE && !hasExecutePermission(parts.scriptPath)) {
+        return responseBuilder_.buildError(FORBIDDEN, conf);
+    }
     // POST 요청이면 요청 본문을, 아니면 빈 문자열을 사용
     std::string requestBody = (reqMsg.getMethod() == POST) ? reqMsg.getBody() : "";
     // CGI 실행에 필요한 환경 변수를 저장할 벡터 생성

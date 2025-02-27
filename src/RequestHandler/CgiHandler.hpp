@@ -54,8 +54,3 @@ private:
 };
 
 #endif
-
-// TODO:
-// clientsession reqMsg, config get 반환타입 변경 요청드리기.
-// handler 호출시 clientSession으로 인자 넘겨줄것 요청드리기
-// client IP 정보 요청드리기

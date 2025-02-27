@@ -208,11 +208,16 @@ std::string StaticHandler::handleDirectory(const std::string &dirPath,
 	const RequestConfig &conf)
 {
 	DEBUG_LOG("[StaticHandler] Handling directory: " << dirPath << ", URI: " << uri);
+	
+	// 디렉토리 경로 마지막에 '/'가 없으면 추가
 	std::string indexPath = dirPath;
 	if (!indexPath.empty() && indexPath[indexPath.size()-1] != '/') {
 		indexPath.push_back('/');
 	}
-	indexPath += conf.indexFile_;
+	
+	// 인덱스 파일이 설정에 지정되어 있는지 확인
+	std::string indexFilename = !conf.indexFile_.empty() ? conf.indexFile_ : "index.html";
+	indexPath += indexFilename;
 	DEBUG_LOG("[StaticHandler] Looking for index file: " << indexPath);
 
 	EnumValidationResult indexValidation = validatePath(indexPath);
@@ -222,9 +227,8 @@ std::string StaticHandler::handleDirectory(const std::string &dirPath,
 		DEBUG_LOG("[StaticHandler] Index file found, serving: " << indexPath);
 		return handleFile(indexPath, conf);
 	}
-	// index 파일이 없고 autoIndex가 on이면 디렉토리 리스트 반환
-	else if ((indexValidation == FILE_NOT_FOUND || indexValidation == PATH_NOT_FOUND) &&
-		conf.autoIndex_.value() == 1)
+	// index 파일이 없거나 권한 문제가 있고, autoIndex가 on이면 디렉토리 리스트 반환
+		else if ((indexValidation != VALID_FILE) && conf.autoIndex_.value() == 1)
 	{
 		DEBUG_LOG("[StaticHandler] No index file, autoIndex is enabled, generating directory listing");
 		return buildAutoIndexResponse(dirPath, uri);
@@ -232,6 +236,8 @@ std::string StaticHandler::handleDirectory(const std::string &dirPath,
 
 	// 나머지는 접근 불가
 	DEBUG_LOG("[StaticHandler] No index file and autoIndex disabled, returning 403 Forbidden");
+	DEBUG_LOG("[StaticHandler] Index validation result: " << indexValidation);
+	DEBUG_LOG("[StaticHandler] autoIndex value: " << (conf.autoIndex_.isSet() ? std::to_string(conf.autoIndex_.value()) : "null"));
 	return responseBuilder_.buildError(FORBIDDEN, conf);
 }
 

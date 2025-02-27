@@ -110,7 +110,7 @@ std::string StaticHandler::handleGetRequest(const RequestMessage& reqMsg, const 
 		case PATH_NO_PERMISSION:
 		case FILE_NO_READ_PERMISSION:
 		case FILE_NO_EXEC_PERMISSION:
-			return handleFile(fullPath, conf);
+			return responseBuilder_.buildError(FORBIDDEN, conf);
 		default:
 			return responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf);
 	}

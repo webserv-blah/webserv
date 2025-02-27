@@ -24,14 +24,14 @@ KqueueDemultiplexer::~KqueueDemultiplexer() {
 }
 
 // 이벤트를 대기하는 함수 (kevent 호출)
-int KqueueDemultiplexer::waitForEventImpl() {
+int KqueueDemultiplexer::waitForEventImpl(timespec* timeout) {
 	// 변경된 이벤트가 없으면(numChanges == 0) NULL 전달
 	int numChanges = changedEvents_.size();
 	const struct kevent* changedEvents = numChanges ? &changedEvents_[0] : NULL;
 
 	// kevent 호출: 이벤트 감지
 	// 반환값 : 감지된 이벤트 개수
-	numEvents_ = kevent(kq_, changedEvents, numChanges, &eventList_[0], MAX_EVENT, nullptr);
+	numEvents_ = kevent(kq_, changedEvents, numChanges, &eventList_[0], MAX_EVENT, timeout);
 	if (numEvents_ == -1) {
 		webserv::throwSystemError("kevent", "Waiting for events", "KqueueDemultiplexer::waitForEventImpl"); // kevent 호출 실패
 	}

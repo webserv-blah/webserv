@@ -11,8 +11,8 @@ DemultiplexerBase<Derived>::~DemultiplexerBase() {
 }
 
 template <typename Derived>
-int DemultiplexerBase<Derived>::waitForEvent() {
-	return static_cast<Derived&>(*this).waitForEventImpl();
+int DemultiplexerBase<Derived>::waitForEvent(timespec* timeout) {
+	return static_cast<Derived&>(*this).waitForEventImpl(timeout);
 }
 
 template <typename Derived>

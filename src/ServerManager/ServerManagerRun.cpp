@@ -20,7 +20,9 @@ void ServerManager::run() {
 		while (isServerRunning()) {
 			// 발생한 이벤트의 개수를 확인
 			std::clog << "\n\n💬 Webserv Waiting For EVENTS..." << std::endl;
-			int	numEvents = reactor.waitForEvent();
+
+			timespec* timeout = timeoutHandler.getEarliestTimeout();
+			int	numEvents = reactor.waitForEvent(timeout);
 
 			// 발생한 각 이벤트를 순회하며 처리
 			for (int i = 0; i < numEvents; ++i) {

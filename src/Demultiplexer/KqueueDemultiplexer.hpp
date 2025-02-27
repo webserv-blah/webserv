@@ -6,12 +6,13 @@
 #include "DemultiplexerBase.hpp"
 #include <vector>
 #include <set>
+#include <time.h>
 
 class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 	public:
 		KqueueDemultiplexer(std::set<int>& listenFds);
 		~KqueueDemultiplexer();
-		int			waitForEventImpl();
+		int			waitForEventImpl(timespec* timeout);
 		void		addSocketImpl(int fd);
 		void		removeSocketImpl(int fd);
 		void		addWriteEventImpl(int fd);

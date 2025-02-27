@@ -32,8 +32,13 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 		                      "EventHandler::recvRequest");
 		return CONNECTION_CLOSED;	//errno)그 외, 통신을 할 수 없는 상태이거나, 메모리 문제로 치명적인 경우
 	} else if (res == 0) {			//클라이언트 측에서 연결을 종료한 경우
+		DEBUG_LOG("[EventHandler] Client closed connection (fd: " << curSession.getClientFd() << ")");
 		return CONNECTION_CLOSED;
 	} else {
+		// 디버그를 위해 요청 내용의 일부 출력
+		std::string reqPreview = buffer.substr(0, std::min(static_cast<size_t>(res), static_cast<size_t>(100)));
+		DEBUG_LOG("[EventHandler] Request preview: " << reqPreview);
+		
 		// 해당 ClientSession의 RequestMessage를 파싱하기 전에 Body의 최대 길이를 설정
 		const RequestConfig *config = curSession.getConfigPtr();
 		const size_t bodyMax = (config == NULL) ? BODY_MAX_LENGTH : config->clientMaxBodySize_.value();
@@ -50,10 +55,18 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 			DEBUG_LOG("[EventHandler] Request error detected: " << curSession.getErrorStatusCode());
 			return REQUEST_ERROR;
 		}
+		else if (curSession.getReqMsgPtr() == NULL) {
+			DEBUG_LOG("[EventHandler] RequestMessage pointer is NULL after parsing");
+			return REQUEST_ERROR;
+		}
 		else if (curSession.getReqMsgPtr()->getStatus() == REQ_DONE) {
 			DEBUG_LOG("[EventHandler] Request fully received and parsed for client fd:" << curSession.getClientFd());
+			DEBUG_LOG("[EventHandler] Request method: " << curSession.getReqMsgPtr()->getMethod() 
+					  << ", URI: " << curSession.getReqMsgPtr()->getTargetURI());
 			return READ_COMPLETE;
 		}
+		
+		DEBUG_LOG("[EventHandler] Request not complete yet, current status: " << curSession.getReqMsgPtr()->getStatus());
 		return READ_CONTINUE;
 	}
 }

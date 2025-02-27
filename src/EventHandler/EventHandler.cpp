@@ -42,6 +42,18 @@ int EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
 
     // ClientManager에 새 클라이언트 정보를 추가
     clientManager.addClient(fd, clientFd, clientIP);
+    
+    // 클라이언트 세션에 설정 적용
+    ClientSession* session = clientManager.accessClientSession(clientFd);
+    if (session != NULL) {
+        // fd에 해당하는 서버 설정 찾기
+        const GlobalConfig &globalConfig = GlobalConfig::getInstance();
+        const RequestConfig* defaultConfig = globalConfig.findRequestConfig(fd, "", "");
+        if (defaultConfig != NULL) {
+            session->setConfig(defaultConfig);
+            DEBUG_LOG("[EventHandler] Set initial server config for new client fd:" << clientFd);
+        }
+    }
 
     // 수락된 클라이언트의 파일 디스크립터 반환
     return clientFd;
@@ -55,14 +67,38 @@ int EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
 //---------------------------------------------------------------------
 EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) {
     DEBUG_LOG("[EventHandler] Handling client read event on fd: " << clientSession.getClientFd());
+    
     // 클라이언트의 요청 데이터를 수신
     EnumSesStatus status = recvRequest(clientSession);
+    DEBUG_LOG("[EventHandler] recvRequest result status: " << status);
 
     if (status == READ_COMPLETE) {
         // 요청 데이터 수신이 완료된 경우
+        if (clientSession.getReqMsgPtr() == NULL) {
+            DEBUG_LOG("[EventHandler] Request message is NULL after READ_COMPLETE, possible error");
+            handleError(INTERNAL_SERVER_ERROR, clientSession);
+            return CONNECTION_CLOSED;
+        }
+        
         RequestMessage  requestMsg = clientSession.getReqMsg();
         std::string     responseMsg;
-		const RequestConfig&	reqConfig = clientSession.getConfig();
+        
+        // 설정이 NULL인지 확인
+        if (clientSession.getConfigPtr() == NULL) {
+            DEBUG_LOG("[EventHandler] Config is NULL after READ_COMPLETE, using default config");
+            const GlobalConfig &globalConfig = GlobalConfig::getInstance();
+            const RequestConfig* defaultConfig = globalConfig.findRequestConfig(clientSession.getListenFd(), "", "");
+            if (defaultConfig != NULL) {
+                clientSession.setConfig(defaultConfig);
+            } else {
+                DEBUG_LOG("[EventHandler] Could not find default config, sending 500 error");
+                handleError(INTERNAL_SERVER_ERROR, clientSession);
+                return CONNECTION_CLOSED;
+            }
+        }
+        
+        const RequestConfig& reqConfig = clientSession.getConfig();
+        DEBUG_LOG("[EventHandler] Processing request with URI: " << requestMsg.getTargetURI());
 
         // 요청 URI에 CGI 실행 대상이 포함되어 있는지 확인
         if (cgiHandler_.isCGI(requestMsg.getTargetURI(), reqConfig.cgiExtension_)) {
@@ -74,11 +110,17 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
             DEBUG_LOG("[EventHandler] Processing static file request for URI: " << requestMsg.getTargetURI());
             responseMsg = staticHandler_.handleRequest(requestMsg, reqConfig);
         }
+        
         // 생성된 응답 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
         clientSession.setWriteBuffer(responseMsg);
+        DEBUG_LOG("[EventHandler] Response created, size: " << responseMsg.size() << " bytes");
+        
+        // 요청 처리가 완료되었으므로 요청 객체 초기화
+        clientSession.resetRequest();
         
         // 클라이언트에게 응답 전송을 시도하고, 전송 결과에 따라 상태 갱신
         status = sendResponse(clientSession);
+        DEBUG_LOG("[EventHandler] sendResponse result status: " << status);
     } else if (status == REQUEST_ERROR) {
         // 요청 처리 도중 에러가 발생한 경우
         // Http 상태 코드(에러)를 가져와서 에러 응답 전송
@@ -109,8 +151,34 @@ EnumSesStatus EventHandler::handleClientWriteEvent(ClientSession& clientSession)
 //---------------------------------------------------------------------
 void EventHandler::handleError(int statusCode, ClientSession& clientSession) {
     DEBUG_LOG("[EventHandler] Building error response for status code: " << statusCode << " for client fd: " << clientSession.getClientFd());
-    // ResponseBuilder를 사용하여 상태 코드에 맞는 에러 응답 메시지 생성
-    std::string errorMsg = rspBuilder_.buildError(statusCode, clientSession.getConfig());
+    
+    // 클라이언트 세션에 설정이 있는지 확인
+    const RequestConfig* configPtr = clientSession.getConfigPtr();
+    std::string errorMsg;
+    
+    // 설정이 없으면 기본 서버 설정 사용
+    if (configPtr == NULL) {
+        DEBUG_LOG("[EventHandler] No client config found, using default server config for error response");
+        
+        // 기본 서버 설정 가져오기 시도
+        const GlobalConfig &globalConfig = GlobalConfig::getInstance();
+        const RequestConfig* defaultConfig = globalConfig.findRequestConfig(clientSession.getListenFd(), "", "");
+        if (defaultConfig != NULL) {
+            clientSession.setConfig(defaultConfig);
+            configPtr = clientSession.getConfigPtr();
+        }
+        
+        // 여전히 설정이 없으면 임시 설정 사용
+        if (configPtr == NULL) {
+            RequestConfig defaultConfig;
+            errorMsg = rspBuilder_.buildError(statusCode, defaultConfig);
+        } else {
+            errorMsg = rspBuilder_.buildError(statusCode, *configPtr);
+        }
+    } else {
+        // 클라이언트에 설정된 정보로 에러 응답 생성
+        errorMsg = rspBuilder_.buildError(statusCode, *configPtr);
+    }
 
     // 생성된 에러 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
     clientSession.setWriteBuffer(errorMsg);

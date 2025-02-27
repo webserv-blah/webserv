@@ -10,7 +10,7 @@
 #endif
 
 EnumSesStatus EventHandler::sendResponse(ClientSession& session) {
-    std::string writeBuffer = session.getWriteBuffer();
+    std::string& writeBuffer = session.accessWriteBuffer();
     int clientFd = session.getClientFd();
 
     // 보낼 내용이 없으면 바로 완료 상태로 설정
@@ -41,7 +41,5 @@ EnumSesStatus EventHandler::sendResponse(ClientSession& session) {
     DEBUG_LOG("[EventHandler] Sent " << sent << " bytes, " << writeBuffer.size() 
               << " bytes remaining, status: " << (status == WRITE_COMPLETE ? "COMPLETE" : "CONTINUE"));
     
-    // 업데이트된 버퍼와 상태를 세션에 반영
-    session.setWriteBuffer(writeBuffer);
     return status;
 }

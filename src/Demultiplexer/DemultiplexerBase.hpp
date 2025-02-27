@@ -2,12 +2,14 @@
 #define DEMULTIPLEXER_BASE_HPP
 
 #include "../include/commonEnums.hpp"
+#include <time.h>
+
 static const int MAX_EVENT = 1024;
 
 template <typename Derived>
 class DemultiplexerBase {
 	public:
-		int			waitForEvent(); 
+		int			waitForEvent(timespec* timeout); 
 		void		addSocket(int fd);
 		void		removeSocket(int fd);
 		void		addWriteEvent(int fd);

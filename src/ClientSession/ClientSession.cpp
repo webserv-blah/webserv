@@ -6,6 +6,7 @@
 
 ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : listenFd_(listenFd), clientFd_(clientFd), reqMsg_(NULL), config_(NULL), clientIP_(clientIP) {
 	this->readBuffer_.reserve(BUFFER_SIZE * 2);
+	this->defConfig_ = GlobalConfig::findRequestConfig(listenFd, "", "");
 }
 ClientSession::~ClientSession() {
 	if (this->reqMsg_ != NULL)
@@ -24,20 +25,15 @@ int ClientSession::getErrorStatusCode() const {
 	return this->errorStatusCode_;
 }
 
-const RequestMessage &ClientSession::getReqMsg() const {
-	return *this->reqMsg_;
-}
-
-const RequestConfig &ClientSession::getConfig() const {
-	return *this->config_;
-}
-
-const RequestMessage *ClientSession::getReqMsgPtr() const {
+const RequestMessage *ClientSession::getReqMsg() const {
 	return this->reqMsg_;
 }
 
-const RequestConfig *ClientSession::getConfigPtr() const {
-	return this->config_;
+const RequestConfig *ClientSession::getConfig() const {
+	if (config_) {
+		return this->config_;
+	}
+	return this->defConfig_;
 }
 
 std::string ClientSession::getReadBuffer() const {

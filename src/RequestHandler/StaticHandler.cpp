@@ -163,7 +163,7 @@ std::string StaticHandler::handleDeleteRequest(const RequestMessage& reqMsg, con
 	// 경로 검사
 	EnumValidationResult pathValidation = validatePath(fullPath);
 
-	if (pathValidation == VALID_FILE || pathValidation == FILE_NO_EXEC_PERMISSION) {
+	if (pathValidation == VALID_FILE) {
 		// 파일 삭제 시도
 		if (std::remove(fullPath.c_str()) == 0) {
 			// 성공

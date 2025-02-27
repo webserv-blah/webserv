@@ -49,6 +49,18 @@ namespace FileUtilities {
 		}
 	}
 
+	// 파일의 실행 권한을 확인하는 함수
+	bool hasExecutePermission(const std::string& filePath) {
+		if (access(filePath.c_str(), X_OK) == 0) {
+			return true;
+		} else {
+			webserv::logError(WARNING, "No execute permission", 
+			                 filePath, 
+			                 "FileUtilities::hasExecutePermission, errno: " + std::to_string(errno));
+			return false;
+		}
+	}
+
 	// 파일을 읽어 문자열로 반환하는 함수
 	std::string readFile(const std::string &filePath) {
 		// 파일을 바이너리 모드로 열고, 파일 끝에 위치하여 크기를 측정

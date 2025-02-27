@@ -47,7 +47,7 @@ std::string CgiHandler::handleRequest(const ClientSession& clientSession) {
                responseBuilder_.buildError(NOT_FOUND, conf) : 
                responseBuilder_.buildError(FORBIDDEN, conf);
     }
-    if (vr == VALID_FILE && access(parts.scriptPath.c_str(), X_OK) != 0) {
+    if (vr == VALID_FILE && !hasExecutePermission(parts.scriptPath)) {
         return responseBuilder_.buildError(FORBIDDEN, conf);
     }
     // POST 요청이면 요청 본문을, 아니면 빈 문자열을 사용

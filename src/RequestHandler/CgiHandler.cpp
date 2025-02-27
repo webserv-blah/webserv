@@ -11,6 +11,9 @@
 #include <sstream>                      // 문자열 스트림 사용을 위한 헤더 포함
 #include <string>                       // 문자열 사용을 위한 헤더 포함
 #include <vector>                       // 벡터 사용을 위한 헤더 포함
+#include <cstring>                      // strerror 등의 문자열 함수
+#include <sys/stat.h>                   // chmod 함수
+#include <errno.h>                      // errno 변수
 
 using namespace FileUtilities;          // FileUtilities 네임스페이스 사용
 
@@ -163,18 +166,60 @@ void CgiHandler::executeChild(const std::string& scriptPath, const std::vector<s
         envp[i] = const_cast<char*>(cgiEnv[i].c_str());  // 각 환경 변수를 char*로 변환
     }
 
-    char* argv[2];                      // 스크립트 실행 인자 배열 생성
-    argv[0] = const_cast<char*>(scriptPath.c_str());  // 실행할 스크립트 경로 설정
-    argv[1] = 0;                        // 인자 배열 끝을 표시
-
-    execve(scriptPath.c_str(), argv, &envp[0]);  // execve 호출로 CGI 스크립트 실행
-    _exit(1);                           // 실행 실패 시 자식 프로세스 종료
+    // Always use shell execution for PHP files
+    std::string fullPath = "/Users/seonseo/projects/webserv/" + scriptPath;
+    
+    DEBUG_LOG("[CgiHandler] Using shell to execute: " << fullPath);
+    
+    // Create a shell script that will execute the PHP script
+    std::string shellScript = "#!/bin/sh\n";
+    
+    // Add all environment variables
+    for (std::vector<std::string>::size_type i = 0; i < cgiEnv.size(); ++i) {
+        shellScript += "export " + std::string(cgiEnv[i]) + "\n";
+    }
+    
+    // Execute PHP directly
+    shellScript += "cd /Users/seonseo/projects/webserv\n";
+    shellScript += "/opt/homebrew/bin/php-cgi -f " + fullPath + "\n";
+    
+    DEBUG_LOG("[CgiHandler] Shell script: \n" << shellScript);
+    
+    // Write the shell script to a temporary file
+    std::string tempScriptPath = "/tmp/cgi_script_" + std::to_string(getpid()) + ".sh";
+    FILE* tempFile = fopen(tempScriptPath.c_str(), "w");
+    if (!tempFile) {
+        DEBUG_LOG("[CgiHandler] Failed to create temp script file: " << strerror(errno));
+        _exit(1);
+    }
+    
+    fwrite(shellScript.c_str(), 1, shellScript.size(), tempFile);
+    fclose(tempFile);
+    
+    // Make the temporary script executable
+    if (chmod(tempScriptPath.c_str(), 0755) != 0) {
+        DEBUG_LOG("[CgiHandler] Failed to make temp script executable: " << strerror(errno));
+        _exit(1);
+    }
+    
+    // Execute the temporary script
+    char* shArgs[2];
+    shArgs[0] = const_cast<char*>(tempScriptPath.c_str());
+    shArgs[1] = nullptr;
+    
+    execve(tempScriptPath.c_str(), shArgs, nullptr);
+    
+    // If execve fails, log the error
+    DEBUG_LOG("[CgiHandler] Failed to execute shell script: " << strerror(errno));
+    _exit(1);
 }
 
 // 부모 프로세스에서 자식 프로세스를 관리하며 CGI 실행 결과를 수신하는 함수
 std::string CgiHandler::handleParent(pid_t pid, int inPipe[2], int outPipe[2], const std::string& requestBody) {
     close(inPipe[0]);   // 부모 프로세스에서 입력 파이프 읽기 닫기
     close(outPipe[1]);  // 부모 프로세스에서 출력 파이프 쓰기 닫기
+
+    DEBUG_LOG("[CgiHandler] Parent process handling CGI execution for PID: " << pid);
 
     // 요청 본문이 있는 경우, 자식 프로세스로 전송
     if (!requestBody.empty()) {
@@ -183,26 +228,65 @@ std::string CgiHandler::handleParent(pid_t pid, int inPipe[2], int outPipe[2], c
         std::string::size_type written = 0;
         while (written < total) {
             ssize_t bytes = write(inPipe[1], data + written, total - written);  // 데이터를 파이프에 씀
-            if (bytes <= 0) break;  // 쓰기 실패 시 루프 종료
+            if (bytes <= 0) {
+                DEBUG_LOG("[CgiHandler] Failed to write request body to pipe");
+                break;  // 쓰기 실패 시 루프 종료
+            }
             written += bytes;
         }
+        DEBUG_LOG("[CgiHandler] Wrote " << written << " bytes of request body");
     }
     close(inPipe[1]);  // 입력 파이프 쓰기 닫기
 
     std::ostringstream oss;            // 자식 프로세스의 출력을 저장할 스트림 생성
     char buffer[4096];                 // 읽기 버퍼 생성
     ssize_t bytesRead;
+    size_t totalBytesRead = 0;
 
-	//TODO: 여기서 read가 오류일땐..?
+    DEBUG_LOG("[CgiHandler] Reading CGI output from pipe");
     while ((bytesRead = read(outPipe[0], buffer, sizeof(buffer))) > 0) {
         oss.write(buffer, bytesRead);  // 버퍼에서 읽은 데이터를 스트림에 기록
+        totalBytesRead += bytesRead;
     }
+    
+    if (bytesRead < 0) {
+        DEBUG_LOG("[CgiHandler] Error reading CGI output: " << strerror(errno));
+    }
+    
+    DEBUG_LOG("[CgiHandler] Read " << totalBytesRead << " bytes from CGI output");
     close(outPipe[0]);                 // 출력 파이프 읽기 닫기
 
     int status;
     waitpid(pid, &status, 0);          // 자식 프로세스 종료 상태를 대기 및 수신
-    // 자식 프로세스가 정상 종료하면 결과 문자열 반환, 그렇지 않으면 빈 문자열 반환
-    return (WIFEXITED(status) && WEXITSTATUS(status) == 0) ? oss.str() : "";
+    
+    // Clean up the temporary script file
+    std::string tempScriptPath = "/tmp/cgi_script_" + std::to_string(pid) + ".sh";
+    unlink(tempScriptPath.c_str());
+    DEBUG_LOG("[CgiHandler] Removed temporary script: " << tempScriptPath);
+    
+    if (WIFEXITED(status)) {
+        int exitCode = WEXITSTATUS(status);
+        DEBUG_LOG("[CgiHandler] Child process exited with code: " << exitCode);
+        if (exitCode != 0) {
+            DEBUG_LOG("[CgiHandler] Non-zero exit code indicates error");
+            return "";
+        }
+    } else if (WIFSIGNALED(status)) {
+        DEBUG_LOG("[CgiHandler] Child process terminated by signal: " << WTERMSIG(status));
+        return "";
+    } else {
+        DEBUG_LOG("[CgiHandler] Child process terminated abnormally");
+        return "";
+    }
+    
+    // Return CGI output if we got any, otherwise empty string
+    if (totalBytesRead > 0) {
+        DEBUG_LOG("[CgiHandler] Returning CGI output, size: " << totalBytesRead << " bytes");
+        return oss.str();
+    } else {
+        DEBUG_LOG("[CgiHandler] No CGI output received, returning empty string");
+        return "";
+    }
 }
 
 // "이름=값" 형태의 환경 변수 문자열을 생성하는 함수

@@ -113,7 +113,6 @@ EnumReqStatus RequestParser::handleCRLFLine(const EnumReqStatus &curStatus) {
 	if (curStatus == REQ_INIT)
 		return REQ_TOP_CRLF;
 	if (curStatus == REQ_HEADER_FIELD)
-		return REQ_HEADER_CRLF;// MUST TO DO: 이 상태에서 request가 새롭게 들어오면 DONE을 해줘야하는 상황이 있음
+		return REQ_HEADER_CRLF;
 	return REQ_ERROR;
-	// MUST TO DO: 이상태에서 DONE의 판단을 할 수 있는가?
 }

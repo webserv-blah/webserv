@@ -31,7 +31,7 @@ EnumStatusCode RequestParser::parseStartLine(const std::string &line, RequestMes
 		return BAD_REQUEST;//status code: start-line의 "method URI version" 형식이 유효하지 않음
 	}
 
-	iss >> buffer;
+	std::getline(iss, buffer, '\0');
 	if (buffer == "HTTP/1.1")
 		reqMsg.setStatus(REQ_STARTLINE);
 	else {

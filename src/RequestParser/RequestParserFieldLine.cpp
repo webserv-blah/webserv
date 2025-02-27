@@ -32,7 +32,7 @@ EnumStatusCode RequestParser::parseFieldLine(const std::string &line, RequestMes
 		return BAD_REQUEST;
 		
 	// 3-3. field value중 RequestMessage의 메타데이터 처리
-	if (!handleFieldValue(name, *values.begin(), reqMsg))
+	if (!handleFieldValue(name, values[0], reqMsg))
 		return BAD_REQUEST;
 	
 	// map<string, vector> 형태의 멤버변수 데이터에 저장

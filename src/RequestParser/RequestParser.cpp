@@ -74,7 +74,7 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 				break ;
 			}
 		} else {//데이터가 있는 줄 처리
-			EnumStatusCode statusCode = this->handleOneLine(readBuffer.substr(cursorFront, cursorBack-cursorFront+2), reqMsg);
+			EnumStatusCode statusCode = this->handleOneLine(readBuffer.substr(cursorFront, cursorBack-cursorFront), reqMsg);
 			if (statusCode != NONE_STATUS_CODE)
 				return statusCode;
 		}

@@ -49,12 +49,14 @@ const std::string& targetUrl) const {
 // 주어진 서버 목록에서 도메인 이름과 일치하는 서버 설정을 찾는다.
 const ServerConfig& GlobalConfig::findServerConfig(const std::vector<ServerConfig*>& servers, \
 const std::string& domainName) const {
-	// 서버 목록을 순회하며 각 서버의 serverNames_ 벡터 내에서 도메인 이름을 찾음
-	for (size_t i = 0; i < servers.size(); ++i) {
-		for (size_t j = 0; j < servers[i]->serverNames_.size(); j++) {
-			// 도메인 이름이 일치하면 해당 서버 설정을 반환
-			if (servers[i]->serverNames_[j] == domainName)
-				return *servers[i];
+	if (!domainName.empty()) {
+		// 서버 목록을 순회하며 각 서버의 serverNames_ 벡터 내에서 도메인 이름을 찾음
+		for (size_t i = 0; i < servers.size(); ++i) {
+			for (size_t j = 0; j < servers[i]->serverNames_.size(); j++) {
+				// 도메인 이름이 일치하면 해당 서버 설정을 반환
+				if (servers[i]->serverNames_[j] == domainName)
+					return *servers[i];
+			}
 		}
 	}
 	// 일치하는 도메인을 찾지 못하면 첫 번째 서버 설정을 반환
@@ -66,6 +68,10 @@ const std::string& domainName) const {
 // 주어진 서버 설정 내에서 target URL과 가장 잘 맞는 location 설정을 찾는다.
 const RequestConfig* GlobalConfig::findLocationConfig(const ServerConfig& server, \
 const std::string& targetUrl) const {
+	// targetUrl이 비어있으면 서버의 기본 RequestConfig를 반환
+	if (targetUrl.empty()) {
+		return &server.reqConfig_;
+	}
 	const LocationConfig* longestPrefixMatch = NULL; // 가장 긴 접두어 매칭을 저장할 포인터 초기화
 	// 서버의 location 설정 목록을 순회
 	for (size_t i = 0; i < server.locations_.size(); ++i) {

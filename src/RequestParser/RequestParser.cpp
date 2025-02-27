@@ -34,7 +34,7 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 	readBuffer.append(readData);
 	if (readData.size() == 1)
 		return NONE_STATUS_CODE;
-	
+
 	// 1-1. Body가 아닌, start-line이나 field-line인 경우
 	while (status != REQ_HEADER_CRLF && status != REQ_BODY) {
 		size_t findResult = readBuffer.find(CRLF, cursorBack+2, 2);
@@ -43,8 +43,6 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 		if (findResult != std::string::npos) {
 			cursorFront = (cursorBack == 0) ? 0 : cursorBack+2;
 			cursorBack = findResult;
-			std::cout << "cursorFront: " << cursorFront << ";\n";
-			std::cout << "cursorBack: " << cursorBack << ";\n";
 		} else {// \n이 나오지 않고 readData가 끝난 상태. 다음 loop로 넘어감
 			if (readBuffer.find(LF, cursorBack) != std::string::npos)
 				return BAD_REQUEST;//status code: CRLF가 아닌, 단일 LF
@@ -174,9 +172,20 @@ EnumStatusCode RequestParser::parseFieldLine(const std::string &line, RequestMes
 
 	// 3-1. field-line의 기본 파싱 (name: value, ...)
 	std::getline(iss, name, ':');
-	while (std::getline(iss, value, ',')) {
-		value = utils::strtrim(value);
-		values.push_back(value);
+	if (name == "Host" || name == "Content-Length"
+	||  name == "Connection" || name == "Transfer-Encoding"
+	||  name == "User-Agent" ||  name == "Authorization"
+	||  name == "Referer" ||  name == "Range"
+	||  name == "If-Modified-Since" ||  name == "If-Unmodified-Since"
+	||  name == "If-Match" ||  name == "If-None-Match"
+	||  name == "Content-Location") {
+		std::getline(iss, value, '\0');
+		values.push_back(utils::strtrim(value));
+	} else {
+		while (std::getline(iss, value, ',')) {
+			value = utils::strtrim(value);
+			values.push_back(value);
+		}
 	}
 	// map<string, vector> 형태의 멤버변수 데이터에 저장
 	reqMsg.addFieldLine(name, values);
@@ -186,7 +195,7 @@ EnumStatusCode RequestParser::parseFieldLine(const std::string &line, RequestMes
 		return BAD_REQUEST;
 		
 	// 3-3. field value중 RequestMessage의 메타데이터 처리
-	if (!handleFieldValue(name, value, reqMsg))
+	if (!handleFieldValue(name, *values.begin(), reqMsg))
 		return BAD_REQUEST;
 	
 	// 3-4. RequestMessage가 하나 이상의 field-line를 갖고 있으며, 아직 CRLF가 나오지 않음을 뜻함
@@ -196,17 +205,20 @@ EnumStatusCode RequestParser::parseFieldLine(const std::string &line, RequestMes
 
 // 3-2. field-line의 value 갯수를 검증하는 함수
 bool RequestParser::validateFieldValueCount(const std::string &name, const int count) {
-	if (count < 1)
+	if (count < 1){
 		return false;
-	if (count > 1
-	&& (name == "Host" || name == "Content-Length"
-	||  name == "Connection" || name == "Transfer-Encoding"
-	||  name == "User-Agent" ||  name == "Authorization"
-	||  name == "Referer" ||  name == "Range"
-	||  name == "If-Modified-Since" ||  name == "If-Unmodified-Since"
-	||  name == "If-Match" ||  name == "If-None-Match"
-	||  name == "Content-Location"))
-		return false;
+	}
+	(void)name;
+	//if (count > 1
+	//&& (name == "Host" || name == "Content-Length"
+	//||  name == "Connection" || name == "Transfer-Encoding"
+	//||  name == "User-Agent" ||  name == "Authorization"
+	//||  name == "Referer" ||  name == "Range"
+	//||  name == "If-Modified-Since" ||  name == "If-Unmodified-Since"
+	//||  name == "If-Match" ||  name == "If-None-Match"
+	//||  name == "Content-Location")){
+	//	return false;
+	//}
 	return true;
 }
 

@@ -36,7 +36,7 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 		std::clog << "[Received MSG]\n" << buffer << std::endl;
 
 		// 해당 ClientSession의 RequestMessage를 파싱하기 전에 Body의 최대 길이를 설정
-		const RequestConfig *config = curSession.getConfigPtr();
+		const RequestConfig *config = curSession.getConfig();
 		const size_t bodyMax = (config == NULL) ? BODY_MAX_LENGTH : config->clientMaxBodySize_.value();
 		this->parser_.setConfigBodyLength(bodyMax);
 
@@ -48,14 +48,14 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 		EnumSesStatus result;
 		if (curSession.getErrorStatusCode() != NONE_STATUS_CODE)
 			result = REQUEST_ERROR;
-		else if (curSession.getReqMsgPtr()->getStatus() == REQ_DONE)
+		else if (curSession.getReqMsg()->getStatus() == REQ_DONE)
 			result = READ_COMPLETE;
 		else
 			result = READ_CONTINUE;
 
 		// 파싱이 완전히 종료되는 경우에 Config 누락 방지
 		if ((result == READ_COMPLETE || result == REQUEST_ERROR)
-		&& curSession.getConfigPtr() == NULL) {
+		&& curSession.getConfig() == NULL) {
 			const GlobalConfig &globalConfig = GlobalConfig::getInstance();
 			curSession.setConfig(globalConfig.findRequestConfig(curSession.getListenFd(), curSession.accessReqMsg().getMetaHost(), curSession.accessReqMsg().getTargetURI()));
 		}

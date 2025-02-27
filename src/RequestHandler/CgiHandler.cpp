@@ -34,8 +34,8 @@ bool CgiHandler::isCGI(const std::string& targetUri, const std::string& cgiExten
 // 클라이언트의 요청을 처리하여 CGI 결과를 반환하는 함수
 std::string CgiHandler::handleRequest(const ClientSession& clientSession) {
     // 클라이언트 요청 메시지와 설정 정보 가져옴
-    const RequestMessage& reqMsg = clientSession.getReqMsg();
-    const RequestConfig& conf = clientSession.getConfig();
+    const RequestMessage& reqMsg = *clientSession.getReqMsg();
+    const RequestConfig& conf = *clientSession.getConfig();
 
     // URI를 파싱하여 스크립트 경로, 쿼리 문자열 등 추출
     UriParts parts = parseUri(conf.root_, reqMsg.getTargetURI());
@@ -67,8 +67,8 @@ void CgiHandler::buildCgiEnv(const ClientSession& clientSession,
     // HTTP 메서드를 문자열로 변환하기 위한 배열
     static const std::string methodStrings[] = {"NONE", "GET", "POST", "DELETE"};
     // 클라이언트 요청 메시지와 설정 정보를 가져옴
-    const RequestMessage& reqMsg = clientSession.getReqMsg();
-    const RequestConfig& conf = clientSession.getConfig();
+    const RequestMessage& reqMsg = *clientSession.getReqMsg();
+    const RequestConfig& conf = *clientSession.getConfig();
 
     envVars.reserve(11);               // 아래 설정할 변수 수만큼 벡터 공간 예약
     envVars.push_back(makeEnvVar("GATEWAY_INTERFACE", "CGI/1.1"));  // CGI 인터페이스 버전 설정

@@ -19,7 +19,7 @@ void RequestParser::setConfigBodyLength(size_t length) {
 //     readCursor_: 버퍼의 마지막 위치를 기록
 EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &curSession) {
 	// 새로운 요청일 때, RequestMessage 동적할당
-	if (curSession.getReqMsgPtr() == NULL)
+	if (curSession.getReqMsg() == NULL)
 		curSession.setReqMsg(new RequestMessage());// 이후 요청처리(handler&builder) 완료 후, delete 필요 (ClientSession.resetRequest()메서드 사용)
 
 	RequestMessage &reqMsg = curSession.accessReqMsg();

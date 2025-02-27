@@ -12,6 +12,9 @@ EnumSesStatus EventHandler::sendResponse(ClientSession& session) {
     std::string writeBuffer = session.getWriteBuffer();
     int clientFd = session.getClientFd();
 
+    // 송신한 내용 출력(로그용)
+    std::clog << "[Will Be Sent MSG]\n" << writeBuffer << std::endl;
+
     // 보낼 내용이 없으면 바로 완료 상태로 설정
     if (writeBuffer.empty()) {
         return WRITE_COMPLETE;

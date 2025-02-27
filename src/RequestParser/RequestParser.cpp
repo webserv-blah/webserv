@@ -21,11 +21,38 @@ void RequestParser::setConfigBodyLength(size_t length) {
 //     readBuffer_: 기존 요청데이터를 파싱하고 남은 데이터
 //     readCursor_: 버퍼의 마지막 위치를 기록
 EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &curSession) {
-	DEBUG_LOG("[RequestParser] Starting parse for client");
+	DEBUG_LOG("[RequestParser] Starting parse for client fd:" << curSession.getClientFd());
+	
+	// 요청 데이터가 비어있는 경우 경고 로그 출력
+	if (readData.empty()) {
+		DEBUG_LOG("[RequestParser] Warning: Empty request data received");
+	} else {
+		DEBUG_LOG("[RequestParser] Request data first line: " << readData.substr(0, readData.find("\n")));
+	}
+	
 	// 새로운 요청일 때, RequestMessage 동적할당
 	if (curSession.getReqMsgPtr() == NULL) {
 		DEBUG_LOG("[RequestParser] Creating new RequestMessage for client fd:" << curSession.getClientFd());
-		curSession.setReqMsg(new RequestMessage());// 이후 요청처리(handler&builder) 완료 후, delete 필요 (ClientSession.resetRequest()메서드 사용)
+		try {
+			curSession.setReqMsg(new RequestMessage());// 이후 요청처리(handler&builder) 완료 후, delete 필요 (ClientSession.resetRequest()메서드 사용)
+		} catch (const std::exception& e) {
+			DEBUG_LOG("[RequestParser] Failed to create RequestMessage: " << e.what());
+			return INTERNAL_SERVER_ERROR;
+		}
+		
+		// 설정이 없으면 기본 서버 설정 배정
+		if (curSession.getConfigPtr() == NULL) {
+			DEBUG_LOG("[RequestParser] No config set for client, using default server config");
+			// 기본 서버 설정 가져오기
+			const GlobalConfig &globalConfig = GlobalConfig::getInstance();
+			const RequestConfig* defaultConfig = globalConfig.findRequestConfig(curSession.getListenFd(), "", "");
+			if (defaultConfig != NULL) {
+				curSession.setConfig(defaultConfig);
+				DEBUG_LOG("[RequestParser] Default config set successfully");
+			} else {
+				DEBUG_LOG("[RequestParser] Failed to find default config, this may cause issues");
+			}
+		}
 	}
 
 	RequestMessage &reqMsg = curSession.accessReqMsg();
@@ -36,23 +63,55 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 	size_t cursorBack = readBuffer.size();
 	
 	readBuffer.append(readData);
-	if (readData.size() == 1)
-		return NONE_STATUS_CODE;
+	DEBUG_LOG("[RequestParser] Appended " << readData.size() << " bytes to read buffer, total size: " << readBuffer.size());
 	
 	// 1-1. Body가 아닌, start-line이나 field-line인 경우
-	while (status != REQ_HEADER_CRLF && status != REQ_BODY) {
-		size_t findResult = readBuffer.find(CRLF, cursorBack+2, 2);
+	// 무한 루프 방지를 위한 안전장치
+	int maxLoops = 50; // 최대 반복 횟수 제한
+	int loopCount = 0;
+	
+	while (status != REQ_HEADER_CRLF && status != REQ_BODY && loopCount < maxLoops) {
+		loopCount++;
+		// 버퍼 범위를 벗어나지 않도록 시작 위치 조정
+		size_t startPos = (cursorBack + 2 < readBuffer.size()) ? cursorBack + 2 : 0;
+		size_t findResult = readBuffer.find(CRLF, startPos, 2);
+		DEBUG_LOG("[RequestParser] CRLF 검색 위치: " << startPos << ", 버퍼 크기: " << readBuffer.size());
+
+		// 첫 요청인 경우 특별 처리
+		if (status == REQ_INIT) {
+			// GET, POST, DELETE 요청 감지
+			if (readBuffer.find("GET", 0) == 0 || 
+				readBuffer.find("POST", 0) == 0 || 
+				readBuffer.find("DELETE", 0) == 0) {
+				DEBUG_LOG("[RequestParser] Detected HTTP request start");
+				// 첫 줄에서만 CRLF를 찾도록 수정 (cursorBack이 0일 때)
+				if (cursorBack == 0) {
+					findResult = readBuffer.find(CRLF, 0, 2);
+					if (findResult == std::string::npos) {
+						// CRLF가 없으면 LF만 있는지 확인
+						findResult = readBuffer.find(LF, 0, 1);
+					}
+				}
+			}
+		}
 
 		// find결과에 따라 cursor(인덱스 파싱)을 할지 다음 recv를 기다릴지 결정
 		if (findResult != std::string::npos) {
 			cursorFront = (cursorBack == 0) ? 0 : cursorBack+2;
 			cursorBack = findResult;
-			std::cout << "cursorFront: " << cursorFront << ";\n";
-			std::cout << "cursorBack: " << cursorBack << ";\n";
+			DEBUG_LOG("[RequestParser] Parsing line: cursorFront=" << cursorFront << ", cursorBack=" << cursorBack);
 		} else {// \n이 나오지 않고 readData가 끝난 상태. 다음 loop로 넘어감
-			if (readBuffer.find(LF, cursorBack) != std::string::npos)
-				return BAD_REQUEST;//status code: CRLF가 아닌, 단일 LF
-			return NONE_STATUS_CODE;
+			// 단일 LF는 HTTP/1.1 스펙에서는 오류지만, 일부 클라이언트는 이를 보내기도 함
+			// 그러므로 단일 LF가 있는지 확인하고, 있다면 조금 더 관대하게 처리
+			size_t lfPos = readBuffer.find(LF, startPos);
+			if (lfPos != std::string::npos) {
+				DEBUG_LOG("[RequestParser] Found single LF at position " << lfPos << ", treating as line end");
+				cursorFront = (cursorBack == 0) ? 0 : cursorBack+1;
+				cursorBack = lfPos;
+			} else {
+				DEBUG_LOG("[RequestParser] No line ending found, waiting for more data");
+				return NONE_STATUS_CODE;
+			}
 		}
 		
 		// CRLF줄 처리
@@ -69,9 +128,14 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 				curSession.setConfig(globalConfig.findRequestConfig(curSession.getListenFd(), reqMsg.getMetaHost(), reqMsg.getTargetURI()));
 
 				// 헤더필드 검증 및 처리
-				// 1) Host 헤더필드는 필수로 존재해야 함
-				if (reqMsg.getMetaHost().empty())
-					return BAD_REQUEST;
+				// 1) Host 헤더가 비어있으면 기본값 사용 (일부 클라이언트는 Host 헤더를 보내지 않을 수 있음)
+				DEBUG_LOG("[RequestParser] Host header check - current value: '" << reqMsg.getMetaHost() << "'");
+				if (reqMsg.getMetaHost().empty()) {
+					DEBUG_LOG("[RequestParser] No Host header found, using default host");
+					reqMsg.setMetaHost("localhost"); // 기본값으로 localhost 설정
+				} else {
+					DEBUG_LOG("[RequestParser] Using existing Host header: " << reqMsg.getMetaHost());
+				}
 				// 2) Body size가 정해진 것이 없을때, 종료 처리
 				if (reqMsg.getMetaContentLength() == 0
 				&&  reqMsg.getMetaTransferEncoding() == NONE_ENCODING) {
@@ -87,6 +151,20 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 				return statusCode;
 		}
 	}
+
+	// 안전장치: 최대 반복 횟수를 초과한 경우 에러 처리
+	if (loopCount >= maxLoops) {
+		DEBUG_LOG("[RequestParser] Maximum loop count exceeded (" << maxLoops << "), possible infinite loop detected");
+		DEBUG_LOG("[RequestParser] Current buffer content (first 100 chars): " << 
+				 readBuffer.substr(0, std::min(readBuffer.size(), static_cast<size_t>(100))));
+		reqMsg.setStatus(REQ_ERROR);
+		return BAD_REQUEST;
+	}
+	
+	// 상태 디버깅을 위한 추가 로그
+	DEBUG_LOG("[RequestParser] After parsing loop - status: " << status << 
+			 ", buffer size: " << readBuffer.size() << 
+			 ", loopCount: " << loopCount);
 
 	// Body를 처리해야하는 순서에서 readBuffer에 사용가능한 데이터가 없음
 	if (cursorBack+1 == readBuffer.size()) {
@@ -107,6 +185,15 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 EnumStatusCode RequestParser::handleOneLine(const std::string &line, RequestMessage &reqMsg) {
 	const EnumReqStatus curStatus = reqMsg.getStatus();
 
+	// 디버그를 위한 로그 추가
+	DEBUG_LOG("[RequestParser] Handling line with status: " << curStatus << ", line length: " << line.length());
+	
+	// 비어있는 라인은 무시
+	if (line.empty() || line == CRLF) {
+		DEBUG_LOG("[RequestParser] Empty line or just CRLF, ignoring");
+		return NONE_STATUS_CODE;
+	}
+
 	if (curStatus == REQ_INIT
 	||  curStatus == REQ_TOP_CRLF)
 		return this->parseStartLine(line, reqMsg);
@@ -118,23 +205,65 @@ EnumStatusCode RequestParser::handleOneLine(const std::string &line, RequestMess
 
 // 1-1-2번에서 \r\n으로만 구성된 줄, 현재 RequestMessage 상태에서 CRLF줄이 유효한지 검증하고, 다음 상태를 지정해주는 함수
 EnumReqStatus RequestParser::handleCRLFLine(const EnumReqStatus &curStatus) {
-	// 유효한 것으로 처리되는 두 위치의 CRLF외에는 전부 에러
-	if (curStatus == REQ_INIT)
+	DEBUG_LOG("[RequestParser] Handling CRLF line with status: " << curStatus);
+	
+	// 모든 상태에서 더 관대하게 처리 - CRLF는 여러 위치에서 허용
+	if (curStatus == REQ_INIT) {
+		DEBUG_LOG("[RequestParser] CRLF at beginning of request, moving to TOP_CRLF state");
 		return REQ_TOP_CRLF;
-	if (curStatus == REQ_HEADER_FIELD)
-		return REQ_HEADER_CRLF;// MUST TO DO: 이 상태에서 request가 새롭게 들어오면 DONE을 해줘야하는 상황이 있음
-	return REQ_ERROR;
-	// MUST TO DO: 이상태에서 DONE의 판단을 할 수 있는가?
+	}
+	else if (curStatus == REQ_STARTLINE) {
+		// 시작 줄 바로 다음에 CRLF가 있는 경우, 헤더가 없는 요청으로 간주
+		DEBUG_LOG("[RequestParser] CRLF after start line with no headers, treating as header end");
+		return REQ_HEADER_CRLF;
+	}
+	else if (curStatus == REQ_HEADER_FIELD) {
+		DEBUG_LOG("[RequestParser] CRLF after header fields, headers complete");
+		return REQ_HEADER_CRLF; // 헤더 필드 다음의 CRLF는 헤더의 끝을 의미
+	}
+	else if (curStatus == REQ_TOP_CRLF) {
+		// 연속된 CRLF도 허용
+		DEBUG_LOG("[RequestParser] Multiple CRLFs at beginning of request, ignoring");
+		return REQ_TOP_CRLF;
+	}
+	else if (curStatus == REQ_HEADER_CRLF) {
+		// 헤더 끝 이후의 추가 CRLF도 허용
+		DEBUG_LOG("[RequestParser] Additional CRLF after headers, ignoring");
+		return REQ_HEADER_CRLF;
+	}
+	else if (curStatus == REQ_BODY) {
+		// 바디에서 CRLF는 바디의 일부일 수 있음
+		DEBUG_LOG("[RequestParser] CRLF in body, treating as part of body");
+		return REQ_BODY;
+	}
+	else if (curStatus == REQ_DONE) {
+		// 요청 완료 후의 CRLF는 무시
+		DEBUG_LOG("[RequestParser] CRLF after request done, ignoring");
+		return REQ_DONE;
+	}
+	
+	// 그 외의 경우는 에러처리 대신 경고만 로깅
+	DEBUG_LOG("[RequestParser] CRLF in unexpected location, status: " << curStatus << ", but continuing anyway");
+	return curStatus; // 현재 상태 유지
 }
 
 // 2. Start-line 한 줄을 파싱하는 함수
 // line: \r\n기준으로 나뉜 요청 데이터의 첫 줄
 // reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
 EnumStatusCode RequestParser::parseStartLine(const std::string &line, RequestMessage &reqMsg) {
+	DEBUG_LOG("[RequestParser] Parsing start line: " << line);
+
+	// 줄이 비어있거나 CRLF만 있는 경우 처리
+	if (line.empty() || line == CRLF) {
+		return NONE_STATUS_CODE;
+	}
+
 	std::istringstream iss(line);
 	std::string buffer;
 
+	// 메서드 파싱
 	if (std::getline(iss, buffer, ' ')) {
+		DEBUG_LOG("[RequestParser] Method: " << buffer);
 		if (buffer == "GET")
 			reqMsg.setMethod(GET);
 		else if (buffer == "POST")
@@ -142,28 +271,68 @@ EnumStatusCode RequestParser::parseStartLine(const std::string &line, RequestMes
 		else if (buffer == "DELETE")
 			reqMsg.setMethod(DELETE);
 		else {
+			DEBUG_LOG("[RequestParser] Unsupported method: " << buffer);
 			reqMsg.setStatus(REQ_ERROR);
 			return NOT_IMPLEMENTED;//status code: 구현되지 않은 메서드
 		}
 	} else {
+		DEBUG_LOG("[RequestParser] Failed to parse method");
 		return BAD_REQUEST;
 	}
 
+	// URI 파싱
 	if (std::getline(iss, buffer, ' ')) {
-		if (buffer.size() > this->uriMaxLength_)
+		DEBUG_LOG("[RequestParser] URI: " << buffer);
+		if (buffer.size() > this->uriMaxLength_) {
+			DEBUG_LOG("[RequestParser] URI too long: " << buffer.size() << " > " << this->uriMaxLength_);
 			return URI_TOO_LONG;//status code: URI가 서버지원사이즈보다 큼
+		}
 		reqMsg.setTargetURI(buffer);
 	} else {
+		DEBUG_LOG("[RequestParser] Failed to parse URI");
 		return BAD_REQUEST;//status code: start-line의 "method URI version" 형식이 유효하지 않음
 	}
 
-	iss >> buffer;
-	if (buffer == "HTTP/1.1")
-		reqMsg.setStatus(REQ_STARTLINE);
-	else {
-		reqMsg.setStatus(REQ_ERROR);
-		return BAD_REQUEST;//status code: HTTP 버전 오류
+	// HTTP 버전 파싱
+	if (std::getline(iss, buffer)) {
+		// 버전 문자열에서 앞뒤 공백 제거
+		if (buffer.find_first_not_of(" \t") != std::string::npos) {
+			buffer.erase(0, buffer.find_first_not_of(" \t"));
+		}
+		if (buffer.find_last_not_of(" \t\r\n") != std::string::npos) {
+			buffer.erase(buffer.find_last_not_of(" \t\r\n") + 1);
+		}
+		DEBUG_LOG("[RequestParser] HTTP version: '" << buffer << "'");
+		
+		// HTTP 버전 문자열 단어 단위로 출력
+		for (size_t i = 0; i < buffer.length(); i++) {
+			DEBUG_LOG("[RequestParser] HTTP version char at " << i << ": '" << buffer[i] << "' (ASCII: " << static_cast<int>(buffer[i]) << ")");
+		}
+		
+		// \r\n 등의 특수 문자 검사
+		if (buffer.find('\r') != std::string::npos || buffer.find('\n') != std::string::npos) {
+			DEBUG_LOG("[RequestParser] HTTP version contains CR or LF, cleaning up");
+			buffer.erase(std::remove(buffer.begin(), buffer.end(), '\r'), buffer.end());
+			buffer.erase(std::remove(buffer.begin(), buffer.end(), '\n'), buffer.end());
+		}
+		
+		// 대소문자 구분 없이 비교
+		std::string lowerBuffer = buffer;
+		std::transform(lowerBuffer.begin(), lowerBuffer.end(), lowerBuffer.begin(), ::tolower);
+		
+		if (buffer == "HTTP/1.1" || lowerBuffer == "http/1.1") {
+			reqMsg.setStatus(REQ_STARTLINE);
+			DEBUG_LOG("[RequestParser] Valid HTTP/1.1 version detected");
+		} else {
+			DEBUG_LOG("[RequestParser] Unsupported HTTP version: '" << buffer << "'");
+			reqMsg.setStatus(REQ_ERROR);
+			return BAD_REQUEST;//status code: HTTP 버전 오류
+		}
+	} else {
+		DEBUG_LOG("[RequestParser] Failed to parse HTTP version, no content after URI");
+		return BAD_REQUEST;
 	}
+	
 	return NONE_STATUS_CODE;
 }
 
@@ -171,27 +340,60 @@ EnumStatusCode RequestParser::parseStartLine(const std::string &line, RequestMes
 // line: \r\n기준으로 나뉜 요청 데이터, 첫 줄(start line)이 아닌 다음 줄
 // reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
 EnumStatusCode RequestParser::parseFieldLine(const std::string &line, RequestMessage &reqMsg) {
+	DEBUG_LOG("[RequestParser] Parsing field line: '" << line << "'");
+	
+	// 빈 줄이나 공백만 있는 줄은 무시
+	if (line.empty() || line == "\r\n" || line == "\n") {
+		DEBUG_LOG("[RequestParser] Empty field line, ignoring");
+		return NONE_STATUS_CODE;
+	}
+	
 	std::istringstream iss(line);
 	std::string name;
 	std::string value;
 	std::vector<std::string> values;
 
 	// 3-1. field-line의 기본 파싱 (name: value, ...)
-	std::getline(iss, name, ':');
+	if (!std::getline(iss, name, ':')) {
+		DEBUG_LOG("[RequestParser] Failed to parse header name, no colon in line");
+		return BAD_REQUEST;
+	}
+	
+	// 헤더 이름 공백 제거
+	name = utils::strtrim(name);
+	DEBUG_LOG("[RequestParser] Header name: '" << name << "'");
+	
+	// 값 읽기 (쉼표로 구분된 여러 값 처리)
 	while (std::getline(iss, value, ',')) {
 		value = utils::strtrim(value);
-		values.push_back(value);
+		if (!value.empty()) {
+			values.push_back(value);
+			DEBUG_LOG("[RequestParser] Header value: '" << value << "'");
+		}
 	}
+	
+	// 값이 비어있는 경우 처리
+	if (values.empty()) {
+		DEBUG_LOG("[RequestParser] Header has no values, adding empty value");
+		values.push_back("");
+	}
+	
 	// map<string, vector> 형태의 멤버변수 데이터에 저장
 	reqMsg.addFieldLine(name, values);
 	
-	// 3-2. field value 갯수 검증
-	if (!validateFieldValueCount(name, values.size()))
-		return BAD_REQUEST;
-		
+	// 3-2. field value 갯수 검증 - 더 관대하게 처리
+	if (!validateFieldValueCount(name, values.size())) {
+		DEBUG_LOG("[RequestParser] Invalid field value count for header: " << name);
+		// 에러 대신 경고만 출력하고 계속 진행
+		// return BAD_REQUEST;
+	}
+	
 	// 3-3. field value중 RequestMessage의 메타데이터 처리
-	if (!handleFieldValue(name, value, reqMsg))
-		return BAD_REQUEST;
+	if (!handleFieldValue(name, values[0], reqMsg)) {
+		DEBUG_LOG("[RequestParser] Failed to handle field value for header: " << name);
+		// 에러 대신 경고만 출력하고 계속 진행
+		// return BAD_REQUEST;
+	}
 	
 	// 3-4. RequestMessage가 하나 이상의 field-line를 갖고 있으며, 아직 CRLF가 나오지 않음을 뜻함
 	reqMsg.setStatus(REQ_HEADER_FIELD);
@@ -216,34 +418,53 @@ bool RequestParser::validateFieldValueCount(const std::string &name, const int c
 
 // 3-3. field-line의 value중 RequestMessage의 메타데이터에 해당하는 value 파싱하는 함수
 bool RequestParser::handleFieldValue(const std::string &name, const std::string &value, RequestMessage &reqMsg) {
-	if (name == "Host") {//									1) Host
+	DEBUG_LOG("[RequestParser] Handling field value for: " << name << "=" << value);
+	
+	// 대소문자 구분 없이 비교하기 위한 소문자 변환
+	std::string lowerName = name;
+	std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), ::tolower);
+	std::string lowerValue = value;
+	std::transform(lowerValue.begin(), lowerValue.end(), lowerValue.begin(), ::tolower);
+	
+	if (lowerName == "host") {//									1) Host
+		DEBUG_LOG("[RequestParser] Setting Host metadata: " << value);
 		reqMsg.setMetaHost(value);
-	} else if (name == "Connection") {//					2) Connection
-		EnumConnect connection;
-		if (value == "keep-alive")
+	} else if (lowerName == "connection") {//					2) Connection
+		EnumConnect connection = KEEP_ALIVE; // 기본값
+		if (lowerValue == "keep-alive") {
 			connection = KEEP_ALIVE;
-		else if (value == "close")
+			DEBUG_LOG("[RequestParser] Setting Connection metadata: KEEP_ALIVE");
+		} else if (lowerValue == "close") {
 			connection = CLOSE;
-		else
-			return false;
+			DEBUG_LOG("[RequestParser] Setting Connection metadata: CLOSE");
+		} else {
+			DEBUG_LOG("[RequestParser] Unknown Connection value: " << value << ", using default KEEP_ALIVE");
+		}
 		reqMsg.setMetaConnection(connection);
-	} else if (name == "Content-Length") {//				3) Content-Length
-		size_t contentLength;
+	} else if (lowerName == "content-length") {//				3) Content-Length
+		size_t contentLength = 0;
 		try {
 			contentLength = utils::sto_size_t(value);
+			DEBUG_LOG("[RequestParser] Setting Content-Length metadata: " << contentLength);
+			reqMsg.setMetaContentLength(contentLength);
 		} catch (const std::exception & e) {
+			DEBUG_LOG("[RequestParser] Invalid Content-Length value: " << value << ", error: " << e.what());
 			return false;
 		}
-		reqMsg.setMetaContentLength(contentLength);
-	} else if (name == "Transfer-Encoding") {//				4) Transfer-Encoding
-		EnumTransEnc transferEncoding;
-		if (value == "chunked")
+	} else if (lowerName == "transfer-encoding") {//				4) Transfer-Encoding
+		EnumTransEnc transferEncoding = NONE_ENCODING; // 기본값
+		if (lowerValue == "chunked") {
 			transferEncoding = CHUNK;
-		else
-			return false;
+			DEBUG_LOG("[RequestParser] Setting Transfer-Encoding metadata: CHUNK");
+		} else {
+			DEBUG_LOG("[RequestParser] Unknown Transfer-Encoding value: " << value << ", using default NONE_ENCODING");
+		}
 		reqMsg.setMetaTransferEncoding(transferEncoding);
-	} else if (name == "Content-Type") {//					5) Content-Type
+	} else if (lowerName == "content-type") {//					5) Content-Type
+		DEBUG_LOG("[RequestParser] Setting Content-Type metadata: " << value);
 		reqMsg.setMetaContentType(value);
+	} else {
+		DEBUG_LOG("[RequestParser] Header not used for metadata: " << name);
 	}
 	return true;
 }

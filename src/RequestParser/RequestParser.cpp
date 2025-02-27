@@ -191,7 +191,7 @@ EnumStatusCode RequestParser::parseFieldLine(const std::string &line, RequestMes
 	reqMsg.addFieldLine(name, values);
 	
 	// 3-2. field value 갯수 검증
-	if (!validateFieldValueCount(name, values.size()))
+	if (values.size() == 0)
 		return BAD_REQUEST;
 		
 	// 3-3. field value중 RequestMessage의 메타데이터 처리
@@ -201,25 +201,6 @@ EnumStatusCode RequestParser::parseFieldLine(const std::string &line, RequestMes
 	// 3-4. RequestMessage가 하나 이상의 field-line를 갖고 있으며, 아직 CRLF가 나오지 않음을 뜻함
 	reqMsg.setStatus(REQ_HEADER_FIELD);
 	return NONE_STATUS_CODE;
-}
-
-// 3-2. field-line의 value 갯수를 검증하는 함수
-bool RequestParser::validateFieldValueCount(const std::string &name, const int count) {
-	if (count < 1){
-		return false;
-	}
-	(void)name;
-	//if (count > 1
-	//&& (name == "Host" || name == "Content-Length"
-	//||  name == "Connection" || name == "Transfer-Encoding"
-	//||  name == "User-Agent" ||  name == "Authorization"
-	//||  name == "Referer" ||  name == "Range"
-	//||  name == "If-Modified-Since" ||  name == "If-Unmodified-Since"
-	//||  name == "If-Match" ||  name == "If-None-Match"
-	//||  name == "Content-Location")){
-	//	return false;
-	//}
-	return true;
 }
 
 // 3-3. field-line의 value중 RequestMessage의 메타데이터에 해당하는 value 파싱하는 함수

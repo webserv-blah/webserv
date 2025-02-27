@@ -27,7 +27,6 @@ class RequestParser {
 		EnumReqStatus		handleCRLFLine(const EnumReqStatus &curStatus);
 		EnumStatusCode		parseStartLine(const std::string &line, RequestMessage &reqMsg);
 		EnumStatusCode		parseFieldLine(const std::string &line, RequestMessage &reqMsg);
-		bool				validateFieldValueCount(const std::string &name, const int count);
 		bool				handleFieldValue(const std::string &name, const std::string &value, RequestMessage &reqMsg);
 		EnumStatusCode		cleanUpChunkedBody(std::string &readBuffer, RequestMessage &reqMsg);
 		EnumStatusCode		parseBody(std::string &readBuffer, RequestMessage &reqMsg);

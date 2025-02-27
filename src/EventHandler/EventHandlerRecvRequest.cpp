@@ -45,10 +45,20 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 		curSession.setErrorStatusCode(statusCode);
 
 		// 파싱이 끝나고 나서, 에러 status code와 RequestMessage의 상태를 점검함
+		EnumSesStatus result;
 		if (curSession.getErrorStatusCode() != NONE_STATUS_CODE)
-			return REQUEST_ERROR;
+			result = REQUEST_ERROR;
 		else if (curSession.getReqMsgPtr()->getStatus() == REQ_DONE)
-			return READ_COMPLETE;
-		return READ_CONTINUE;
+			result = READ_COMPLETE;
+		else
+			result = READ_CONTINUE;
+
+		// 파싱이 완전히 종료되는 경우에 Config 누락 방지
+		if ((result == READ_COMPLETE || result == REQUEST_ERROR)
+		&& curSession.getConfigPtr() == NULL) {
+			const GlobalConfig &globalConfig = GlobalConfig::getInstance();
+			curSession.setConfig(globalConfig.findRequestConfig(curSession.getListenFd(), curSession.accessReqMsg().getMetaHost(), curSession.accessReqMsg().getTargetURI()));
+		}
+		return result;
 	}
 }

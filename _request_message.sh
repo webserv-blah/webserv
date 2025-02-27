@@ -2,7 +2,7 @@
 
 BASIC="\
 GET /index.html HTTP/1.1\r\n\
-Host: localhost\r\n\
+Host:     localhost,  \r\n\
 Content-Length: 4\r\n\
 \r\n\
 hi\r\n\

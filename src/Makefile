@@ -10,22 +10,21 @@ SRCS := $(wildcard *.cpp)
 
 # SRCS(in SRCDIR) ------
 DIRS := utils \
-		Test \
 		GlobalConfig \
 		ConfigParser \
 		RequestMessage \
 		ClientSession \
 		RequestParser \
-		ResponseBuilder \
-		RequestHandler \
-		EventHandler \
-		TimeoutHandler \
-		ServerManager \
-		Demultiplexer \
-		ClientManager
-		ServerManager \
-		Demultiplexer \
-		TimeoutHandler
+#		ResponseBuilder \#s
+#		RequestHandler \#
+#		EventHandler \#
+#		TimeoutHandler \#
+#		ServerManager \#
+#		Demultiplexer \#
+#		ClientManager#
+#		ServerManager \#
+#		Demultiplexer \#
+#		TimeoutHandler#
 
 SUBS := $(addsuffix .a,$(DIRS))
 

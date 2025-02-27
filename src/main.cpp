@@ -1,10 +1,5 @@
-#include "Test.hpp"
-
 #include <iostream>
 #include "utils.hpp"
-#include "GlobalConfig.hpp"
-//#include "ServerManager.hpp"
-
 volatile bool globalServerRunning = true;
 #include "RequestParser.hpp"
 #ifndef BUFFER_SIZE
@@ -12,7 +7,7 @@ volatile bool globalServerRunning = true;
 #endif
 EnumSesStatus recvRequest(ClientSession &curSession);
 int main(int argc, char** argv) {
-    if (argc != 2) {
+	if (argc != 2) {
 		std::cerr << "Usage: ./webserver [config file path]" << std::endl;
 		return 1;
 	}
@@ -33,13 +28,24 @@ int main(int argc, char** argv) {
 		std::cout << "(READ_CONTINUE)" << std::endl;
 	if (sessionStatus == READ_COMPLETE)
 		std::cout << "(READ_COMPLETE)" << std::endl;
-	ses.getReqMsg()->printResult();
+	ses.getReqMsgPtr()->printResult();
 	std::cout << "=================== END ===================" << std::endl;
 
 	ses.resetRequest();
 
 	std::cout << "================== START ==================" << std::endl;
-	functfunct("MIDDLE BUFFER", ses.getReadBuffer());
+	std::cout << "MIDDLE BUFFER: "<<std::endl;
+	std::string datad = ses.getReadBuffer();
+	for (std::string::const_iterator it = datad.begin(); it != datad.end(); ++it) {
+		if (*it == '\n')
+			std::cout << "\\n";
+		else if (*it == '\r')
+			std::cout << "\\r";
+		else
+			std::cout << *it;
+	}
+	std::cout <<";"<<std::endl;
+	
 	sessionStatus = recvRequest(ses);
 	std::cout << "================== RESULT =================" << std::endl;
 	std::cout << "(STATUSCODE: " << ses.getErrorStatusCode() << ")&";
@@ -49,7 +55,7 @@ int main(int argc, char** argv) {
 		std::cout << "(READ_CONTINUE)" << std::endl;
 	if (sessionStatus == READ_COMPLETE)
 		std::cout << "(READ_COMPLETE)" << std::endl;
-	ses.getReqMsg()->printResult();
+	ses.getReqMsgPtr()->printResult();
 	std::cout << "=================== END ===================" << std::endl;
 }
 
@@ -69,7 +75,7 @@ EnumSesStatus recvRequest(ClientSession &curSession) {
 	std::cout << "ORIGIN ENV: "<<std::endl;
 	for (std::string::const_iterator it = data.begin(); it != data.end(); ++it) {
 		if (*it == '\n')
-			std::cout << "\\n" << std::endl;
+			std::cout << "\\n"<<std::endl;
 		else if (*it == '\r')
 			std::cout << "\\r";
 		else
@@ -84,7 +90,7 @@ EnumSesStatus recvRequest(ClientSession &curSession) {
 		size_t chunkSize = std::min(static_cast<size_t>(BUFFER_SIZE), dataLength - offset);
 		std::string chunk(&data[offset], chunkSize);  // BUFFER_SIZE만큼 잘라서 문자열 생성
 
-		const RequestConfig *config = curSession.getConfig();
+		const RequestConfig *config = curSession.getConfigPtr();
 		const size_t bodyMax = (config == NULL) ? BODY_MAX_LENGTH : config->clientMaxBodySize_.value();
 		parser.setConfigBodyLength(bodyMax);
 
@@ -96,7 +102,7 @@ EnumSesStatus recvRequest(ClientSession &curSession) {
 		// 파싱이 끝나고 나서, 에러 status code와 RequestMessage의 상태를 점검함
 		if (curSession.getErrorStatusCode() != NONE_STATUS_CODE)
 			requestResult = REQUEST_ERROR;
-		else if (curSession.getReqMsg()->getStatus() == REQ_DONE)
+		else if (curSession.getReqMsgPtr()->getStatus() == REQ_DONE)
 			requestResult = READ_COMPLETE;
 		else
 			requestResult = READ_CONTINUE;

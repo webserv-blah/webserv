@@ -2,6 +2,7 @@
 #define CLIENT_SESSION_HPP
 
 #include "../RequestParser/RequestParser.hpp"
+#include "../RequestMessage/RequestMessage.hpp"
 #include "../GlobalConfig/GlobalConfig.hpp"
 #include "../include/commonEnums.hpp"
 

@@ -1,6 +1,7 @@
 #ifndef REQUEST_PARSER_HPP
 #define REQUEST_PARSER_HPP
 
+#include "../ClientSession/ClientSession.hpp"
 #include "../RequestMessage/RequestMessage.hpp"
 #include "../include/commonEnums.hpp"
 

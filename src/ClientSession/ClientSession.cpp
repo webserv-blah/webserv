@@ -92,6 +92,10 @@ std::string &ClientSession::accessReadBuffer() {
 	return this->readBuffer_;
 }
 
+std::string &ClientSession::accessWriteBuffer() {
+	return this->writeBuffer_;
+}
+
 void ClientSession::resetRequest() {
 	delete this->reqMsg_;
 	this->reqMsg_ = NULL;

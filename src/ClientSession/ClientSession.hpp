@@ -30,6 +30,7 @@ class ClientSession {
 
 		RequestMessage			&accessReqMsg();
 		std::string				&accessReadBuffer();
+		std::string				&accessWriteBuffer();
 		void					resetRequest();
 		
 	private:

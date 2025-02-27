@@ -71,7 +71,6 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
         }
         // 생성된 응답 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
         clientSession.setWriteBuffer(responseMsg);
-        clientSession.resetRequest();
         
         // 클라이언트에게 응답 전송을 시도하고, 전송 결과에 따라 상태 갱신
         status = sendResponse(clientSession);

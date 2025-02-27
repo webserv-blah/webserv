@@ -30,7 +30,6 @@ class ClientSession {
 
 		RequestMessage			&accessReqMsg();
 		std::string				&accessReadBuffer();
-		void					resetRequest();
 		
 	private:
 		int						listenFd_;
@@ -41,6 +40,8 @@ class ClientSession {
 		std::string				readBuffer_;
 		std::string				writeBuffer_;
 		std::string				clientIP_;
+		
+		void					resetRequest();
 };
 
 #endif

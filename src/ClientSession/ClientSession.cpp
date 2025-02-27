@@ -78,6 +78,7 @@ void ClientSession::setReadBuffer(const std::string &remainData) {
 
 void ClientSession::setWriteBuffer(const std::string &remainData) {
 	this->writeBuffer_ = remainData;
+	resetRequest();
 }
 
 RequestMessage &ClientSession::accessReqMsg() {

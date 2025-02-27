@@ -11,6 +11,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 	try {
+		std::clog << "Setting up Webserv..." << std::endl;
 		GlobalConfig::initGlobalConfig(argv[1]);
 		setupSignalHandlers();
 		ServerManager serverManager;

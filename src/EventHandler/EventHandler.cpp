@@ -40,6 +40,7 @@ int EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
     // ClientManager에 새 클라이언트 정보를 추가
     clientManager.addClient(fd, clientFd, clientIP);
 
+    std::clog << "  Accepted CLIENT SOCKET : " << clientFd << std::endl;
     // 수락된 클라이언트의 파일 디스크립터 반환
     return clientFd;
 }

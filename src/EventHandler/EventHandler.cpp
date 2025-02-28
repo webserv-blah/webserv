@@ -29,7 +29,7 @@ int EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
     if (clientFd < 0) {
         // 연결 수락 실패 - 시스템 호출 에러를 로깅
         webserv::logSystemError(ERROR, "accept", 
-                              "Server fd: " + std::to_string(fd), 
+                              "Server fd: " + utils::size_t_tos(fd), 
                               "EventHandler::handleServerReadEvent");
         return -1;
     }

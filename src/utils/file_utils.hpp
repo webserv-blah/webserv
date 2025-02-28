@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <fstream>
 #include <vector>
-
 namespace FileUtilities {
 	enum EnumValidationResult {
 		VALID_PATH,         // 유효한 경로 (디렉터리) 이며 권한 OK

@@ -3,7 +3,7 @@
 
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 ARFLAGS = rcs
-CPPFLAGS = -I$(TOPDIR)/include -I$(SRCDIR)/include
+CPPFLAGS = -I$(TOPDIR)/include -I$(SRCDIR)/include -I/usr/include/kqueue/
 
 OBJS = $(SRCS:.cpp=.o)
 DEPS = $(SRCS:.cpp=.d)

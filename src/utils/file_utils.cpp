@@ -13,12 +13,12 @@ namespace FileUtilities {
 			if (!path.empty() && path[path.size() - 1] == '/') {
 				webserv::logError(WARNING, "Path not found", 
 				                 path, 
-				                 "FileUtilities::validatePath, errno: " + std::to_string(errno));
+				                 "FileUtilities::validatePath, errno: " + utils::size_t_tos(errno));
 				return PATH_NOT_FOUND;
 			} else {
 				webserv::logError(WARNING, "File not found", 
 				                 path, 
-				                 "FileUtilities::validatePath, errno: " + std::to_string(errno));
+				                 "FileUtilities::validatePath, errno: " + utils::size_t_tos(errno));
 				return FILE_NOT_FOUND;
 			}
 		}
@@ -56,7 +56,7 @@ namespace FileUtilities {
 		} else {
 			webserv::logError(WARNING, "No execute permission", 
 			                 filePath, 
-			                 "FileUtilities::hasExecutePermission, errno: " + std::to_string(errno));
+			                 "FileUtilities::hasExecutePermission, errno: " + utils::size_t_tos(errno));
 			return false;
 		}
 	}
@@ -70,7 +70,7 @@ namespace FileUtilities {
 		if (!file.is_open()) {
 			webserv::logError(ERROR, "File opening failed", 
 			                 filePath, 
-			                 "FileUtilities::readFile, errno: " + std::to_string(errno));
+			                 "FileUtilities::readFile, errno: " + utils::size_t_tos(errno));
 			return "";
 		}
 
@@ -82,7 +82,7 @@ namespace FileUtilities {
 		// 파일 크기가 음수인 경우(비정상적인 상태) 에러 로깅 후 빈 문자열 반환
 		if (fileSize < 0) {
 			webserv::logError(ERROR, "Invalid file size", 
-			                 filePath + ", size: " + std::to_string(fileSize), 
+			                 filePath + ", size: " + utils::size_t_tos(fileSize), 
 			                 "FileUtilities::readFile");
 			return "";
 		}
@@ -93,7 +93,7 @@ namespace FileUtilities {
 		// 파일을 읽고, 실패 시 에러 로깅 후 빈 문자열 반환
 		if (!file.read(&buffer[0], fileSize)) {
 			webserv::logError(ERROR, "File read failed", 
-			                 filePath + ", requested size: " + std::to_string(fileSize), 
+			                 filePath + ", requested size: " + utils::size_t_tos(fileSize), 
 			                 "FileUtilities::readFile");
 			return "";
 		}

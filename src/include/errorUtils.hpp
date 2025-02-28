@@ -32,7 +32,7 @@ inline std::string systemErrorMessage(EnumErrorLevel level, const std::string& s
     std::ostringstream oss;
     std::string cause = syscall + " failed";
     std::string source = (location.empty() ? "" : location + ", ") + 
-                        "errno " + std::to_string(errno) + ", " + std::strerror(errno);
+                        "errno " + utils::size_t_tos(errno) + ", " + std::strerror(errno);
     return errorMessage(level, cause, context, source);
 }
 
@@ -43,7 +43,7 @@ inline void logSystemError(EnumErrorLevel level, const std::string& syscall,
     std::ostringstream oss;
     std::string cause = syscall + " failed";
     std::string source = (location.empty() ? "" : location + ", ") + 
-                        "errno " + std::to_string(err) + ", " + std::strerror(err);
+                        "errno " + utils::size_t_tos(err) + ", " + std::strerror(err);
     std::cerr << errorMessage(level, cause, context, source) << std::endl;
 }
 
@@ -53,7 +53,7 @@ inline void throwSystemError(const std::string& syscall, const std::string& cont
     std::ostringstream oss;
     std::string cause = syscall + " failed";
     std::string source = (location.empty() ? "" : location + ", ") + 
-                        "errno " + std::to_string(err) + ", " + std::strerror(err);
+                        "errno " + utils::size_t_tos(err) + ", " + std::strerror(err);
     std::string errorMsg = errorMessage(FATAL, cause, context, source);
     throw std::runtime_error(errorMsg);
 }

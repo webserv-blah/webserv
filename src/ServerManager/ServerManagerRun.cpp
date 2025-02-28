@@ -115,7 +115,7 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 	if (!client) {
 		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
 		webserv::logError(WARNING, "Invalid Value", 
-		                 "No clientSession corresponding to fd: " + std::to_string(fd), 
+		                 "No clientSession corresponding to fd: " + utils::size_t_tos(fd), 
 		                 "ServerManager::processClientReadEvent");
 		return;
 	}
@@ -144,7 +144,7 @@ void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager
 	if (!client) {
 		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
 		webserv::logError(WARNING, "Invalid Value", 
-		                 "No clientSession corresponding to fd: " + std::to_string(fd), 
+		                 "No clientSession corresponding to fd: " + utils::size_t_tos(fd), 
 		                 "ServerManager::processClientWriteEvent");
 		return;
 	}

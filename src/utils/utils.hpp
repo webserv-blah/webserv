@@ -8,7 +8,9 @@
 #include <cstring>
 #include <cerrno>
 #include <limits>
+#include <climits>
 #include <csignal>
+#include <cstdlib>
 #include "../include/commonEnums.hpp"
 
 // 전역 함수

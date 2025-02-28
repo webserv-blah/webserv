@@ -84,8 +84,6 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
         } else {
             // HTTP 408 Request Timeout 처리
             eventHandler.handleError(408, *client);
-            // config 접근시 터지는 문제로, 테스트시 위를 주석처리, 아래를 주석해제
-            //(void)eventHandler;
         }
 
         // client 정보 삭제 및 정리

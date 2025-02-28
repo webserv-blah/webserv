@@ -82,9 +82,6 @@ EnumEvent KqueueDemultiplexer::getEventTypeImpl(int idx) {
 		if (eventList_[idx].filter == EVFILT_WRITE) {
 			return WRITE_EVENT; // 쓰기 이벤트
 		}
-		if (eventList_[idx].filter == EVFILT_EXCEPT) {
-			return EXCEPTION_EVENT; // 예외 이벤트
-		}
 	}
 	return UNKNOWN_EVENT; // 알 수 없는 이벤트
 }

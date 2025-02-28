@@ -25,6 +25,7 @@ class ClientSession {
 		void					setConfig(const RequestConfig *config);
 		void					setReadBuffer(const std::string &remainData);
 		void					setWriteBuffer(const std::string &remainData);
+		bool					isReceiving() const;
 
 		RequestMessage			&accessReqMsg();
 		std::string				&accessReadBuffer();

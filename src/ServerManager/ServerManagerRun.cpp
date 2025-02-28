@@ -122,15 +122,11 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 	if (status == CONNECTION_CLOSED) { 
 		// 클라이언트가 연결을 종료한 경우, 관련 정보를 삭제
 		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
-	} else if (status == WRITE_CONTINUE) { 
-		// 추가적인 쓰기 작업이 필요한 경우:
-		// - 타임아웃을 갱신
-		// - 해당 클라이언트에 대해 쓰기 이벤트를 추가
-		timeoutHandler.updateActivity(fd);
-		reactor.addWriteEvent(fd);
-	} else { 
-		// 그 외, 타임아웃만 갱신
-		timeoutHandler.updateActivity(fd);
+	} else {
+		timeoutHandler.updateActivity(fd, status);
+		if (status == WRITE_CONTINUE) {
+			reactor.addWriteEvent(fd);
+		}
 	}
 }
 

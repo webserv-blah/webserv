@@ -29,13 +29,13 @@ void TimeoutHandler::addConnection(int fd) {
     time_t lastActivity = getTime();
     connections_[fd] = lastActivity;
 
-    time_t expire = lastActivity + LIMIT;
+    time_t expire = lastActivity + IDLE_LIMIT;
     TypeExpireQueueIter it = expireQueue_.insert(std::make_pair(expire, fd));
     expireMap_[fd] = it;
 }
 
 // 클라이언트(fd)의 최근 활동 시각 및 만료 시각 업데이트
-void TimeoutHandler::updateActivity(int fd) {
+void TimeoutHandler::updateActivity(int fd, EnumSesStatus status) {
 	// fd에 대응하는 연결 정보 찾기
     TypeConnectionIter cit = connections_.find(fd);
     if (cit == connections_.end()) { // 연결 정보가 존재하지 않을 경우
@@ -53,7 +53,9 @@ void TimeoutHandler::updateActivity(int fd) {
     }
 
     // 새로운 만료 정보 등록
-    time_t newExpire = cit->second + LIMIT;
+    time_t limit = (status == READ_CONTINUE) ? REQ_LIMIT : IDLE_LIMIT;
+    time_t newExpire;
+    newExpire = cit->second + limit;
     TypeExpireQueueIter qit = expireQueue_.insert(std::make_pair(newExpire, fd));
     expireMap_[fd] = qit;
 }
@@ -81,8 +83,8 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
         ClientSession* client = clientManager.accessClientSession(fd);
         if (!client) { 
             std::cerr << "[Error][TimeoutHandler][checkTimeouts] Invalid Client Fd" << std::endl;
-        } else {
-            // HTTP 408 Request Timeout 처리
+        } else if (client->isReceiving()) {
+            // Request Timeout일 경우 HTTP 408 Request Timeout 처리
             eventHandler.handleError(408, *client);
         }
 

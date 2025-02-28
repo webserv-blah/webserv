@@ -6,8 +6,8 @@
 #include "../ClientManager/ClientManager.hpp"
 #include <map>
 
-// Nginx의 client_body_timeout 값과 동일 (초 단위 제한 시간)
-static const int LIMIT = 60;
+static const int REQ_LIMIT = 15;
+static const int IDLE_LIMIT = 30;
 
 class TimeoutHandler {
     public:
@@ -21,7 +21,7 @@ class TimeoutHandler {
 
         timespec*   getEarliestTimeout();
         void        addConnection(int fd);
-        void        updateActivity(int fd);
+        void        updateActivity(int fd, EnumSesStatus status);
         void        checkTimeouts(EventHandler& eventHandler, Demultiplexer& reactor, ClientManager& clientManager);
         void        removeConnection(int fd);
 

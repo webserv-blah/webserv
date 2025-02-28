@@ -1,7 +1,11 @@
 all:
+	$(Q)$(call color_printf,$(BLUE),$(NAME),✨ starting compile $(NAME))
 	$(Q)$(foreach dir,$(DIRS),$(MAKE) TOPDIR=$(TOPDIR) SRCDIR=`pwd` -C $(dir) $@;)
 	$(Q)$(MAKE) $(NAME)
 	$(Q)$(call color_printf,$(BOLD_PURPLE),$(NAME),✨ compiled!)
+
+%.o: %.cpp
+	$(AQ)$(COMPILE.cpp) $(OUTPUT_OPTION) $<
 
 $(NAME): $(OBJS) $(SUBS)
 	$(Q)$(LINK.cpp) $^ $(LOADLIBES) $(LDLIBS) -o $@

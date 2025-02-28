@@ -26,8 +26,9 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 	std::string &readBuffer = curSession.accessReadBuffer();
 	EnumReqStatus status = reqMsg.getStatus();
 
-	size_t cursorFront = readBuffer.size();
-	size_t cursorBack = readBuffer.size();
+	size_t prevReadBufferSize = readBuffer.size();
+	size_t cursorFront = 0;
+	size_t cursorBack = prevReadBufferSize-2;
 	
 	readBuffer.append(readData);
 	if (readData.size() == 1)
@@ -39,7 +40,7 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 
 		// find결과에 따라 cursor(인덱스 파싱)을 할지 다음 recv를 기다릴지 결정
 		if (findResult != std::string::npos) {
-			cursorFront = (cursorBack == 0) ? 0 : cursorBack+2;
+			cursorFront = (cursorBack == prevReadBufferSize-2) ? 0 : cursorBack+2;
 			cursorBack = findResult;
 		} else {// \n이 나오지 않고 readData가 끝난 상태. 다음 loop로 넘어감
 			if (readBuffer.find(LF, cursorBack+2) != std::string::npos) {

@@ -2,6 +2,7 @@
 #define REQUEST_PARSER_HPP
 
 #include "../RequestMessage/RequestMessage.hpp"
+#include "../ClientSession/ClientSession.hpp"
 #include "../include/commonEnums.hpp"
 
 // 전방 선언으로 순환 참조 방지

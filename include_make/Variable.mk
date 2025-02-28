@@ -14,10 +14,6 @@ ARFLAGS = rcs
 CPPFLAGS = $(shell find $(SRCDIR) -type d | sort -u | sed 's|^|-I|') -I/usr/include/kqueue/
 # src경로의 모든 디렉토리를 include path로 추가
 
-ARCHIVES = ServerManager.a TimeoutHandler.a EventHandler.a Demultiplexer.a \
-		   RequestHandler.a ResponseBuilder.a RequestParser.a ClientManager.a \
-		   ClientSession.a RequestMessage.a utils.a GlobalConfig.a ConfigParser.a 
-
 OBJS = $(SRCS:.cpp=.o)
 DEPS = $(SRCS:.cpp=.d)
 -include $(DEPS)

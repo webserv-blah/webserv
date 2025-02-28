@@ -76,8 +76,10 @@ EnumStatusCode RequestParser::cleanUpChunkedBody(std::string &readBuffer, Reques
 	size_t chunkSize;
 
 	while (std::getline(iss, buffer, '\n')) {
-		if (iss.eof())// 5-1. \n으로 getline되지 않은 경우 readBuffer에 남겨 다음 loop에 진행
+		if (iss.eof()) {// 5-1. \n으로 getline되지 않은 경우 readBuffer에 남겨 다음 loop에 진행 
+			std::cout << "CHUNK eof RETURN;\n";
 			return NONE_STATUS_CODE;
+		}
 		if (!buffer.empty() && buffer[buffer.size() - 1] == '\r') {// 5-2. \r\n으로 찾은 줄 파싱
 			// iss에 남은 길이 측정을 위한 도구
 			std::streampos currentPos = iss.tellg();
@@ -94,6 +96,7 @@ EnumStatusCode RequestParser::cleanUpChunkedBody(std::string &readBuffer, Reques
 			// chunkSize가 0일때도 "0\r\n\r\n"이 정확한 종료기준이기 때문에 종료확정을 미룸
 			if (static_cast<size_t>(endPos - currentPos) < chunkSize + 2) {
 				readBuffer = tmp + iss.str().substr(static_cast<std::string::size_type>(currentPos));
+				std::cout << "모잘라 RETURN;\n";
 				return NONE_STATUS_CODE;
 			}
 			
@@ -105,6 +108,7 @@ EnumStatusCode RequestParser::cleanUpChunkedBody(std::string &readBuffer, Reques
 				reqMsg.setStatus(REQ_DONE);
 				reqMsg.setMetaContentLength(reqMsg.getBodyLength());
 				readBuffer = buffer.erase(0, 2);
+				std::cout << "청크 0 끝내!! RETURN;\n";
 				return NONE_STATUS_CODE;
 			}
 

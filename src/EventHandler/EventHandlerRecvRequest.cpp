@@ -33,7 +33,17 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 		return CONNECTION_CLOSED;
 	} else {
 		// 수신한 내용 출력(로그용)
-		std::clog << "[Received MSG]\n" << buffer << std::endl;
+		 std::clog << "\033[32;7m[Received MSG]:\033[0m" << std::endl;
+		// std::clog << "[Received MSG]\n" << buffer << std::endl;
+		//for (std::string::const_iterator it = buffer.begin(); it != buffer.end(); ++it) {
+		//	if (*it == '\n')
+		//		std::cout << "\\n"<<std::endl;
+		//	else if (*it == '\r')
+		//		std::cout << "\\r";
+		//	else
+		//		std::cout << *it;
+		//}
+		//std::cout <<";"<<std::endl;
 
 		// 해당 ClientSession의 RequestMessage를 파싱하기 전에 Body의 최대 길이를 설정
 		const RequestConfig *config = curSession.getConfig();
@@ -43,6 +53,18 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 		// 이전에 버퍼 저장해놓은 데이터와 새로운 요청 데이터를 가지고 파싱
 		EnumStatusCode statusCode = this->parser_.parse(buffer.substr(0, res), curSession);
 		curSession.setErrorStatusCode(statusCode);
+
+		 std::clog << "\033[32;7mREMAIN BUFFER:\033[0m" << std::endl;
+		for (std::string::const_iterator it = curSession.accessReadBuffer().begin(); it != curSession.accessReadBuffer().end(); ++it) {
+			if (*it == '\n')
+				std::cout << "\\n"<<std::endl;
+			else if (*it == '\r')
+				std::cout << "\\r";
+			else
+				std::cout << *it;
+		}
+		std::cout <<";"<<std::endl;
+		curSession.accessReqMsg().printResult();
 
 		// 파싱이 끝나고 나서, 에러 status code와 RequestMessage의 상태를 점검함
 		EnumSesStatus result;

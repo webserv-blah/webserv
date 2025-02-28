@@ -104,22 +104,30 @@ void RequestMessage::resetHostField(const std::string &value) {
 #include <iostream>
 #include <iterator>
 void RequestMessage::printResult() const {
-	std::cout << "\033[32;7m StartLine :\033[0m"<<std::endl;
+	std::cout << "\033[37;7m Status :\033[0m"<<std::endl;
+	const char *status;
+	switch (this->status_) {
+		case REQ_INIT: status = "REQ_INIT"; break;
+		case REQ_TOP_CRLF: status = "REQ_TOP_CRLF"; break;
+		case REQ_METHOD: status = "REQ_METHOD"; break;
+		case REQ_TARGET_URI: status = "REQ_TARGET_URI"; break;
+		case REQ_STARTLINE: status = "REQ_STARTLINE"; break;
+		case REQ_HEADER_FIELD: status = "REQ_HEADER_FIELD"; break;
+		case REQ_HEADER_CRLF: status = "REQ_HEADER_CRLF"; break;
+		case REQ_BODY: status = "REQ_BODY"; break;
+		case REQ_DONE: status = "REQ_DONE"; break;
+		case REQ_ERROR: status = "REQ_ERROR"; break;
+	}
+	std::cout <<status<<";"<<std::endl;
+	
+	std::cout << "\033[37;7m StartLine :\033[0m"<<std::endl;
 	std::cout <<"\033[37;2mmethod: \033[0m";
 	const char *method;
 	switch (this->method_) {
-		case NONE:
-			method = "NONE";
-			break;
-		case GET:
-			method = "GET";
-			break;
-		case POST:
-			method = "POST";
-			break;
-		case DELETE:
-			method = "DELETE";
-			break;
+		case NONE: method = "NONE"; break;
+		case GET: method = "GET"; break;
+		case POST: method = "POST"; break;
+		case DELETE: method = "DELETE"; break;
 	}
 	std::cout <<method<<";"<<std::endl;
 	
@@ -131,7 +139,7 @@ void RequestMessage::printResult() const {
 }
 
 void RequestMessage::printFields(void) const {
-	std::cout << "\033[32;7m Fields :\033[0m"<< std::endl;
+	std::cout << "\033[37;7m Fields :\033[0m"<< std::endl;
 	for (std::map<std::string, std::vector<std::string> >::const_iterator it = this->fieldLines_.begin(); it != this->fieldLines_.end(); ++it) {
 		int cnt = 0;
 		std::cout << it->first << ": {";
@@ -146,7 +154,7 @@ void RequestMessage::printFields(void) const {
 }
 
 void RequestMessage::printBody(void) const {
-	std::cout << "\033[32;7m Body :\033[0m"<< std::endl;
+	std::cout << "\033[37;7m Body :\033[0m"<< std::endl;
 	std::cout << "\033[37;2mcount: " << this->body_.length() << "\033[0m\n";
 	for (std::string::const_iterator it = this->body_.begin(); it != this->body_.end(); ++it) {
 		if (*it == '\n')

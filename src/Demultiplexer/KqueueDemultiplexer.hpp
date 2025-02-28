@@ -1,7 +1,7 @@
 #ifndef KQUEUE_DEMULTIPLEXER_HPP
 #define KQUEUE_DEMULTIPLEXER_HPP
 
-#ifdef __APPLE__
+// #ifdef __APPLE__
 
 #include "DemultiplexerBase.hpp"
 #include <vector>
@@ -31,5 +31,5 @@ class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 
 typedef KqueueDemultiplexer Demultiplexer;
 
-#endif
+// #endif
 #endif

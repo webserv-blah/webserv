@@ -3,7 +3,7 @@
 
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 ARFLAGS = rcs
-CPPFLAGS = $(shell find $(SRCDIR) -type d | sort -u | sed 's|^|-I|')
+CPPFLAGS = $(shell find $(SRCDIR) -type d | sort -u | sed 's|^|-I|') -I/usr/include/kqueue/
 # src경로의 모든 디렉토리를 include path로 추가
 
 OBJS = $(SRCS:.cpp=.o)

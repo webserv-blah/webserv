@@ -44,7 +44,7 @@ int KqueueDemultiplexer::waitForEventImpl(timespec* timeout) {
 void KqueueDemultiplexer::addSocketImpl(int fd) {
 	struct kevent change;
 
-	EV_SET(&change, fd, EVFILT_READ, EV_ADD, 0, 0, nullptr);
+	EV_SET(&change, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	changedEvents_.push_back(change);
 }
 
@@ -52,8 +52,8 @@ void KqueueDemultiplexer::addSocketImpl(int fd) {
 void KqueueDemultiplexer::removeSocketImpl(int fd) {
 	struct kevent changes[2];
 
-	EV_SET(&changes[0], fd, EVFILT_READ, EV_DELETE, 0, 0, nullptr);   // 읽기 이벤트 제거
-	EV_SET(&changes[1], fd, EVFILT_WRITE, EV_DELETE, 0, 0, nullptr);  // 쓰기 이벤트 제거
+	EV_SET(&changes[0], fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);   // 읽기 이벤트 제거
+	EV_SET(&changes[1], fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);  // 쓰기 이벤트 제거
 	changedEvents_.insert(changedEvents_.end(), changes, changes + 2);
 }
 
@@ -61,7 +61,7 @@ void KqueueDemultiplexer::removeSocketImpl(int fd) {
 void KqueueDemultiplexer::addWriteEventImpl(int fd) {
 	struct kevent change;
 
-	EV_SET(&change, fd, EVFILT_WRITE, EV_ADD, 0, 0, nullptr);
+	EV_SET(&change, fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
 	changedEvents_.push_back(change);
 }
 
@@ -69,7 +69,7 @@ void KqueueDemultiplexer::addWriteEventImpl(int fd) {
 void KqueueDemultiplexer::removeWriteEventImpl(int fd) {
 	struct kevent change;
 	
-	EV_SET(&change, fd, EVFILT_WRITE, EV_DELETE, 0, 0, nullptr);
+	EV_SET(&change, fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
 	changedEvents_.push_back(change);
 }
 

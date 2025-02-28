@@ -8,7 +8,7 @@ all:
 	$(AQ)$(COMPILE.cpp) $(OUTPUT_OPTION) $<
 
 $(NAME): $(OBJS) $(SUBS)
-	$(Q)$(LINK.cpp) $^ $(LOADLIBES) $(LDLIBS) -o $@
+	$(Q)$(LINK.cpp) $^ $(ARCHIVES) $(LOADLIBES) $(LDLIBS) -o $@
 	$(Q)$(MAKE) files=$(NAME) src_dir=`pwd` dst_dir=$(TOPDIR) link_files
 
 clean:

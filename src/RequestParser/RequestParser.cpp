@@ -1,5 +1,6 @@
 #include "RequestParser.hpp"
 #include "../GlobalConfig/GlobalConfig.hpp"
+#include "../include/errorUtils.hpp"
 #include <sstream>
 
 //Body크기에 제한 없이 테스트하고 싶은 경우, BODY_MAX_LENGTH대신 std::numeric_limits을 사용할 수 있음
@@ -41,8 +42,12 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 			cursorFront = (cursorBack == 0) ? 0 : cursorBack+2;
 			cursorBack = findResult;
 		} else {// \n이 나오지 않고 readData가 끝난 상태. 다음 loop로 넘어감
-			if (readBuffer.find(LF, cursorBack) != std::string::npos)
+			if (readBuffer.find(LF, cursorBack) != std::string::npos) {
+				webserv::logError(ERROR, "BAD_REQUEST",
+					"single LF",
+					"RequestParser::parse");
 				return BAD_REQUEST;//status code: CRLF가 아닌, 단일 LF
+			}
 			return NONE_STATUS_CODE;
 		}
 		
@@ -51,8 +56,12 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 			status = this->handleCRLFLine(reqMsg.getStatus());
 			reqMsg.setStatus(status);
 			// 올바르지 않은 CRLF줄 에러
-			if (status == REQ_ERROR)
+			if (status == REQ_ERROR) {
+				webserv::logError(ERROR, "BAD_REQUEST", 
+					"invalid CRLF location", 
+					"RequestParser::parse");
 				return BAD_REQUEST;//status code: 유효하지 않은 CRLF 위치
+			}
 			// field-line까지 다 읽은 후, 요청메시지에 맞는 RequestConfig를 설정하고 Host헤더필드 유무를 검증함
 			if (status == REQ_HEADER_CRLF) {
 				// ClientSession에 Config설정
@@ -61,8 +70,12 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 
 				// 헤더필드 검증 및 처리
 				// 1) Host 헤더필드는 필수로 존재해야 함
-				if (reqMsg.getMetaHost().empty())
+				if (reqMsg.getMetaHost().empty()) {
+					webserv::logError(ERROR, "BAD_REQUEST", 
+						"Host does not exist", 
+						"RequestParser::parse");
 					return BAD_REQUEST;
+				}
 				// 2) Body size가 정해진 것이 없을때, 종료 처리
 				if (reqMsg.getMetaContentLength() == 0
 				&&  reqMsg.getMetaTransferEncoding() == NONE_ENCODING) {

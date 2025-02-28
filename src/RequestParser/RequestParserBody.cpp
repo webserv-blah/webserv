@@ -1,5 +1,6 @@
 #include "RequestParser.hpp"
 #include "../utils/utils.hpp"
+#include "../include/errorUtils.hpp"
 #include <sstream>
 
 // 4. Body를 파싱하는 함수, Content-Length의 길이에 따라 예외 처리됨. 유효한 문자열은 기존의 Body의 추가함
@@ -10,8 +11,12 @@ EnumStatusCode RequestParser::parseBody(std::string &readBuffer, RequestMessage 
 
 	// 4-1. 최종 body의 길이 >= 현재 저장된 body길이 + 파싱하려는 길이
 	if (contentLength >= reqMsg.getBodyLength() + readBuffer.length()) {
-		if (this->bodyMaxLength_ < reqMsg.getBodyLength() + readBuffer.length())
+		if (this->bodyMaxLength_ < reqMsg.getBodyLength() + readBuffer.length()) {
+			webserv::logError(ERROR, "CONTENT_TOO_LARGE", 
+				"Body size is larger than the Config", 
+				"RequestParser::parseBody");
 			return CONTENT_TOO_LARGE;//status code: Body가 설정보다 큼 “Request Entity Too Large”
+		}
 
 		reqMsg.addBody(readBuffer);
 		readBuffer = "";
@@ -50,6 +55,9 @@ EnumStatusCode RequestParser::parseBody(std::string &readBuffer, RequestMessage 
 
 	if (suspicious) {
 		reqMsg.setStatus(REQ_ERROR);
+		webserv::logError(ERROR, "BAD_REQUEST", 
+			"reject suspicious Body", 
+			"RequestParser::parseBody");
 		return BAD_REQUEST;//status code: 의심스러운 Body 거부
 	}
 	reqMsg.setStatus(REQ_DONE);
@@ -97,15 +105,26 @@ EnumStatusCode RequestParser::cleanUpChunkedBody(std::string &readBuffer, Reques
 			iss.read(&buffer[0], chunkSize + 2);
 
 			// 청크 데이터가 \r\n형식에 맞춰 들어왔는지 검증
-			if (buffer.compare(buffer.size() - 2, 2, "\r\n") != 0)
+			if (buffer.compare(buffer.size() - 2, 2, "\r\n") != 0) {
+				webserv::logError(ERROR, "BAD_REQUEST", 
+					"invalid chunk data format", 
+					"RequestParser::cleanUpChunkedBody");
 				return BAD_REQUEST;//status code: 유효하지 않은 청크 데이터 형식
+			}
 				
-			if (this->bodyMaxLength_ < reqMsg.getBodyLength() + chunkSize)
+			if (this->bodyMaxLength_ < reqMsg.getBodyLength() + chunkSize) {
+				webserv::logError(ERROR, "CONTENT_TOO_LARGE", 
+					"Body size is larger than the Config", 
+					"RequestParser::cleanUpChunkedBody");
 				return CONTENT_TOO_LARGE;//status code: Body가 설정보다 큼 “Request Entity Too Large”
+			}
 
 				// 청크 데이터에 \r\n를 제거하여 Body에 저장
 			reqMsg.addBody(buffer.substr(0, buffer.size() - 2));
 		} else { //\r\n으로 이루어져있지 않음
+			webserv::logError(ERROR, "BAD_REQUEST", 
+				"single LF", 
+				"RequestParser::cleanUpChunkedBody");
 			return BAD_REQUEST;//status code: CRLF가 아닌, 단일 LF
 		}
 	}

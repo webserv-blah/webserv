@@ -19,6 +19,10 @@ EnumStatusCode RequestParser::parseFieldLine(const std::string &line, RequestMes
 	||  name == "User-Agent" ||  name == "Authorization"
 	||  name == "If-Modified-Since" ||  name == "If-Unmodified-Since"
 	||  name == "Referer" ||  name == "Content-Location") {
+		// 단일 헤더인데, 또 반복하여 들어온 경우
+		if (reqMsg.getFields().count(name))
+			return BAD_REQUEST;
+
 		std::getline(iss, value, '\0');
 		values.push_back(utils::strtrim(value));
 	} else {

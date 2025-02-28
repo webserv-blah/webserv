@@ -95,6 +95,11 @@ void RequestMessage::setMetaContentType(const std::string &value) {
 	this->metaContentType_ = value;
 }
 
+void RequestMessage::resetHostField(const std::string &value) {
+	this->fieldLines_["Host"][0] = value;
+	this->metaHost_ = value;
+}
+
 // Parser 구현 후, 파싱 테스트용 함수, C++98 X
 #include <iostream>
 #include <iterator>

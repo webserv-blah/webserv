@@ -76,7 +76,16 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 						"RequestParser::parse");
 					return BAD_REQUEST;
 				}
-				// 2) Body size가 정해진 것이 없을때, 종료 처리
+				// 2) targetURI와 Host 헤더필드 처리
+				const std::string &targetURI = reqMsg.getTargetURI();
+				const size_t schemaPos = targetURI.find("http://", 0);
+				const size_t cursor = (schemaPos == std::string::npos) ? 0 : schemaPos;
+				const size_t slashPos = targetURI.find("/", cursor);
+				if (cursor != slashPos) {
+					reqMsg.resetHostField(targetURI.substr(cursor, slashPos));
+					reqMsg.setTargetURI(targetURI.substr(slashPos, targetURI.size()));
+				}
+				// 3) Body size가 정해진 것이 없을때, 종료 처리
 				if (reqMsg.getMetaContentLength() == 0
 				&&  reqMsg.getMetaTransferEncoding() == NONE_ENCODING) {
 					reqMsg.setStatus(REQ_DONE);

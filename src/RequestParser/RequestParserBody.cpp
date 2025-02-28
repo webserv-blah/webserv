@@ -70,6 +70,32 @@ EnumStatusCode RequestParser::parseBody(std::string &readBuffer, RequestMessage 
 // readBuffer: Body로 파싱할 요청 데이터이자, 남은 데이터를 저장할 ClientSession의 readBuffer
 // reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
 EnumStatusCode RequestParser::cleanUpChunkedBody(std::string &readBuffer, RequestMessage &reqMsg) {
+	size_t chunkSize;
+
+	bool isStart = true;
+	size_t cursorFront = 0;
+	size_t cursorBack = 0;
+	
+	while () {
+		size_t findResult = readBuffer.find(CRLF, cursorBack, 2);
+		if (findResult != std::string::npos) {
+			cursorFront = (isStart) ? 0 : cursorBack;
+			cursorBack = findResult+2;
+			isStart = false;
+		} else {// \n이 나오지 않음
+			if (readBuffer.find(LF, cursorBack) != std::string::npos) {
+				webserv::logError(ERROR, "BAD_REQUEST",
+					"single LF",
+					"RequestParser::parse");
+				return BAD_REQUEST;//status code: CRLF가 아닌, 단일 LF
+			}
+		}
+	}
+
+	
+
+
+
 	std::istringstream iss(readBuffer);
 	std::string buffer;
 	std::string tmp;

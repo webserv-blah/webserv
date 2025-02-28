@@ -20,7 +20,7 @@ int main() {
 		||  errno == EWOULDBLOCK
 		||  errno == EINTR) {
 			webserv::logSystemError(WARNING, "recv failed", 
-				"Client fd: " + std::to_string(curSession.getClientFd()), 
+				"Client fd: " + utils::size_t_tos(curSession.getClientFd()), 
 				"EventHandler::recvRequest");
 			return READ_CONTINUE;
 		}
@@ -30,7 +30,7 @@ int main() {
     std::ifstream file("non_existent_file.txt");
     if (!file.is_open()) {
         webserv::logError(ERROR, "File opening failed", "non_existent_file.txt", 
-                         "errno " + std::to_string(errno) + ", " + std::strerror(errno));
+                         "errno " + utils::size_t_tos(errno) + ", " + std::strerror(errno));
         // 에러 발생 후 복구 시도 또는 대체 작업 수행
     }
 

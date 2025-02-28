@@ -32,14 +32,14 @@ webserv::logError(WARNING, "Invalid value", "Input is negative", "validateInput 
 
 // ERROR 레벨 에러
 webserv::logError(ERROR, "File opening failed", "test.txt", 
-                 "errno " + std::to_string(errno) + ", " + std::strerror(errno));
+                 "errno " + utils::size_t_tos(errno) + ", " + std::strerror(errno));
 ```
 
 ### 3. 시스템 호출 에러 로깅 (errno 자동 처리)
 ```cpp
 // WARNING 레벨 에러
 webserv::logSystemError(WARNING, "recv failed", 
-			                 "Client fd: " + std::to_string(curSession.getClientFd()), 
+			                 "Client fd: " + utils::size_t_tos(curSession.getClientFd()), 
 			                 "EventHandler::recvRequest");
 // ERROR 레벨 에러
 webserv::logSystemError(ERROR, "fopen", "test.txt");

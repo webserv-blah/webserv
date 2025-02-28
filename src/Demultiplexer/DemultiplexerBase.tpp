@@ -1,4 +1,5 @@
 #include "DemultiplexerBase.hpp"
+#include "sys/event.h"
 
 template <typename Derived>
 DemultiplexerBase<Derived>::DemultiplexerBase() {

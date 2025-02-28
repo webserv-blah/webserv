@@ -27,7 +27,7 @@ ClientManager::TypeClientMap::iterator ClientManager::removeClient(int fd) {
 	if (it == clientList_.end()) {
 		// 존재하지 않는 fd에 대한 요청 시 오류 로깅
 		webserv::logError(WARNING, "Client Fd Not Found", 
-		                 "fd: " + std::to_string(fd), 
+		                 "fd: " + utils::size_t_tos(fd), 
 		                 "ClientManager::removeClient");
 		return clientList_.end(); // 유효하지 않은 반복자 반환
 	}
@@ -36,7 +36,9 @@ ClientManager::TypeClientMap::iterator ClientManager::removeClient(int fd) {
 	close(fd); // 해당 클라이언트의 소켓 닫기
 
 	// 해당 요소를 map에서 삭제하고 다음 요소의 반복자 반환
-	TypeClientMap::iterator nextIt = clientList_.erase(it);
+	TypeClientMap::iterator nextIt = it;
+	++nextIt;
+	clientList_.erase(it);
 	return nextIt;
 }
 

@@ -19,14 +19,14 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 		||  errno == EINTR) {		//errno)인터럽트, 시스템 호출 중 시그널에 의해 중단되어 호출이 완료되지 않은 경우
 			// 일시적인 문제(non-blocking, 인터럽트)는 WARNING 레벨로 로깅
 			webserv::logSystemError(WARNING, "recv", 
-			                      "Client fd: " + std::to_string(curSession.getClientFd()), 
+			                      "Client fd: " + utils::size_t_tos(curSession.getClientFd()), 
 			                      "EventHandler::recvRequest");
 			return READ_CONTINUE;
 		}
 			
 		// 심각한 오류 발생 시 ERROR 레벨로 로그만 출력하고 연결 종료 (서버는 계속 실행)
 		webserv::logSystemError(ERROR, "recv", 
-		                      "Client fd: " + std::to_string(curSession.getClientFd()),
+		                      "Client fd: " + utils::size_t_tos(curSession.getClientFd()),
 		                      "EventHandler::recvRequest");
 		return CONNECTION_CLOSED;	//errno)그 외, 통신을 할 수 없는 상태이거나, 메모리 문제로 치명적인 경우
 	} else if (res == 0) {			//클라이언트 측에서 연결을 종료한 경우

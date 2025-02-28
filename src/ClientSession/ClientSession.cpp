@@ -6,7 +6,7 @@
 
 ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : listenFd_(listenFd), clientFd_(clientFd), reqMsg_(NULL), config_(NULL), clientIP_(clientIP) {
 	this->readBuffer_.reserve(BUFFER_SIZE * 2);
-	this->defConfig_ = GlobalConfig::findRequestConfig(listenFd, "", "");
+	this->defConfig_ = GlobalConfig::getInstance().findRequestConfig(listenFd, "", "");
 }
 ClientSession::~ClientSession() {
 	if (this->reqMsg_ != NULL)

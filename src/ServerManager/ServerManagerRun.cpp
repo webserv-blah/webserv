@@ -29,10 +29,7 @@ void ServerManager::run() {
 				EnumEvent	type = reactor.getEventType(i);
 				int 		fd = reactor.getSocketFd(i);
 
-				if (type == EXCEPTION_EVENT) {
-					// 예외 이벤트 발생: 소켓 오류 등으로 인해 클라이언트 연결을 종료
-					removeClientInfo(fd, clientManager, reactor, timeoutHandler);
-				} else if (type == READ_EVENT) {
+				if (type == READ_EVENT) {
 					if (isListeningSocket(fd)) {
 						std::clog << "READ Event on Listening Socket " << fd << std::endl;
 						// 리스닝 소켓에서 읽기 이벤트 발생: 새로운 클라이언트의 연결 요청 처리
@@ -56,11 +53,11 @@ void ServerManager::run() {
 		}
 	} catch (std::exception& e) {
 	    // 예외 발생 시, 서버 비정상 종료에 대비하여 연결된 모든 클라이언트에게 종료 알림을 전송
-		// notifyClientsShutdown(clientManager, eventHandler);
+		notifyClientsShutdown(clientManager, eventHandler);
 		throw; // 원래 예외 그대로 throw
 	}
 	// 서버가 정상 종료된 시 모든 클라이언트에게 종료 알림 전송
-	// notifyClientsShutdown(clientManager, eventHandler);
+	notifyClientsShutdown(clientManager, eventHandler);
 }
 
 // 서버 종료 전에, 모든 클라이언트에게 종료 메시지(503:SERVICE_UNAVAILABLE)를 전송합니다.

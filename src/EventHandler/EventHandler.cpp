@@ -57,9 +57,9 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
 
     if (status == READ_COMPLETE) {
         // 요청 데이터 수신이 완료된 경우
-        RequestMessage  requestMsg = clientSession.getReqMsg();
+        RequestMessage  &requestMsg = *clientSession.getReqMsg();
         std::string     responseMsg;
-		const RequestConfig&	reqConfig = clientSession.getConfig();
+		const RequestConfig&	reqConfig = *clientSession.getConfig();
 
         // 요청 URI에 CGI 실행 대상이 포함되어 있는지 확인
         if (cgiHandler_.isCGI(requestMsg.getTargetURI(), reqConfig.cgiExtension_)) {
@@ -102,7 +102,7 @@ EnumSesStatus EventHandler::handleClientWriteEvent(ClientSession& clientSession)
 //---------------------------------------------------------------------
 void EventHandler::handleError(int statusCode, ClientSession& clientSession) {
     // ResponseBuilder를 사용하여 상태 코드에 맞는 에러 응답 메시지 생성
-    std::string errorMsg = rspBuilder_.buildError(statusCode, clientSession.getConfig());
+    std::string errorMsg = rspBuilder_.buildError(statusCode, *clientSession.getConfig());
 
     // 생성된 에러 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
     clientSession.setWriteBuffer(errorMsg);

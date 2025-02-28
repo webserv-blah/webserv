@@ -11,4 +11,4 @@ WORKDIR /app
 
 COPY . .
 
-CMD [ "sh", "-c", "make && ./webserv 42tester.conf && make fclean" ]
+CMD [ "sh", "-c", "make && ./webserv ./config/42tester.conf && make fclean" ]

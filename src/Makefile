@@ -9,7 +9,20 @@ NAME := webserv
 SRCS := $(wildcard *.cpp)
 
 # SRCS(in SRCDIR) ------
-DIRS := $(subst /,,$(filter-out include/, $(wildcard */)))
+DIRS := ServerManager \
+		TimeoutHandler \
+		EventHandler \
+		Demultiplexer \
+		RequestHandler \
+		ResponseBuilder \
+		RequestParser \
+		ClientManager \
+		ClientSession \
+		RequestMessage \
+		utils \
+		GlobalConfig \
+		ConfigParser \
+
 SUBS := $(addsuffix .a,$(DIRS))
 
 include $(TOPDIR)/include_make/Verbose.mk

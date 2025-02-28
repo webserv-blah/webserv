@@ -60,3 +60,6 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Claude AI configuration file - keep local to persist across branches
+CLAUDE.md

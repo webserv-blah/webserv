@@ -7,6 +7,8 @@ src/manda/include/*
 test*
 .DS_Store
 .vscode/
+# (3)tester
+ubuntu_tester
 
 # Prerequisites
 *.d

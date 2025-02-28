@@ -42,7 +42,7 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 			cursorFront = (cursorBack == 0) ? 0 : cursorBack+2;
 			cursorBack = findResult;
 		} else {// \n이 나오지 않고 readData가 끝난 상태. 다음 loop로 넘어감
-			if (readBuffer.find(LF, cursorBack) != std::string::npos) {
+			if (readBuffer.find(LF, cursorBack+2) != std::string::npos) {
 				webserv::logError(ERROR, "BAD_REQUEST",
 					"single LF",
 					"RequestParser::parse");

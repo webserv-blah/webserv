@@ -6,7 +6,7 @@
 #include "../include/errorUtils.hpp"
 
 // ResponseBuilder를 인자로 하여 정적 핸들러와 CGI 핸들러를 초기화합니다.
-EventHandler::EventHandler() : staticHandler_(rspBuilder_), cgiHandler_(rspBuilder_) {
+EventHandler::EventHandler() : staticHandler_(responseBuilder_), cgiHandler_(responseBuilder_) {
 
 }
 
@@ -61,8 +61,10 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
 		const RequestConfig&	reqConfig = *clientSession.getConfig();
         std::string     responseMsg;
 
-        // 요청 URI에 CGI 실행 대상이 포함되어 있는지 확인
-        if (cgiHandler_.isCGI(requestMsg.getTargetURI(), reqConfig.cgiExtension_)) {
+		if (reqConfig.returnStatus_) {
+			// 리다이렉션
+			responseMsg = handleRedirection(reqConfig);
+		} else if (cgiHandler_.isCGI(requestMsg.getTargetURI(), reqConfig.cgiExtension_)) {
             // CGI 요청
             responseMsg = cgiHandler_.handleRequest(clientSession);
         } else {
@@ -71,7 +73,6 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
         }
         // 생성된 응답 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
         clientSession.setWriteBuffer(responseMsg);
-        
         // 클라이언트에게 응답 전송을 시도하고, 전송 결과에 따라 상태 갱신
         status = sendResponse(clientSession);
     } else if (status == REQUEST_ERROR) {
@@ -83,6 +84,22 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
     } 
 
     return status;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// 리다이렉션 처리
+std::string EventHandler::handleRedirection(const RequestConfig& conf) {
+	// 리다이렉션 설정이 올바른 경우
+	if (!conf.returnUrl_.empty() && \
+	(conf.returnStatus_ == FOUND || conf.returnStatus_ == MOVED_PERMANENTLY)) {
+		// 리다이렉트 응답
+		std::map<std::string, std::string> headers;
+		headers["Location"] = conf.returnUrl_;
+		return responseBuilder_.build(conf.returnStatus_, headers, "");
+	} else {
+		// 그 외에는 에러 응답
+		return responseBuilder_.buildError(conf.returnStatus_, conf);
+	}
 }
 
 //---------------------------------------------------------------------
@@ -102,7 +119,7 @@ EnumSesStatus EventHandler::handleClientWriteEvent(ClientSession& clientSession)
 //---------------------------------------------------------------------
 void EventHandler::handleError(int statusCode, ClientSession& clientSession) {
     // ResponseBuilder를 사용하여 상태 코드에 맞는 에러 응답 메시지 생성
-    std::string errorMsg = rspBuilder_.buildError(statusCode, *clientSession.getConfig());
+    std::string errorMsg = responseBuilder_.buildError(statusCode, *clientSession.getConfig());
 
     // 생성된 에러 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
     clientSession.setWriteBuffer(errorMsg);

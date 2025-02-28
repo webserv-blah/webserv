@@ -49,23 +49,6 @@ StaticHandler::~StaticHandler() {
 // ─────────────────────────────────────────────────────────────────────────────────────
 // 메인 요청 처리 함수: GET / POST / DELETE 등 다양한 메소드를 분기
 std::string StaticHandler::handleRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
-	// 설정 블록에 리턴 지시자가 있는 경우
-	if (conf.returnStatus_ >= 100) {
-		if (conf.returnStatus_ == OK) {
-			// location block에 "return 200 someText" 형태로 썼다면
-			// 특별 처리(예: 특정 문구 반환) 등의 로직을 넣을 수 있음(현재는 단순 통과)
-		} 
-		else if (!conf.returnUrl_.empty() && 
-			(conf.returnStatus_ == FOUND || conf.returnStatus_ == MOVED_PERMANENTLY)) {
-			// 리다이렉트 응답
-			return handleRedirction(conf);
-		} 
-		else {
-			// 그 외에는 에러 응답
-			return responseBuilder_.buildError(conf.returnStatus_, conf);
-		}
-	}
-
 	// 우선, 설정에서 현재 요청 메소드가 허용되는지 확인 (methods_ 벡터 사용)
 	EnumMethod method = reqMsg.getMethod();
 	if (!isMethodAllowed(method, conf)) {
@@ -244,15 +227,6 @@ std::string StaticHandler::buildAutoIndexResponse(const std::string &dirPath, co
 	std::map<std::string, std::string> headers;
 	headers["Content-Type"] = "text/html";
 	return responseBuilder_.build(OK, headers, body.str());
-}
-
-// ─────────────────────────────────────────────────────────────────────────────────────
-// 리다이렉션 처리
-std::string StaticHandler::handleRedirction(const RequestConfig& conf) {
-	std::string location = conf.returnUrl_;
-	std::map<std::string, std::string> headers;
-	headers["Location:"] = location;
-	return responseBuilder_.build(conf.returnStatus_, headers, "");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────

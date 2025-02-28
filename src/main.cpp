@@ -19,7 +19,9 @@ int main(int argc, char** argv) {
 		serverManager.run();
 	} catch (const std::exception& e) {
 		GlobalConfig::destroyInstance();
-		std::cerr << "Error: " << e.what() << std::endl;
+		if (globalServerRunning) {
+			std::cerr << "Error: " << e.what() << std::endl;
+		}
 		return 1;
 	}
 	GlobalConfig::destroyInstance();

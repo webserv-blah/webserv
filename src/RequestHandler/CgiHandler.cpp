@@ -59,7 +59,9 @@ std::string CgiHandler::handleRequest(const ClientSession& clientSession) {
     // CGI 스크립트를 실행하고 결과를 받아옴
     std::string cgiResult = executeCgi(parts.scriptPath, cgiEnv, requestBody);
     // 실행 결과가 없으면 500 에러, 있으면 결과 반환
-    return cgiResult.empty() ? responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf) : cgiResult;
+    return cgiResult.empty() ? 
+    responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf) : 
+    responseBuilder_.AddHeaderForCgi(cgiResult);
 }
 
 // CGI 실행에 필요한 환경 변수를 설정하는 함수
@@ -72,11 +74,14 @@ void CgiHandler::buildCgiEnv(const ClientSession& clientSession,
     const RequestMessage& reqMsg = *clientSession.getReqMsg();
     const RequestConfig& conf = *clientSession.getConfig();
 
-    envVars.reserve(11);               // 아래 설정할 변수 수만큼 벡터 공간 예약
+    envVars.reserve(14);               // 아래 설정할 변수 수만큼 벡터 공간 예약
     envVars.push_back(makeEnvVar("GATEWAY_INTERFACE", "CGI/1.1"));  // CGI 인터페이스 버전 설정
     envVars.push_back(makeEnvVar("REQUEST_METHOD", methodStrings[static_cast<int>(reqMsg.getMethod())]));  // 요청 메서드 설정
     envVars.push_back(makeEnvVar("SCRIPT_NAME", uriParts.scriptPath.substr(conf.root_.length())));  // 스크립트 이름 설정 (루트 이후 경로)
+    envVars.push_back(makeEnvVar("SCRIPT_FILENAME", relativeToAbsolute(uriParts.scriptPath)));  // 스크립트 경로 설정
     envVars.push_back(makeEnvVar("PATH_INFO", uriParts.pathInfo));      // 추가 경로 정보 설정
+    envVars.push_back(makeEnvVar("CONTENT_TYPE", reqMsg.getMetaContentType()));  // 컨텐츠 타입 설정
+    envVars.push_back(makeEnvVar("CONTENT_LENGTH", utils::size_t_tos(reqMsg.getBody().size())));  // 본문 길이 설정
     envVars.push_back(makeEnvVar("QUERY_STRING", uriParts.queryString));  // 쿼리 문자열 설정
     envVars.push_back(makeEnvVar("REMOTE_ADDR", clientSession.getClientIP()));  // 클라이언트 IP 주소 설정
     std::string host = reqMsg.getMetaHost();   // 요청 헤더에서 호스트 정보 추출
@@ -90,6 +95,7 @@ void CgiHandler::buildCgiEnv(const ClientSession& clientSession,
     }
     envVars.push_back(makeEnvVar("SERVER_PROTOCOL", "HTTP/1.1"));  // 서버 프로토콜 설정
     envVars.push_back(makeEnvVar("SERVER_SOFTWARE", "MyTinyWebServer/0.1"));  // 서버 소프트웨어 정보 설정
+    envVars.push_back(makeEnvVar("REDIRECT_STATUS", "200"));  // 리다이렉트 상태 설정
 }
 
 // CGI 스크립트를 실행하고 결과를 반환하는 함수
@@ -146,8 +152,7 @@ void CgiHandler::executeChild(const std::string& scriptPath, const std::vector<s
     char* argv[2];                      // 스크립트 실행 인자 배열 생성
     argv[0] = const_cast<char*>(scriptPath.c_str());  // 실행할 스크립트 경로 설정
     argv[1] = 0;                        // 인자 배열 끝을 표시
-
-    execve(scriptPath.c_str(), argv, &envp[0]);  // execve 호출로 CGI 스크립트 실행
+    execve(relativeToAbsolute(scriptPath).c_str(), argv, &envp[0]);
     _exit(1);                           // 실행 실패 시 자식 프로세스 종료
 }
 
@@ -182,6 +187,7 @@ std::string CgiHandler::handleParent(pid_t pid, int inPipe[2], int outPipe[2], c
     int status;
     waitpid(pid, &status, 0);          // 자식 프로세스 종료 상태를 대기 및 수신
     // 자식 프로세스가 정상 종료하면 결과 문자열 반환, 그렇지 않으면 빈 문자열 반환
+
     return (WIFEXITED(status) && WEXITSTATUS(status) == 0) ? oss.str() : "";
 }
 

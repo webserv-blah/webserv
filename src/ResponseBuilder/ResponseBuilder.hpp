@@ -29,6 +29,11 @@ public:
 	// @return 최종 에러 응답 문자열
 	std::string buildError(int statusCode, const RequestConfig& currConf) const;
 
+	// Cgi 스크립트로부터 나온 결과물에 헤더를 추가해주는 함수
+	// @param cgiOutput    CGI 스크립트의 출력 결과
+	// @return 헤더가 추가된 결과물
+	std::string AddHeaderForCgi(const std::string &cgiOutput) const;
+
 private:
 
 	// Content-Length 헤더를 설정하는 헬퍼함수
@@ -48,6 +53,7 @@ private:
 								const std::string& reasonPhrase,
 								const std::map<std::string, std::string>& headers,
 								const std::string& body) const;
+
 };
 
 #endif

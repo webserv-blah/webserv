@@ -101,4 +101,59 @@ namespace FileUtilities {
 		// 버퍼를 문자열로 변환하여 반환
 		return std::string(buffer.begin(), buffer.end());
 	}
+
+	// 경로가 절대경로인지 판별 (Linux/Unix 전용)
+	bool isAbsolutePath(const std::string &path) {
+		return (!path.empty() && path[0] == '/');
+	}
+
+	// 경로 정규화 함수: 불필요한 "."와 ".."를 제거
+	std::string normalizePath(const std::string &path) {
+		std::vector<std::string> stack;
+		std::istringstream iss(path);
+		std::string token;
+		
+		// '/'를 구분자로 토큰 분리
+		while (std::getline(iss, token, '/')) {
+			if (token.empty() || token == ".") {
+				continue;
+			} else if (token == "..") {
+				if (!stack.empty()) {
+					stack.pop_back();
+				}
+				// 절대경로의 경우, stack이 비면 ".."를 무시합니다.
+			} else {
+				stack.push_back(token);
+			}
+		}
+		
+		std::string result;
+		if (isAbsolutePath(path))
+			result = "/";
+		
+		for (size_t i = 0; i < stack.size(); ++i) {
+			result += stack[i];
+			if (i != stack.size() - 1)
+				result += "/";
+		}
+		
+		return result.empty() ? "/" : result;
+	}
+
+	// 상대경로를 절대경로로 변환 (Linux/Unix 전용)
+	std::string relativeToAbsolute(const std::string &path) {
+		if (isAbsolutePath(path))
+			return normalizePath(path);
+
+		char buffer[PATH_MAX];
+		if (getcwd(buffer, PATH_MAX) == NULL) {
+			throw std::runtime_error("getcwd() 호출 중 오류 발생");
+		}
+		std::string currentDir(buffer);
+		if (currentDir.empty() || currentDir[currentDir.size()-1] != '/')
+			currentDir += '/';
+		
+		return normalizePath(currentDir + path);
+	}
+
 }

@@ -1,4 +1,4 @@
-#!/usr/bin/php-cgi
+#!/opt/homebrew/bin/php-cgi
 <?php
 // Set content type to HTML
 header("Content-type: text/html");

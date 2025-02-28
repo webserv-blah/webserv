@@ -24,11 +24,14 @@ CgiHandler::~CgiHandler() {
 // 요청된 URI가 CGI 실행 대상인지 확인하는 함수
 bool CgiHandler::isCGI(const std::string& targetUri, const std::string& cgiExtension)
 {
-	// targetUri가 cgiExtension으로 끝나면 true 반환
-    if (targetUri.size() < cgiExtension.size()) {
-		return false;
-	}
-    return targetUri.compare(targetUri.size() - cgiExtension.size(), cgiExtension.size(), cgiExtension) == 0;
+    // 쿼리 문자열이 있으면 그 이전까지만 잘라서 확인
+    size_t queryPos = targetUri.find('?');
+    std::string uriWithoutQuery = (queryPos == std::string::npos) ? targetUri : targetUri.substr(0, queryPos);
+
+    if (uriWithoutQuery.size() < cgiExtension.size()) {
+        return false;
+    }
+    return uriWithoutQuery.compare(uriWithoutQuery.size() - cgiExtension.size(), cgiExtension.size(), cgiExtension) == 0;
 }
 
 // 클라이언트의 요청을 처리하여 CGI 결과를 반환하는 함수

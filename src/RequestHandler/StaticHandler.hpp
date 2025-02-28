@@ -39,9 +39,6 @@ private:
     // -- 파일 처리 --
     std::string handleFile(const std::string &filePath, const RequestConfig& conf);
 
-    // -- redirection 처리 --
-    std::string handleRedirction(const RequestConfig& conf);
-
     // -- autoindex 응답(디렉토리 목록) --
     std::string buildAutoIndexResponse(const std::string &dirPath, const std::string &uri);
 

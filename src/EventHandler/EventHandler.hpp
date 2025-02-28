@@ -20,16 +20,17 @@ class EventHandler {
 		EnumSesStatus	handleClientReadEvent(ClientSession& clientSession);
 		EnumSesStatus 	handleClientWriteEvent(ClientSession& clientSession);
 		void			handleError(int statusCode, ClientSession& clientSession);
-		
+
 	private:
 		RequestParser	parser_;
-		ResponseBuilder	rspBuilder_;
+		ResponseBuilder	responseBuilder_;
 		StaticHandler	staticHandler_;
 		CgiHandler		cgiHandler_;
 
 		EnumSesStatus	recvRequest(ClientSession& clientSession); //recv()
 		EnumSesStatus	sendResponse(ClientSession& clientSession); //send()
-
+		
+		std::string 	handleRedirection(const RequestConfig& config);
 };
 
 #endif

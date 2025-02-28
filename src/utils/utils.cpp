@@ -100,4 +100,9 @@ namespace utils {
 		return str.substr(start, end - start);
 	}
 
+	std::string size_t_tos(size_t size) {
+		std::ostringstream oss;
+		oss << size;
+		return oss.str();
+	}
 }

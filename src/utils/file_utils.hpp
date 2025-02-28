@@ -23,6 +23,9 @@ namespace FileUtilities {
 	EnumValidationResult	validatePath(const std::string& path);
 	bool					hasExecutePermission(const std::string& filePath);
 	std::string			    readFile(const std::string &filePath);
+	bool					isAbsolutePath(const std::string &path);
+	std::string				normalizePath(const std::string &path);
+	std::string				relativeToAbsolute(const std::string &path);
 };
 
 #endif

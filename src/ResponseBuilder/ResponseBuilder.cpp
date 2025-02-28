@@ -84,3 +84,34 @@ std::string ResponseBuilder::buildError(int errorStatusCode, const RequestConfig
 
 	return assembleResponse(errorStatusCode, errorReason, headers, body);	// 에러 응답 메시지 반환
 }
+
+std::string ResponseBuilder::AddHeaderForCgi(const std::string &cgiOutput) const {
+    // CGI 스크립트의 출력은 자체 헤더와 본문이 빈 줄("\r\n\r\n" 또는 "\n\n")로 구분됨
+    std::string separator = "\r\n\r\n";
+    std::size_t pos = cgiOutput.find(separator);
+    if (pos == std::string::npos) {
+        separator = "\n\n";
+        pos = cgiOutput.find(separator);
+    }
+    
+    // 본문만 추출: 구분자가 없으면 전체를 본문으로 간주
+    std::string body;
+    if (pos != std::string::npos) {
+        body = cgiOutput.substr(pos + separator.length());
+    } else {
+        body = cgiOutput;
+    }
+    
+    // 본문의 바이트 크기를 계산
+    std::size_t contentLength = body.size();
+    
+    // 새 HTTP 응답 메시지를 구성 (문자열로)
+    std::ostringstream oss;
+    oss << "HTTP/1.1 200 OK\r\n";
+    oss << "Date: " << getCurrentDateString() << "\r\n";
+    oss << "Content-Length: " << contentLength << "\r\n";
+    oss << "\r\n";  // 헤더와 본문을 구분하는 빈 줄
+    oss << body;
+    
+    return oss.str();
+}

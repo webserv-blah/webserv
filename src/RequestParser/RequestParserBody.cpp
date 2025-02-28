@@ -65,6 +65,7 @@ EnumStatusCode RequestParser::parseBody(std::string &readBuffer, RequestMessage 
 	return NONE_STATUS_CODE;
 }
 
+
 // 5. 청크 전송 파싱하는 함수. Transfer-Encoding이 chunked여서 Body가 청크로 아루어진 경우
 // readBuffer: Body로 파싱할 요청 데이터이자, 남은 데이터를 저장할 ClientSession의 readBuffer
 // reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
@@ -86,17 +87,24 @@ EnumStatusCode RequestParser::cleanUpChunkedBody(std::string &readBuffer, Reques
 
 			// 청크 사이즈 파싱
 			chunkSize = utils::sto_size_t(buffer.erase(buffer.size() - 1));
-			if (chunkSize == 0) {
-				reqMsg.setStatus(REQ_DONE);
-				reqMsg.setMetaContentLength(reqMsg.getBodyLength());
-				readBuffer = iss.str().substr(static_cast<std::string::size_type>(currentPos)); 
-				return NONE_STATUS_CODE;
-			}
 			
 			// 읽어낸 데이터가 모자를 경우 readBuffer에 돌려놓기 위함
 			tmp = buffer + "\r\n";
+			// 남은 데이터가 청크사이즈보다 모자를때 파싱을 미룸
+			// chunkSize가 0일때도 "0\r\n\r\n"이 정확한 종료기준이기 때문에 종료확정을 미룸
 			if (static_cast<size_t>(endPos - currentPos) < chunkSize + 2) {
 				readBuffer = tmp + iss.str().substr(static_cast<std::string::size_type>(currentPos));
+				return NONE_STATUS_CODE;
+			}
+			
+			// chunkSize가 0일때 Body파싱을 종료함
+			if (chunkSize == 0) {
+				std::getline(iss, buffer, '\0');
+				if (buffer.find(CRLF, 0) != 0)
+					return BAD_REQUEST;
+				reqMsg.setStatus(REQ_DONE);
+				reqMsg.setMetaContentLength(reqMsg.getBodyLength());
+				readBuffer = buffer.erase(0, 2);
 				return NONE_STATUS_CODE;
 			}
 

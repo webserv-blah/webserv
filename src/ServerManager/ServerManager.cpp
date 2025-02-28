@@ -51,7 +51,7 @@ void ServerManager::setupListeningSockets() {
         }
         // 현재 서버 구성을 해당 수신 소켓에 매핑합니다.
         // 이를 통해 여러 서버 구성이 동일한 소켓을 공유할 수 있습니다.
-        std::clog << "Connected LISTENING SOCKET no." << i+1 << " : " << sockFd << std::endl;
+		DEBUG_LOG("[ServerManager]Connected LISTENING SOCKET no." << (i + 1) << " : " << sockFd)
         globalConfig.listenFdToServers_[sockFd].push_back(&server);
     }
 }

@@ -2,6 +2,7 @@
 #include "utils/utils.hpp"
 #include "GlobalConfig/GlobalConfig.hpp"
 #include "ServerManager/ServerManager.hpp"
+#include "errorUtils.hpp"
 
 volatile bool globalServerRunning = true;
 
@@ -11,11 +12,13 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 	try {
-		std::clog << "Setting up Webserv..." << std::endl;
+		DEBUG_LOG("[main]Initializing global configuration...");
 		GlobalConfig::initGlobalConfig(argv[1]);
 		setupSignalHandlers();
 		ServerManager serverManager;
+		DEBUG_LOG("[main]Setting up listening sockets...");
 		serverManager.setupListeningSockets();
+		DEBUG_LOG("[main]Starting server manager...");
 		serverManager.run();
 	} catch (const std::exception& e) {
 		GlobalConfig::destroyInstance();
@@ -24,6 +27,7 @@ int main(int argc, char** argv) {
 		}
 		return 1;
 	}
+	DEBUG_LOG("[main]Server stopped successfully.");
 	GlobalConfig::destroyInstance();
 	return 0;
 }

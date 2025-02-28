@@ -19,7 +19,7 @@ void ServerManager::run() {
 
 		while (isServerRunning()) {
 			// 발생한 이벤트의 개수를 확인
-			std::clog << "\n\n💬 Webserv Waiting For EVENTS..." << std::endl;
+			DEBUG_LOG("[ServerManager]Waiting for events...")
 
 			timespec* timeout = timeoutHandler.getEarliestTimeout();
 			int	numEvents = reactor.waitForEvent(timeout);
@@ -31,18 +31,18 @@ void ServerManager::run() {
 
 				if (type == READ_EVENT) {
 					if (isListeningSocket(fd)) {
-						std::clog << "READ Event on Listening Socket " << fd << std::endl;
+						DEBUG_LOG("[ServerManager]READ Event on Listening Socket: fd " << fd)
 						// 리스닝 소켓에서 읽기 이벤트 발생: 새로운 클라이언트의 연결 요청 처리
 						processServerReadEvent(
 							fd, clientManager, eventHandler, timeoutHandler, reactor);
 					} else {
-						std::clog << "READ Event on Client Socket " << fd << std::endl;
+						DEBUG_LOG("[ServerManager]READ Event on Client Socket: fd " << fd)
 						// 기존 클라이언트 소켓에서 읽기 이벤트 발생: 클라이언트로부터 데이터 수신 처리
 						processClientReadEvent(
 							fd, clientManager, eventHandler, timeoutHandler, reactor);
 					}
 				} else if (type == WRITE_EVENT) {
-					std::clog << "WRITE Event on Client Socket " << fd << std::endl;
+					DEBUG_LOG("[ServerManager]WRITE Event on Client Socket: fd " << fd)
 					// 쓰기 이벤트 발생: 클라이언트에게 데이터를 전송하는 작업 처리
 					processClientWriteEvent(
 						fd, clientManager, eventHandler, timeoutHandler, reactor);
@@ -87,7 +87,7 @@ void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager,
 	timeoutHandler.removeConnection(clientFd);
 	// 리액터에서 클라이언트 소켓 제거
 	reactor.removeSocket(clientFd);
-	std::clog << "  Removed Client Socket " << clientFd << std::endl;
+	DEBUG_LOG("[ServerManager]Removed Client Socket " << clientFd)
 }
 
 // 리스닝 소켓에서 읽기 이벤트가 발생하면 새로운 클라이언트의 연결 요청을 처리합니다.

@@ -48,6 +48,7 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 					"RequestParser::parse");
 				return BAD_REQUEST;//status code: CRLF가 아닌, 단일 LF
 			}
+			readBuffer.erase(0, cursorBack+2);
 			return NONE_STATUS_CODE;
 		}
 		

@@ -35,7 +35,7 @@ EnumStatusCode RequestParser::parseFieldLine(const std::string &line, RequestMes
 	// 3-2. field value 갯수 검증
 	if (values.size() == 0) {
 		webserv::logError(ERROR, "BAD_REQUEST", 
-			"invalid field value counts", 
+			"invalid field(" + name + ") value counts",  
 			"RequestParser::parseFieldLine");
 		return BAD_REQUEST;
 	}

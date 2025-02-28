@@ -9,31 +9,21 @@ NAME := webserv
 SRCS := $(wildcard *.cpp)
 
 # SRCS(in SRCDIR) ------
-# 두 가지 버전이 있는데, 개인적으로 전자가 더 빠르다고 생각합니다.
-# 확인 후 의견 부탁드립니다!
-# ver1 (기존 내용 기반)
-DIRS := utils \
+DIRS := ServerManager \
+		TimeoutHandler \
+		EventHandler \
+		Demultiplexer \
+		RequestHandler \
+		ResponseBuilder \
+		RequestParser \
+		ClientManager \
+		ClientSession \
+		RequestMessage \
+		utils \
 		GlobalConfig \
 		ConfigParser \
-		RequestMessage \
-		ClientSession \
-		ClientManager \
-		RequestParser \
-		ResponseBuilder \
-		RequestHandler \
-		Demultiplexer \
-		EventHandler \
-		TimeoutHandler \
-		ServerManager
 
-REVERSED_DIRS := $(foreach d, $(DIRS), $(eval REVERSED := $(d) $(REVERSED))$(REVERSED))
-SUBS := $(addsuffix .a, $(REVERSED_DIRS))
-
-# ver2 (최근 수정 사항 반영)
-# DIRS := $(subst /,,$(filter-out include/, $(wildcard */)))
-# SUBS := ServerManager.a TimeoutHandler.a EventHandler.a Demultiplexer.a \
-# 		RequestHandler.a ResponseBuilder.a RequestParser.a ClientManager.a \
-# 		ClientSession.a RequestMessage.a utils.a GlobalConfig.a ConfigParser.a 
+SUBS := $(addsuffix .a,$(DIRS))
 
 include $(TOPDIR)/include_make/Verbose.mk
 include $(TOPDIR)/include_make/Color.mk

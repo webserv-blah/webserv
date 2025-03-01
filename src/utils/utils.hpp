@@ -38,6 +38,7 @@ namespace utils
     size_t sto_size_t(const std::string& str);
     std::string strtrim(const std::string& str);
     std::string size_t_tos(size_t num);
+    std::string int_tos(int num);
     
     template <typename InputIt, typename UnaryPredicate>
     bool all_of(InputIt first, InputIt last, UnaryPredicate p) {

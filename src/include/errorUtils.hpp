@@ -13,10 +13,10 @@
 #ifdef DEBUG
 	// 디버그 빌드용: 디버깅 메시지를 표준 에러(stderr)로 출력합니다.
     // 이 매크로는 디버그 정보를 로깅할 때 사용되며, 릴리스 빌드에서는 제거됩니다.
-    #define DEBUG_LOG(x) do { std::clog << x << std::endl; } while(0)
+    #define DEBUG_LOG(x) std::clog << x << std::endl;
 #else
     // 일반(릴리스) 빌드용: 아무 동작도 하지 않음 (컴파일러에 의해 최적화되어 제거됨)
-    #define DEBUG_LOG(x) ((void)0)
+    #define DEBUG_LOG(x) (void)0;
 #endif
 
 namespace webserv

@@ -32,7 +32,7 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 	} else if (res == 0) {			//클라이언트 측에서 연결을 종료한 경우
 		return CONNECTION_CLOSED;
 	} else {
-		DEBUG_LOG("[EventHandler]Received MSG:\n" << buffer.substr(0, res))
+		// DEBUG_LOG("[EventHandler]Received MSG:\n" << buffer.substr(0, res))
 
 		// 해당 ClientSession의 RequestMessage를 파싱하기 전에 Body의 최대 길이를 설정
 		const RequestConfig *config = curSession.getConfig();

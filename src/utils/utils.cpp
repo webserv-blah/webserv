@@ -105,4 +105,10 @@ namespace utils {
 		oss << size;
 		return oss.str();
 	}
+
+	std::string int_tos(int num) {
+		std::ostringstream oss;
+		oss << num;
+		return oss.str();
+	}
 }

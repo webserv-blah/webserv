@@ -1,5 +1,6 @@
 #include "TimeoutHandler.hpp"
 #include <iostream>
+#include "errorUtils.hpp"
 
 TimeoutHandler::TimeoutHandler() {
 
@@ -66,7 +67,7 @@ void TimeoutHandler::updateActivity(int fd, EnumSesStatus status) {
 void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& reactor, ClientManager& clientManager) {
     time_t currentTime = getTime();
 
-    std::clog << "⏱️ Checking Timeouts : " << currentTime << std::endl;
+	DEBUG_LOG("[TimeoutHandler]Checking Timeouts : " << currentTime)
 
     while (!expireQueue_.empty()) {
         TypeExpireQueueIter it = expireQueue_.begin();
@@ -78,7 +79,7 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
 
         // 만료된 연결 응답처리
         int fd = it->second;
-        std::clog << "  Connection Expired : " << fd << std::endl;
+		DEBUG_LOG("[TimeoutHandler]Connection Expired : " << fd)
 
         ClientSession* client = clientManager.accessClientSession(fd);
         if (!client) { 

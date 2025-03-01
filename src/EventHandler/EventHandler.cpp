@@ -3,7 +3,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "../include/errorUtils.hpp"
+#include "errorUtils.hpp"
 
 // ResponseBuilder를 인자로 하여 정적 핸들러와 CGI 핸들러를 초기화합니다.
 EventHandler::EventHandler() : staticHandler_(responseBuilder_), cgiHandler_(responseBuilder_) {
@@ -39,8 +39,9 @@ int EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
 
     // ClientManager에 새 클라이언트 정보를 추가
     clientManager.addClient(fd, clientFd, clientIP);
+	DEBUG_LOG("[EventHandler]New client connected: " + clientIP + ", clientFd: " + clientFd)
 
-    std::clog << "  Accepted CLIENT SOCKET : " << clientFd << std::endl;
+
     // 수락된 클라이언트의 파일 디스크립터 반환
     return clientFd;
 }

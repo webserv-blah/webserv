@@ -44,10 +44,10 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 
 	// 1-1. Body가 아닌, start-line이나 field-line인 경우
 	while (status != REQ_HEADER_CRLF && status != REQ_BODY) {
-		std::cout << "B_FRONT: " << cursorFront << ";\n";
-		std::cout << "B_BACK: " << cursorBack << ";\n";
+		//std::cout << "B_FRONT: " << cursorFront << ";\n";
+		//std::cout << "B_BACK: " << cursorBack << ";\n";
 		size_t findResult = readBuffer.find(CRLF, cursorBack, 2);
-		std::cout << "FINDRESULT: " << findResult << ";\n";
+		//std::cout << "FINDRESULT: " << findResult << ";\n";
 
 
 		// find결과에 따라 cursor(인덱스 파싱)을 할지 다음 recv를 기다릴지 결정
@@ -55,9 +55,9 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 			cursorFront = (isStart) ? 0 : cursorBack;
 			cursorBack = findResult+2;
 			isStart = false;
-			std::cout << "A_FRONT: " << cursorFront << ";\n";
-			std::cout << "A_BACK: " << cursorBack << ";\n";
-			std::cout << "-------;\n";
+			//std::cout << "A_FRONT: " << cursorFront << ";\n";
+			//std::cout << "A_BACK: " << cursorBack << ";\n";
+			//std::cout << "-------;\n";
 		} else {// \n이 나오지 않고 readData가 끝난 상태. 다음 loop로 넘어감
 			if (readBuffer.find(LF, cursorBack+2) != std::string::npos) {
 				webserv::logError(ERROR, "BAD_REQUEST",
@@ -138,7 +138,6 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 	//	return NONE_STATUS_CODE;
 	//}
 	std::cout <<"START BODY!!!"<<std::endl;
-	readBuffer.erase(0, cursorBack);
 
 	// 1-2. Body 처리, 청크전송인지 아닌지에 따라 처리과정을 달리함
 	if (reqMsg.getMetaTransferEncoding() == CHUNK)

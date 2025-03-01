@@ -93,87 +93,87 @@ const std::string& targetUrl) const {
 }
 
 void GlobalConfig::print() const {
-	for (size_t i = 0; i < servers_.size(); i++) {
-		std::cout << "Server " << i + 1 << ":\n";
-		std::cout << "  Host: " << servers_[i].host_ << "\n";
-		std::cout << "  Port: " << servers_[i].port_ << "\n";
-		std::cout << "  Server Names: ";
-		for (size_t j = 0; j < servers_[i].serverNames_.size(); j++) {
-			std::cout << servers_[i].serverNames_[j];
-			if (j < servers_[i].serverNames_.size() - 1)
-				std::cout << ", ";
-		}
-		std::cout << "\n";
+    for (size_t i = 0; i < servers_.size(); i++) {
+        std::cout << "\n====== Server " << i + 1 << " ======\n";
+        std::cout << "Host:         " << servers_[i].host_ << "\n";
+        std::cout << "Port:         " << servers_[i].port_ << "\n";
+        std::cout << "Server Names: ";
+        for (size_t j = 0; j < servers_[i].serverNames_.size(); j++) {
+            std::cout << servers_[i].serverNames_[j];
+            if (j < servers_[i].serverNames_.size() - 1)
+                std::cout << ", ";
+        }
+        std::cout << "\n\n";
 
-		std::cout << "  Request Handling:\n";
+        std::cout << "--- Default Server Configuration ---\n";
+        servers_[i].reqConfig_.print(1);  // Pass indentation level
+        
+        if (!servers_[i].locations_.empty()) {
+            std::cout << "\n--- Location Blocks ---\n";
+            for (size_t j = 0; j < servers_[i].locations_.size(); j++) {
+                std::cout << "Location [" << servers_[i].locations_[j].path_ << "]:\n";
+                servers_[i].locations_[j].reqConfig_.print(1);  // Pass indentation level
+                std::cout << "\n";
+            }
+        }
+        std::cout << "==============================\n";
+    }
+}
 
-		std::cout << "    Error Pages:\n";
-		for (std::map<int, std::string>::const_iterator it = servers_[i].reqConfig_.errorPages_.begin();
-			 it != servers_[i].reqConfig_.errorPages_.end(); ++it) {
-			std::cout << "      " << it->first << " -> " << it->second << "\n";
-		}
-		std::cout << "    Return URL: " << servers_[i].reqConfig_.returnUrl_ << "\n";
-		std::cout << "    Return Status: " << servers_[i].reqConfig_.returnStatus_ << "\n";
-		std::cout << "    Root: " << servers_[i].reqConfig_.root_ << "\n";
-		std::cout << "    Index File: " << servers_[i].reqConfig_.indexFile_ << "\n";
-		std::cout << "    Upload Path: " << servers_[i].reqConfig_.uploadPath_ << "\n";
-		std::cout << "    CGI Extension: " << servers_[i].reqConfig_.cgiExtension_ << "\n";
+void RequestConfig::print(int indentLevel) const {
+    std::string indent(indentLevel * 2, ' ');
+    
+    // Methods
+    std::cout << indent << "Methods:            ";
+    if (methods_.empty()) {
+        std::cout << "All methods allowed\n";
+    } else {
+        for (size_t i = 0; i < methods_.size(); i++) {
+            std::cout << methods_[i];
+            if (i < methods_.size() - 1)
+                std::cout << ", ";
+        }
+        std::cout << "\n";
+    }
 
-		std::cout << "    Client Max Body Size: ";
-		if (servers_[i].reqConfig_.clientMaxBodySize_.isSet())
-			std::cout << servers_[i].reqConfig_.clientMaxBodySize_.value();
-		else
-			std::cout << "N/A";
-		std::cout << "\n";
+    // Error Pages
+    std::cout << indent << "Error Pages:        ";
+    if (errorPages_.empty()) {
+        std::cout << "None defined\n";
+    } else {
+        std::cout << "\n";
+        for (std::map<int, std::string>::const_iterator it = errorPages_.begin();
+             it != errorPages_.end(); ++it) {
+            std::cout << indent << "  " << it->first << " -> " << it->second << "\n";
+        }
+    }
 
-		std::cout << "    Auto Index: ";
-		if (servers_[i].reqConfig_.autoIndex_.isSet())
-			std::cout << (servers_[i].reqConfig_.autoIndex_.value() ? "on" : "off");
-		else
-			std::cout << "on";
-		std::cout << "\n";
+    // Other configuration options
+    std::cout << indent << "Return URL:         " << (returnUrl_.empty() ? "None" : returnUrl_) << "\n";
+    std::cout << indent << "Return Status:      " << (returnStatus_ == 0 ? "None" : std::to_string(returnStatus_)) << "\n";
+    std::cout << indent << "Root:               " << (root_.empty() ? "None" : root_) << "\n";
+    std::cout << indent << "Index File:         " << (indexFile_.empty() ? "None" : indexFile_) << "\n";
+    std::cout << indent << "Upload Path:        " << (uploadPath_.empty() ? "None" : uploadPath_) << "\n";
+    std::cout << indent << "CGI Extension:      " << (cgiExtension_.empty() ? "None" : cgiExtension_) << "\n";
 
-		if (!servers_[i].locations_.empty()) {
-			std::cout << "  Locations:\n";
-			for (size_t j = 0; j < servers_[i].locations_.size(); j++) {
-				std::cout << "    Location " << j + 1 << ":\n";
-				std::cout << "      Path: " << servers_[i].locations_[j].path_ << "\n";
-				std::cout << "      Request Handling:\n";
-				std::cout << "        Methods: ";
-				for (size_t k = 0; k < servers_[i].locations_[j].reqConfig_.methods_.size(); k++) {
-					std::cout << servers_[i].locations_[j].reqConfig_.methods_[k];
-					if (k < servers_[i].locations_[j].reqConfig_.methods_.size() - 1)
-						std::cout << ", ";
-				}
-				std::cout << "\n";
+    // Size and auto-index settings
+    std::cout << indent << "Client Max Body Size: ";
+    if (clientMaxBodySize_.isSet()) {
+        std::cout << clientMaxBodySize_.value();
+        if (clientMaxBodySize_.value() >= 1024 * 1024) {
+            std::cout << " (" << (clientMaxBodySize_.value() / (1024 * 1024)) << " MB)";
+        } else if (clientMaxBodySize_.value() >= 1024) {
+            std::cout << " (" << (clientMaxBodySize_.value() / 1024) << " KB)";
+        }
+    } else {
+        std::cout << "Not set";
+    }
+    std::cout << "\n";
 
-				std::cout << "        Error Pages:\n";
-				for (std::map<int, std::string>::const_iterator it = servers_[i].locations_[j].reqConfig_.errorPages_.begin();
-					 it != servers_[i].locations_[j].reqConfig_.errorPages_.end(); ++it) {
-					std::cout << "          " << it->first << " -> " << it->second << "\n";
-				}
-				std::cout << "        Return URL: " << servers_[i].locations_[j].reqConfig_.returnUrl_ << "\n";
-				std::cout << "        Return Status: " << servers_[i].locations_[j].reqConfig_.returnStatus_ << "\n";
-				std::cout << "        Root: " << servers_[i].locations_[j].reqConfig_.root_ << "\n";
-				std::cout << "        Index File: " << servers_[i].locations_[j].reqConfig_.indexFile_ << "\n";
-				std::cout << "        Upload Path: " << servers_[i].locations_[j].reqConfig_.uploadPath_ << "\n";
-				std::cout << "        CGI Extension: " << servers_[i].locations_[j].reqConfig_.cgiExtension_ << "\n";
-
-				std::cout << "        Client Max Body Size: ";
-				if (servers_[i].locations_[j].reqConfig_.clientMaxBodySize_.isSet())
-					std::cout << servers_[i].locations_[j].reqConfig_.clientMaxBodySize_.value();
-				else
-					std::cout << "N/A";
-				std::cout << "\n";
-
-				std::cout << "        Auto Index: ";
-				if (servers_[i].locations_[j].reqConfig_.autoIndex_.isSet())
-					std::cout << (servers_[i].locations_[j].reqConfig_.autoIndex_.value() ? "on" : "off");
-				else
-					std::cout << "on";
-				std::cout << "\n";
-			}
-		}
-		std::cout << "\n";
-	}
+    std::cout << indent << "Auto Index:         ";
+    if (autoIndex_.isSet())
+        std::cout << (autoIndex_.value() ? "on" : "off");
+    else
+        std::cout << "Default (off)";
+    std::cout << "\n";
 }

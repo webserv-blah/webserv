@@ -27,6 +27,8 @@ public:
 	std::string					cgiExtension_;		// CGI 스크립트를 식별하는 확장자
 	Optional<size_t>			clientMaxBodySize_;	// 요청의 최대 허용 본문 크기
 	Optional<bool>				autoIndex_;			// 디렉토리 자동 색인화 여부
+
+	void						print(int indentLevel) const;
 };
 
 // ServerConfig에서 std::vector<LocationConfig> 형태로 사용됩니다.

@@ -34,6 +34,8 @@ private:
 										RequestConfig& locationReqHandling);
 	// 설정값이 없을 경우 기본값으로 초기화
 	static void	setDefaultReqHandling(RequestConfig& ReqHandling);
+	// 주어진 서버 목록에서 같은 호스트와 포트를 가진 중복 서버가 있는지 확인
+	static bool isDuplicateServer(const std::vector<ServerConfig>& servers, const ServerConfig& server);
 
 	// ServerBlock 파서
 	static void	parseHostPort(std::ifstream& configFile, std::string& host, unsigned int& port);

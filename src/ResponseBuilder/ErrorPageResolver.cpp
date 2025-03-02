@@ -66,17 +66,17 @@ namespace ErrorPageResolver {
 		
 		// {{ERROR_CODE}} 대체
 		while ((pos = result.find("{{ERROR_CODE}}")) != std::string::npos) {
-			result.replace(pos, 15, codeStr);
+			result.replace(pos, 14, codeStr);
 		}
 		
 		// {{ERROR_TEXT}} 대체
 		while ((pos = result.find("{{ERROR_TEXT}}")) != std::string::npos) {
-			result.replace(pos, 15, statusText);
+			result.replace(pos, 14, statusText);
 		}
 		
 		// {{ERROR_DESCRIPTION}} 대체
 		while ((pos = result.find("{{ERROR_DESCRIPTION}}")) != std::string::npos) {
-			result.replace(pos, 22, errorDescription);
+			result.replace(pos, 21, errorDescription);
 		}
 		
 		return result;

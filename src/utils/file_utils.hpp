@@ -25,6 +25,7 @@ namespace FileUtilities {
 	bool					isAbsolutePath(const std::string &path);
 	std::string				normalizePath(const std::string &path);
 	std::string				relativeToAbsolute(const std::string &path);
+	std::string				joinPaths(const std::string& root, const std::string& path);
 };
 
 #endif

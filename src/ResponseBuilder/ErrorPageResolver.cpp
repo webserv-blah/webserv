@@ -1,6 +1,7 @@
 #include "ErrorPageResolver.hpp"
 #include "../include/commonEnums.hpp"
 #include <algorithm>
+#include "file_utils.hpp"
 
 namespace ErrorPageResolver {
 	// 상태 코드에 따른 텍스트 설명을 반환하는 함수
@@ -65,30 +66,31 @@ namespace ErrorPageResolver {
 		
 		// {{ERROR_CODE}} 대체
 		while ((pos = result.find("{{ERROR_CODE}}")) != std::string::npos) {
-			result.replace(pos, 15, codeStr);
+			result.replace(pos, 14, codeStr);
 		}
 		
 		// {{ERROR_TEXT}} 대체
 		while ((pos = result.find("{{ERROR_TEXT}}")) != std::string::npos) {
-			result.replace(pos, 15, statusText);
+			result.replace(pos, 14, statusText);
 		}
 		
 		// {{ERROR_DESCRIPTION}} 대체
 		while ((pos = result.find("{{ERROR_DESCRIPTION}}")) != std::string::npos) {
-			result.replace(pos, 22, errorDescription);
+			result.replace(pos, 21, errorDescription);
 		}
 		
 		return result;
 	}
 
 	// 주어진 에러 코드에 해당하는 에러 페이지의 내용을 반환하는 함수
-	std::string resolveErrorPage(int errorCode, const std::map<int, std::string>& errorPages) {
+	std::string resolveErrorPage(int errorCode, const RequestConfig& reqConf) {
+		const std::map<int, std::string>& errorPages = reqConf.errorPages_;
 		std::string bodyContent; // 에러 페이지의 내용(본문)을 저장할 변수
 
 		// 사용자 정의 에러 페이지를 먼저 찾아봅니다.
 		std::map<int, std::string>::const_iterator it = errorPages.find(errorCode);
 		if (it != errorPages.end()) {
-			const std::string& customPath = it->second;
+			const std::string& customPath = FileUtilities::joinPaths(reqConf.root_, it->second);
 			bodyContent = FileUtilities::readFile(customPath);
 		}
 

@@ -62,8 +62,15 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
 		const RequestConfig&	reqConfig = *clientSession.getConfig();
         std::string     responseMsg;
 
+		#ifdef DEBUG
+		std::cout << "[EventHandler]Request Config" << std::endl;
+		reqConfig.print(0);
+		std::cout << "[EventHandler]Request Message" << std::endl;
+		requestMsg.printResult();
+		#endif
 		if (reqConfig.returnStatus_) {
 			// 리다이렉션
+			DEBUG_LOG("[EventHandler]Redirection requested")
 			responseMsg = handleRedirection(reqConfig);
 		} else if (cgiHandler_.isCGI(requestMsg.getTargetURI(), reqConfig.cgiExtension_)) {
             // CGI 요청
@@ -94,11 +101,13 @@ std::string EventHandler::handleRedirection(const RequestConfig& conf) {
 	if (!conf.returnUrl_.empty() && \
 	(conf.returnStatus_ == FOUND || conf.returnStatus_ == MOVED_PERMANENTLY)) {
 		// 리다이렉트 응답
+		DEBUG_LOG("[EventHandler]Redirect to " + conf.returnUrl_)
 		std::map<std::string, std::string> headers;
 		headers["Location"] = conf.returnUrl_;
 		return responseBuilder_.build(conf.returnStatus_, headers, "");
 	} else {
 		// 그 외에는 에러 응답
+		DEBUG_LOG("[EventHandler]Invalid redirection setting")
 		return responseBuilder_.buildError(conf.returnStatus_, conf);
 	}
 }

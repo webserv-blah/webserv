@@ -14,6 +14,9 @@ int main(int argc, char** argv) {
 	try {
 		DEBUG_LOG("[main]Initializing global configuration...")
 		GlobalConfig::initGlobalConfig(argv[1]);
+		#ifdef DEBUG
+		GlobalConfig::getInstance().print();
+		#endif
 		setupSignalHandlers();
 		ServerManager serverManager;
 		DEBUG_LOG("[main]Setting up listening sockets...")

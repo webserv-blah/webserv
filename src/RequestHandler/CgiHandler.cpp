@@ -72,7 +72,7 @@ void CgiHandler::buildCgiEnv(const ClientSession& clientSession,
                              const UriParts& uriParts,
                              std::vector<std::string>& envVars) {
     // HTTP 메서드를 문자열로 변환하기 위한 배열
-    static const std::string methodStrings[] = {"NONE", "GET", "POST", "DELETE", "HEAD"};
+    static const std::string methodStrings[] = {"NONE", "GET", "POST", "DELETE"};
     // 클라이언트 요청 메시지와 설정 정보를 가져옴
     const RequestMessage& reqMsg = *clientSession.getReqMsg();
     const RequestConfig& conf = *clientSession.getConfig();

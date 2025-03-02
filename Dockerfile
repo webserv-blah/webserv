@@ -11,8 +11,9 @@ WORKDIR /app
 
 COPY . .
 
+RUN make && make clean
+
 ENV TESTER="./ubuntu_tester http://localhost:8080"
 ENV SERVER="./webserv config/42tester.conf"
 
-ENTRYPOINT [ "sh", "-c", "make && make clean" ]
 CMD [ "tail", "-f", "/dev/null" ]

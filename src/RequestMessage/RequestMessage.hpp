@@ -9,7 +9,7 @@
 #define LF "\n"
 #define CRLF "\r\n"
 
-enum EnumMethod { NONE, GET, POST, DELETE };
+enum EnumMethod { NONE, GET, POST, DELETE, HEAD };
 typedef enum EnumConnection { KEEP_ALIVE, CLOSE } EnumConnect;
 typedef enum EnumTransferEncoding { NONE_ENCODING, CHUNK } EnumTransEnc;
 typedef enum EnumRequestStatus {

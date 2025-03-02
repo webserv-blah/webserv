@@ -64,6 +64,8 @@ std::string StaticHandler::handleRequest(const RequestMessage& reqMsg, const Req
 			return handlePostRequest(reqMsg, conf);
 		case DELETE:
 			return handleDeleteRequest(reqMsg, conf);
+		case HEAD:
+			return handleHeadRequest(reqMsg, conf);
 		default:
 			// 미구현 메소드인 경우 (PUT 등)
 			return responseBuilder_.buildError(NOT_IMPLEMENTED, conf);
@@ -162,6 +164,30 @@ std::string StaticHandler::handleDeleteRequest(const RequestMessage& reqMsg, con
 	if (pathValidation == VALID_PATH) {
 		// 디렉토리
 		return responseBuilder_.buildError(FORBIDDEN, conf);
+	}
+	return responseBuilder_.buildError(NOT_FOUND, conf);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// HEAD 요청 처리
+//  - GET과 동일한 응답을 하되, 바디는 제외
+std::string StaticHandler::handleHeadRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
+	std::string uri = reqMsg.getTargetURI();
+	std::string documentRoot = conf.root_;
+	std::string fullPath = documentRoot + uri;
+
+	// 경로 검사
+	EnumValidationResult pathValidation = validatePath(fullPath);
+
+	if (pathValidation == VALID_FILE) {
+		// 파일이면 헤더만 반환
+		std::map<std::string, std::string> headers;
+		headers["Content-Type"] = determineContentType(fullPath);
+		return responseBuilder_.build(OK, headers, "");
+	}
+	if (pathValidation == VALID_PATH) {
+		// 디렉토리면 인덱스 파일 혹은 autoIndex 처리
+		return handleDirectory(fullPath, uri, conf);
 	}
 	return responseBuilder_.buildError(NOT_FOUND, conf);
 }
@@ -272,9 +298,10 @@ bool StaticHandler::isMethodAllowed(EnumMethod method, const RequestConfig &conf
 	// 여기서는 간단히 문자열 비교 버전으로 가정
 	std::string methodStr;
 	switch (method) {
-		case GET:       methodStr = "GET";    break;
-		case POST:      methodStr = "POST";   break;
-		case DELETE:   methodStr = "DELETE"; break;
+		case GET:       methodStr = "GET";		break;
+		case POST:      methodStr = "POST";		break;
+		case DELETE:   methodStr = "DELETE";	break;
+		case HEAD:		methodStr = "HEAD";		break;
 		default:        methodStr = "UNKNOWN";break;
 	}
 

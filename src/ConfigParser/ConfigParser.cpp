@@ -18,8 +18,14 @@ void ConfigParser::parse(GlobalConfig& globalConfig, const char* path) {
 			break;
 		// "server" 토큰이 나오면 server 설정 블록을 파싱함
 		if (token == "server") {
-			globalConfig.servers_.push_back(ServerConfig());
-			parseServerBlock(configFile, globalConfig.servers_.back());
+			ServerConfig server;
+			parseServerBlock(configFile, server);
+			// 같은 주소 포트 쌍을 가진 서버가 존재하면 에러
+			if (isDuplicateServer(globalConfig.servers_, server)) {
+				throw std::runtime_error("Duplicate server block found in config file");
+			} else {
+				globalConfig.servers_.push_back(server);
+			}
 		} else {
 			// 예상하지 못한 토큰이면 예외 발생
 			throw std::runtime_error("Unexpected token in config file: " + token);
@@ -207,4 +213,15 @@ void ConfigParser::setDefaultReqHandling(RequestConfig& reqConfig) {
 		// 기본 autoindex 값은 false
 		reqConfig.autoIndex_ = false;
 	}
+}
+
+// 주어진 서버 목록에서 같은 호스트와 포트를 가진 중복 서버가 있는지 확인
+bool ConfigParser::isDuplicateServer(const std::vector<ServerConfig>& servers, const ServerConfig& server) {
+    for (std::vector<ServerConfig>::const_iterator it = servers.begin(); it != servers.end(); ++it) {
+        // 호스트와 포트가 모두 일치하는 서버가 있으면 중복으로 판단
+        if (it->host_ == server.host_ && it->port_ == server.port_) {
+            return true;
+        }
+    }
+    return false;
 }

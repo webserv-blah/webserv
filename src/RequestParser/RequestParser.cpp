@@ -1,5 +1,6 @@
 #include "RequestParser.hpp"
 #include "../GlobalConfig/GlobalConfig.hpp"
+#include "../include/errorUtils.hpp"
 #include <sstream>
 
 //Body크기에 제한 없이 테스트하고 싶은 경우, BODY_MAX_LENGTH대신 std::numeric_limits을 사용할 수 있음
@@ -25,67 +26,86 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 	std::string &readBuffer = curSession.accessReadBuffer();
 	EnumReqStatus status = reqMsg.getStatus();
 
-	size_t cursorFront = readBuffer.size();
-	size_t cursorBack = readBuffer.size();
-	
+	bool isStart = true;
+	size_t cursorFront = 0;// cursorFront: readBuffer의 시작이나, CRLF다음
+	size_t cursorBack = (isStart) ? 0 : readBuffer.size()-1;// cursorBack: CRLF의 바로 다음
+
 	readBuffer.append(readData);
-	if (readData.size() == 1)
-		return NONE_STATUS_CODE;
 
 	// 1-1. Body가 아닌, start-line이나 field-line인 경우
 	while (status != REQ_HEADER_CRLF && status != REQ_BODY) {
-		size_t findResult = readBuffer.find(CRLF, cursorBack+2, 2);
-
+		size_t findResult = readBuffer.find(CRLF, cursorBack, 2);
+		
 		// find결과에 따라 cursor(인덱스 파싱)을 할지 다음 recv를 기다릴지 결정
 		if (findResult != std::string::npos) {
-			cursorFront = (cursorBack == 0) ? 0 : cursorBack+2;
-			cursorBack = findResult;
+			cursorFront = (isStart) ? 0 : cursorBack;
+			cursorBack = findResult+2;
+			isStart = false;
 		} else {// \n이 나오지 않고 readData가 끝난 상태. 다음 loop로 넘어감
-			if (readBuffer.find(LF, cursorBack) != std::string::npos)
+			if (readBuffer.find(LF, cursorBack+2) != std::string::npos) {
+				webserv::logError(ERROR, "BAD_REQUEST",
+					"single LF",
+					"RequestParser::parse");
 				return BAD_REQUEST;//status code: CRLF가 아닌, 단일 LF
+			}
+			readBuffer.erase(0, cursorBack);
 			return NONE_STATUS_CODE;
 		}
 		
 		// CRLF줄 처리
-		if (cursorBack == cursorFront) {
+		if (cursorBack-cursorFront == 2) {
 			status = this->handleCRLFLine(reqMsg.getStatus());
 			reqMsg.setStatus(status);
 			// 올바르지 않은 CRLF줄 에러
-			if (status == REQ_ERROR)
+			if (status == REQ_ERROR) {
+				webserv::logError(ERROR, "BAD_REQUEST", 
+					"invalid CRLF location", 
+					"RequestParser::parse");
 				return BAD_REQUEST;//status code: 유효하지 않은 CRLF 위치
+			}
 			// field-line까지 다 읽은 후, 요청메시지에 맞는 RequestConfig를 설정하고 Host헤더필드 유무를 검증함
 			if (status == REQ_HEADER_CRLF) {
+				readBuffer.erase(0, cursorBack);
+
 				// ClientSession에 Config설정
 				const GlobalConfig &globalConfig = GlobalConfig::getInstance();
 				curSession.setConfig(globalConfig.findRequestConfig(curSession.getListenFd(), reqMsg.getMetaHost(), reqMsg.getTargetURI()));
 
 				// 헤더필드 검증 및 처리
 				// 1) Host 헤더필드는 필수로 존재해야 함
-				if (reqMsg.getMetaHost().empty())
+				if (reqMsg.getMetaHost().empty()) {
+					webserv::logError(ERROR, "BAD_REQUEST", 
+						"Host does not exist", 
+						"RequestParser::parse");
 					return BAD_REQUEST;
-				// 2) Body size가 정해진 것이 없을때, 종료 처리
+				}
+				// 2) targetURI와 Host 헤더필드 처리
+				const std::string &targetURI = reqMsg.getTargetURI();
+				const size_t schemaPos = targetURI.find("http://", 0);
+				const size_t cursor = (schemaPos == std::string::npos) ? 0 : schemaPos;
+				const size_t slashPos = targetURI.find("/", cursor);
+				if (cursor != slashPos) {
+					reqMsg.resetHostField(targetURI.substr(cursor, slashPos));
+					reqMsg.setTargetURI(targetURI.substr(slashPos, targetURI.size()));
+				}
+				// 3) Body size가 정해진 것이 없을때, 종료 처리
 				if (reqMsg.getMetaContentLength() == 0
 				&&  reqMsg.getMetaTransferEncoding() == NONE_ENCODING) {
 					reqMsg.setStatus(REQ_DONE);
-					readBuffer.erase(0, cursorBack+2);
 					return NONE_STATUS_CODE;
 				}
 				break ;
 			}
 		} else {//데이터가 있는 줄 처리
-			EnumStatusCode statusCode = this->handleOneLine(readBuffer.substr(cursorFront, cursorBack-cursorFront), reqMsg);
+			EnumStatusCode statusCode = this->handleOneLine(readBuffer.substr(cursorFront, cursorBack-cursorFront-2), reqMsg);
 			if (statusCode != NONE_STATUS_CODE)
 				return statusCode;
 		}
 	}
 
 	// Body를 처리해야하는 순서에서 readBuffer에 사용가능한 데이터가 없음
-	if (cursorBack+1 == readBuffer.size()) {
-		readBuffer = "";
+	if (!readBuffer.size())
 		return NONE_STATUS_CODE;
-	}
-
-	readBuffer.erase(0, cursorBack+2);
 
 	// 1-2. Body 처리, 청크전송인지 아닌지에 따라 처리과정을 달리함
 	if (reqMsg.getMetaTransferEncoding() == CHUNK)

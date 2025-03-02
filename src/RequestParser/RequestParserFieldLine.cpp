@@ -1,5 +1,6 @@
 #include "RequestParser.hpp"
 #include "../utils/utils.hpp"
+#include "../include/errorUtils.hpp"
 #include <sstream>
 
 // 3. field-line 한 줄을 파싱하는 함수
@@ -18,6 +19,10 @@ EnumStatusCode RequestParser::parseFieldLine(const std::string &line, RequestMes
 	||  name == "User-Agent" ||  name == "Authorization"
 	||  name == "If-Modified-Since" ||  name == "If-Unmodified-Since"
 	||  name == "Referer" ||  name == "Content-Location") {
+		// 단일 헤더인데, 또 반복하여 들어온 경우
+		if (reqMsg.getFields().count(name))
+			return BAD_REQUEST;
+
 		std::getline(iss, value, '\0');
 		values.push_back(utils::strtrim(value));
 	} else {
@@ -26,11 +31,16 @@ EnumStatusCode RequestParser::parseFieldLine(const std::string &line, RequestMes
 			values.push_back(value);
 		}
 	}
-	
+
 	// 3-2. field value 갯수 검증
-	if (values.size() == 0)
+	if (values.size() == 0) {
+		webserv::logError(ERROR, "BAD_REQUEST", 
+			"invalid field(" + name + ") value counts",  
+			"RequestParser::parseFieldLine");
 		return BAD_REQUEST;
+	}
 		
+
 	// 3-3. field value중 RequestMessage의 메타데이터 처리
 	if (!handleFieldValue(name, values[0], reqMsg))
 		return BAD_REQUEST;
@@ -47,6 +57,12 @@ EnumStatusCode RequestParser::parseFieldLine(const std::string &line, RequestMes
 // 3-3. field-line의 value중 RequestMessage의 메타데이터에 해당하는 value 파싱하는 함수
 bool RequestParser::handleFieldValue(const std::string &name, const std::string &value, RequestMessage &reqMsg) {
 	if (name == "Host") {//									1) Host
+		if (value.find("/", 0) != std::string::npos) {
+			webserv::logError(ERROR, "BAD_REQUEST", 
+				"Host meta data error", 
+				"RequestParser::handleFieldValue");
+			return false;
+		}
 		reqMsg.setMetaHost(value);
 	} else if (name == "Connection") {//					2) Connection
 		EnumConnect connection;
@@ -54,14 +70,21 @@ bool RequestParser::handleFieldValue(const std::string &name, const std::string 
 			connection = KEEP_ALIVE;
 		else if (value == "close")
 			connection = CLOSE;
-		else
+		else {
+			webserv::logError(ERROR, "BAD_REQUEST", 
+				"Connection meta data error", 
+				"RequestParser::handleFieldValue");
 			return false;
+		}
 		reqMsg.setMetaConnection(connection);
 	} else if (name == "Content-Length") {//				3) Content-Length
 		size_t contentLength;
 		try {
 			contentLength = utils::sto_size_t(value);
 		} catch (const std::exception & e) {
+			webserv::logError(ERROR, "BAD_REQUEST", 
+				"Content Length meta data error", 
+				"RequestParser::handleFieldValue");
 			return false;
 		}
 		reqMsg.setMetaContentLength(contentLength);
@@ -69,8 +92,12 @@ bool RequestParser::handleFieldValue(const std::string &name, const std::string 
 		EnumTransEnc transferEncoding;
 		if (value == "chunked")
 			transferEncoding = CHUNK;
-		else
+		else {
+			webserv::logError(ERROR, "BAD_REQUEST", 
+				"Transfer Encondig meta data error", 
+				"RequestParser::handleFieldValue");
 			return false;
+		}
 		reqMsg.setMetaTransferEncoding(transferEncoding);
 	} else if (name == "Content-Type") {//					5) Content-Type
 		reqMsg.setMetaContentType(value);

@@ -55,8 +55,6 @@ class RequestMessage {
 		void			setMetaTransferEncoding(const EnumTransEnc &value);
 		void			setMetaContentType(const std::string &value);
 
-		void			resetHostField(const std::string &value);
-
 		// 파싱 후, 결과 출력을 위한 함수
 		void printResult() const;
 		void printFields() const;

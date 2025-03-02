@@ -1,6 +1,5 @@
 #include "RequestParser.hpp"
 #include "../utils/utils.hpp"
-#include "../include/errorUtils.hpp"
 #include <sstream>
 
 // 4. Body를 파싱하는 함수, Content-Length의 길이에 따라 예외 처리됨. 유효한 문자열은 기존의 Body의 추가함
@@ -11,12 +10,8 @@ EnumStatusCode RequestParser::parseBody(std::string &readBuffer, RequestMessage 
 
 	// 4-1. 최종 body의 길이 >= 현재 저장된 body길이 + 파싱하려는 길이
 	if (contentLength >= reqMsg.getBodyLength() + readBuffer.length()) {
-		if (this->bodyMaxLength_ < reqMsg.getBodyLength() + readBuffer.length()) {
-			webserv::logError(ERROR, "CONTENT_TOO_LARGE", 
-				"Body size is larger than the Config", 
-				"RequestParser::parseBody");
+		if (this->bodyMaxLength_ < reqMsg.getBodyLength() + readBuffer.length())
 			return CONTENT_TOO_LARGE;//status code: Body가 설정보다 큼 “Request Entity Too Large”
-		}
 
 		reqMsg.addBody(readBuffer);
 		readBuffer = "";
@@ -55,12 +50,8 @@ EnumStatusCode RequestParser::parseBody(std::string &readBuffer, RequestMessage 
 
 	if (suspicious) {
 		reqMsg.setStatus(REQ_ERROR);
-		webserv::logError(ERROR, "BAD_REQUEST", 
-			"reject suspicious Body", 
-			"RequestParser::parseBody");
 		return BAD_REQUEST;//status code: 의심스러운 Body 거부
 	}
-
 	reqMsg.setStatus(REQ_DONE);
 	readBuffer = remainData;
 	return NONE_STATUS_CODE;
@@ -70,63 +61,54 @@ EnumStatusCode RequestParser::parseBody(std::string &readBuffer, RequestMessage 
 // readBuffer: Body로 파싱할 요청 데이터이자, 남은 데이터를 저장할 ClientSession의 readBuffer
 // reqMsg: 현재 요청 데이터를 파싱하고 저장할 RequestMessage
 EnumStatusCode RequestParser::cleanUpChunkedBody(std::string &readBuffer, RequestMessage &reqMsg) {
+	std::istringstream iss(readBuffer);
+	std::string buffer;
+	std::string tmp;
 	size_t chunkSize;
 
-	bool isStart = true;
-	size_t cursorFront = 0;// cursorFront: readBuffer의 시작이나, CRLF다음
-	size_t cursorBack = 0;// cursorBack: CRLF의 바로 다음
-	
-	while (1) {
-		size_t findResult = readBuffer.find(CRLF, cursorBack, 2);
-		
-		// CRLF가 존재
-		if (findResult != std::string::npos) {
-			cursorFront = (isStart) ? 0 : cursorBack;
-			cursorBack = findResult+2;
-			isStart = false;
-		} else {// CRLF가 존재하지 않는 경우
-			if (readBuffer.find(LF, cursorBack) != std::string::npos) {
-				webserv::logError(ERROR, "BAD_REQUEST",
-					"single LF",
-					"RequestParser::parse");
-				return BAD_REQUEST;//status code: CRLF가 아닌, 단일 LF
+	while (std::getline(iss, buffer, '\n')) {
+		if (iss.eof())// 5-1. \n으로 getline되지 않은 경우 readBuffer에 남겨 다음 loop에 진행
+			return NONE_STATUS_CODE;
+		if (!buffer.empty() && buffer[buffer.size() - 1] == '\r') {// 5-2. \r\n으로 찾은 줄 파싱
+			// iss에 남은 길이 측정을 위한 도구
+			std::streampos currentPos = iss.tellg();
+			iss.seekg(0, std::ios::end);
+			std::streampos endPos = iss.tellg();
+			iss.seekg(currentPos);
+
+			// 청크 사이즈 파싱
+			chunkSize = utils::sto_size_t(buffer.erase(buffer.size() - 1));
+			if (chunkSize == 0) {
+				reqMsg.setStatus(REQ_DONE);
+				reqMsg.setMetaContentLength(reqMsg.getBodyLength());
+				readBuffer = iss.str().substr(static_cast<std::string::size_type>(currentPos)); 
+				return NONE_STATUS_CODE;
 			}
-			readBuffer.erase(0, cursorFront);
-			return NONE_STATUS_CODE;
-		}
-		
-		// 표기된 청크사이즈 파싱
-		chunkSize = utils::sto_size_t(readBuffer.substr(cursorFront, cursorBack-cursorFront-2));
+			
+			// 읽어낸 데이터가 모자를 경우 readBuffer에 돌려놓기 위함
+			tmp = buffer + "\r\n";
+			if (static_cast<size_t>(endPos - currentPos) < chunkSize + 2) {
+				readBuffer = tmp + iss.str().substr(static_cast<std::string::size_type>(currentPos));
+				return NONE_STATUS_CODE;
+			}
 
-		// readBuffer에 chunkSize + CRLF사이즈가 모자른 경우 다시 recv를 기다림
-		if (chunkSize + 2 > readBuffer.size() - cursorBack) {
-			readBuffer.erase(0, cursorFront);
-			return NONE_STATUS_CODE;
-		}
-		
-		// 청크사이즈+2만큼 데이터가 CRLF로 끝나지 않음
-		if (readBuffer.find(CRLF, cursorBack + chunkSize) != cursorBack) {
-			webserv::logError(ERROR, "BAD_REQUEST", 
-				"invalid chunk data format", 
-				"RequestParser::cleanUpChunkedBody");
-			return BAD_REQUEST;//status code: 유효하지 않은 청크 데이터 형식
-		}
-		
-		if (chunkSize == 0) {
-			reqMsg.setStatus(REQ_DONE);
-			reqMsg.setMetaContentLength(reqMsg.getBodyLength());
-			readBuffer.erase(0, cursorBack + chunkSize + 2);
-			return NONE_STATUS_CODE;
-		}
+			// 파싱한 청크사이즈 기준으로 청크 데이터를 읽음
+			buffer.resize(chunkSize + 2);
+			iss.read(&buffer[0], chunkSize + 2);
 
-		if (this->bodyMaxLength_ < reqMsg.getBodyLength() + chunkSize) {
-			webserv::logError(ERROR, "CONTENT_TOO_LARGE", 
-				"Body size is larger than the Config", 
-				"RequestParser::cleanUpChunkedBody");
-			return CONTENT_TOO_LARGE;//status code: Body가 설정보다 큼 “Request Entity Too Large”
+			// 청크 데이터가 \r\n형식에 맞춰 들어왔는지 검증
+			if (buffer.compare(buffer.size() - 2, 2, "\r\n") != 0)
+				return BAD_REQUEST;//status code: 유효하지 않은 청크 데이터 형식
+				
+			if (this->bodyMaxLength_ < reqMsg.getBodyLength() + chunkSize)
+				return CONTENT_TOO_LARGE;//status code: Body가 설정보다 큼 “Request Entity Too Large”
+
+				// 청크 데이터에 \r\n를 제거하여 Body에 저장
+			reqMsg.addBody(buffer.substr(0, buffer.size() - 2));
+		} else { //\r\n으로 이루어져있지 않음
+			return BAD_REQUEST;//status code: CRLF가 아닌, 단일 LF
 		}
-		reqMsg.addBody(readBuffer.substr(cursorFront, chunkSize));
 	}
-	readBuffer.erase(0, cursorBack + chunkSize + 2);
+	readBuffer = "";
 	return NONE_STATUS_CODE;
 }

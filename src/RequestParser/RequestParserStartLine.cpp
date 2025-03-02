@@ -1,5 +1,4 @@
 #include "RequestParser.hpp"
-#include "../include/errorUtils.hpp"
 #include <sstream>
 
 // 2. Start-line 한 줄을 파싱하는 함수
@@ -21,9 +20,6 @@ EnumStatusCode RequestParser::parseStartLine(const std::string &line, RequestMes
 			return NOT_IMPLEMENTED;//status code: 구현되지 않은 메서드
 		}
 	} else {
-		webserv::logError(ERROR, "BAD_REQUEST", 
-			"method format error", 
-			"RequestParser::parseStartLine");
 		return BAD_REQUEST;
 	}
 
@@ -32,9 +28,6 @@ EnumStatusCode RequestParser::parseStartLine(const std::string &line, RequestMes
 			return URI_TOO_LONG;//status code: URI가 서버지원사이즈보다 큼
 		reqMsg.setTargetURI(buffer);
 	} else {
-		webserv::logError(ERROR, "BAD_REQUEST", 
-			"targeturi format error", 
-			"RequestParser::parseStartLine");
 		return BAD_REQUEST;//status code: start-line의 "method URI version" 형식이 유효하지 않음
 	}
 
@@ -43,9 +36,6 @@ EnumStatusCode RequestParser::parseStartLine(const std::string &line, RequestMes
 		reqMsg.setStatus(REQ_STARTLINE);
 	else {
 		reqMsg.setStatus(REQ_ERROR);
-		webserv::logError(ERROR, "BAD_REQUEST", 
-			"http version error", 
-			"RequestParser::parseStartLine");
 		return BAD_REQUEST;//status code: HTTP 버전 오류
 	}
 	return NONE_STATUS_CODE;

@@ -190,8 +190,9 @@ void ConfigParser::getEffectiveReqHandling(const RequestConfig& serverReqHandlin
 // request handling에 기본값을 설정하는 함수
 void ConfigParser::setDefaultReqHandling(RequestConfig& reqConfig) {
 	if (reqConfig.methods_.empty()) {
-		// 기본 메서드는 GET, POST, DELETE
+		// 기본 메서드는 GET, HEAD, POST, DELETE
 		reqConfig.methods_.push_back("GET");
+		reqConfig.methods_.push_back("HEAD");
 		reqConfig.methods_.push_back("POST");
 		reqConfig.methods_.push_back("DELETE");
 	}

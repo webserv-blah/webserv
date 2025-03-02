@@ -27,8 +27,8 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 	EnumReqStatus status = reqMsg.getStatus();
 
 	bool isStart = true;
-	size_t cursorFront = 0;
-	size_t cursorBack = (isStart) ? 0 : readBuffer.size()-1;
+	size_t cursorFront = 0;// cursorFront: readBuffer의 시작이나, CRLF다음
+	size_t cursorBack = (isStart) ? 0 : readBuffer.size()-1;// cursorBack: CRLF의 바로 다음
 
 	readBuffer.append(readData);
 

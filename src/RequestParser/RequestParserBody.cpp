@@ -60,6 +60,7 @@ EnumStatusCode RequestParser::parseBody(std::string &readBuffer, RequestMessage 
 			"RequestParser::parseBody");
 		return BAD_REQUEST;//status code: 의심스러운 Body 거부
 	}
+
 	reqMsg.setStatus(REQ_DONE);
 	readBuffer = remainData;
 	return NONE_STATUS_CODE;
@@ -72,17 +73,18 @@ EnumStatusCode RequestParser::cleanUpChunkedBody(std::string &readBuffer, Reques
 	size_t chunkSize;
 
 	bool isStart = true;
-	size_t cursorFront = 0;
-	size_t cursorBack = 0;
+	size_t cursorFront = 0;// cursorFront: readBuffer의 시작이나, CRLF다음
+	size_t cursorBack = 0;// cursorBack: CRLF의 바로 다음
 	
 	while (1) {
 		size_t findResult = readBuffer.find(CRLF, cursorBack, 2);
 		
+		// CRLF가 존재
 		if (findResult != std::string::npos) {
 			cursorFront = (isStart) ? 0 : cursorBack;
 			cursorBack = findResult+2;
 			isStart = false;
-		} else {// \n이 나오지 않음
+		} else {// CRLF가 존재하지 않는 경우
 			if (readBuffer.find(LF, cursorBack) != std::string::npos) {
 				webserv::logError(ERROR, "BAD_REQUEST",
 					"single LF",
@@ -93,13 +95,16 @@ EnumStatusCode RequestParser::cleanUpChunkedBody(std::string &readBuffer, Reques
 			return NONE_STATUS_CODE;
 		}
 		
+		// 표기된 청크사이즈 파싱
 		chunkSize = utils::sto_size_t(readBuffer.substr(cursorFront, cursorBack-cursorFront-2));
 
+		// readBuffer에 chunkSize + CRLF사이즈가 모자른 경우 다시 recv를 기다림
 		if (chunkSize + 2 > readBuffer.size() - cursorBack) {
 			readBuffer.erase(0, cursorFront);
 			return NONE_STATUS_CODE;
 		}
 		
+		// 청크사이즈+2만큼 데이터가 CRLF로 끝나지 않음
 		if (readBuffer.find(CRLF, cursorBack + chunkSize) != cursorBack) {
 			webserv::logError(ERROR, "BAD_REQUEST", 
 				"invalid chunk data format", 

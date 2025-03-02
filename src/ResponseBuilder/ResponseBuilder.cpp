@@ -1,5 +1,6 @@
 #include "ResponseBuilder.hpp"	// ResponseBuilder 헤더 파일 포함
 #include "../include/commonEnums.hpp"
+#include "errorUtils.hpp"
 
 // 현재 GMT 시간의 RFC1123 형식 문자열 반환
 static std::string getCurrentDateString() {
@@ -70,6 +71,15 @@ std::string ResponseBuilder::build(	int statusCode,
 		headers["Content-Length"] = contentLengthBuffer;
 	}
 
+	DEBUG_LOG("-Response-");
+	DEBUG_LOG("\nStatusCode: " << statusCode);
+	DEBUG_LOG("\nReason: " << reason);
+	DEBUG_LOG("\nHeaders: ");
+	for (std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it) {
+		DEBUG_LOG(it->first << ": " << it->second);
+	}
+	DEBUG_LOG("\n");
+
 	return assembleResponse(statusCode, reason, headers, body);	// 최종 응답 메시지 반환
 }
 
@@ -81,6 +91,15 @@ std::string ResponseBuilder::buildError(int errorStatusCode, const RequestConfig
 
 	headers["Content-Type"] = "text/html";	// Content-Type 헤더 설정
 	setContentLength(headers, body);			// Content-Length 헤더 설정
+
+	DEBUG_LOG("-Error Response-");
+	DEBUG_LOG("\nStatusCode: " << errorStatusCode);
+	DEBUG_LOG("\nReason: " << errorReason);
+	DEBUG_LOG("\nHeaders: ");
+	for (std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it) {
+		DEBUG_LOG(it->first << ": " << it->second);
+	}
+	DEBUG_LOG("\n");
 
 	return assembleResponse(errorStatusCode, errorReason, headers, body);	// 에러 응답 메시지 반환
 }

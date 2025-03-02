@@ -4,6 +4,7 @@
 #include "../RequestMessage/RequestMessage.hpp"           // 요청 메시지 클래스 포함
 #include "../GlobalConfig/GlobalConfig.hpp"             // 전역 설정 정보 포함
 #include "../ResponseBuilder/ResponseBuilder.hpp"          // 응답 빌더 클래스 포함
+#include "errorUtils.hpp"
 
 #include <sys/wait.h>                   // 프로세스 대기 관련 헤더 포함
 #include <unistd.h>                     // POSIX API 관련 헤더 포함
@@ -107,16 +108,22 @@ std::string CgiHandler::executeCgi(const std::string& scriptPath,
                                    const std::string& requestBody) {
     int inPipe[2] = {-1, -1}, outPipe[2] = {-1, -1};   // 입력 및 출력 파이프 초기화
     if (pipe(inPipe) == -1) {
+        DEBUG_LOG("[CgiHandler]Failed to create input pipe");
+        webserv::logSystemError(ERROR, "pipe", "CgiHandler::executeCgi");
 		return "";   // 입력 파이프 생성 실패 시 빈 문자열 반환
 	}
     if (pipe(outPipe) == -1) {           // 출력 파이프 생성 실패 시
         close(inPipe[0]); close(inPipe[1]);  // 입력 파이프 닫음
+        DEBUG_LOG("[CgiHandler]Failed to create output pipe");
+        webserv::logSystemError(ERROR, "pipe", "CgiHandler::executeCgi");
         return "";                     // 빈 문자열 반환
     }
 
     pid_t pid = fork();                // 자식 프로세스 생성
     if (pid < 0) {
         closePipes(inPipe, outPipe);   // fork 실패 시 파이프 닫고 빈 문자열 반환
+        DEBUG_LOG("[CgiHandler]Failed to fork");
+        webserv::logSystemError(ERROR, "fork", "CgiHandler::executeCgi");
         return "";
     }
 
@@ -131,10 +138,18 @@ std::string CgiHandler::executeCgi(const std::string& scriptPath,
 
 // 생성된 파이프들을 모두 닫는 함수
 void CgiHandler::closePipes(int inPipe[2], int outPipe[2]) {
-    if (inPipe[0] != -1) close(inPipe[0]);  // 입력 파이프 읽기 닫기
-    if (inPipe[1] != -1) close(inPipe[1]);  // 입력 파이프 쓰기 닫기
-    if (outPipe[0] != -1) close(outPipe[0]);  // 출력 파이프 읽기 닫기
-    if (outPipe[1] != -1) close(outPipe[1]);  // 출력 파이프 쓰기 닫기
+    if (inPipe[0] != -1) {
+        close(inPipe[0]);  // 입력 파이프 읽기 닫기
+    }
+    if (inPipe[1] != -1) {
+        close(inPipe[1]);  // 입력 파이프 쓰기 닫기
+    }
+    if (outPipe[0] != -1) {
+        close(outPipe[0]);  // 출력 파이프 읽기 닫기
+    }
+    if (outPipe[1] != -1) {
+        close(outPipe[1]);  // 출력 파이프 쓰기 닫기
+    }
 }
 
 // 자식 프로세스에서 파이프를 표준 입출력으로 재설정하는 함수

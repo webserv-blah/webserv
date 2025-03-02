@@ -77,7 +77,7 @@ std::string ResponseBuilder::buildError(int errorStatusCode, const RequestConfig
 	// 에러 응답 메시지 생성
 	std::string errorReason = getReasonPhrase(errorStatusCode);	// 에러 코드에 따른 이유 구문 결정
 	std::map<std::string, std::string> headers;					// 헤더 저장용 맵
-	std::string body = ErrorPageResolver::resolveErrorPage(errorStatusCode, currConf.errorPages_);	// 에러 페이지 HTML 내용 불러오기
+	std::string body = ErrorPageResolver::resolveErrorPage(errorStatusCode, currConf);	// 에러 페이지 HTML 내용 불러오기
 
 	headers["Content-Type"] = "text/html";	// Content-Type 헤더 설정
 	setContentLength(headers, body);			// Content-Length 헤더 설정

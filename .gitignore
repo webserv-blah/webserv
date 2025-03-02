@@ -4,7 +4,6 @@ webserv
 include/*
 src/manda/include/*
 # (2)etc.
-test*
 .DS_Store
 .vscode/
 # (3)tester

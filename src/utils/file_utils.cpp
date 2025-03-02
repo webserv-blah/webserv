@@ -156,4 +156,22 @@ namespace FileUtilities {
 		return normalizePath(currentDir + path);
 	}
 
+	std::string joinPaths(const std::string& root, const std::string& path) {
+		if (root.empty()) return path;
+		
+		bool rootHasTrailingSlash = (!root.empty() && root[root.length()-1] == '/');
+		bool pathHasLeadingSlash = (!path.empty() && path[0] == '/');
+		
+		if (rootHasTrailingSlash && pathHasLeadingSlash) {
+			// If root ends with '/' and path starts with '/', remove one
+			return root + path.substr(1);
+		} else if (!rootHasTrailingSlash && !pathHasLeadingSlash) {
+			// If neither has a slash, add one
+			return root + "/" + path;
+		} else {
+			// One of them has the needed slash
+			return root + path;
+		}
+	}
+
 }

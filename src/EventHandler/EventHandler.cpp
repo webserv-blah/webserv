@@ -65,8 +65,10 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
 		#ifdef DEBUG
 		std::cout << "[EventHandler]Request Config" << std::endl;
 		reqConfig.print(0);
+		std::cout << std::endl;
 		std::cout << "[EventHandler]Request Message" << std::endl;
 		requestMsg.printResult();
+		std::cout << std::endl;
 		#endif
 		if (reqConfig.returnStatus_) {
 			// 리다이렉션
@@ -108,7 +110,7 @@ std::string EventHandler::handleRedirection(const RequestConfig& conf) {
 	} else {
 		// 그 외에는 에러 응답
 		DEBUG_LOG("[EventHandler]Invalid redirection setting")
-		return responseBuilder_.buildError(conf.returnStatus_, conf);
+		return responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf);
 	}
 }
 

@@ -66,7 +66,7 @@ void TimeoutHandler::updateActivity(int fd, EnumSesStatus status) {
 void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& reactor, ClientManager& clientManager) {
     time_t currentTime = getTime();
 
-    ////////////std::clog << "⏱️ Checking Timeouts : " << currentTime << std::endl;
+    std::clog << "⏱️ Checking Timeouts : " << currentTime << std::endl;
 
     while (!expireQueue_.empty()) {
         TypeExpireQueueIter it = expireQueue_.begin();

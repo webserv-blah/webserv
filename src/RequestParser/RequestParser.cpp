@@ -28,7 +28,8 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 
 	bool isStart = true;
 	size_t cursorFront = 0;
-	size_t cursorBack = (readBuffer.size() < 2) ? 0 : readBuffer.size()-1;
+	size_t cursorBack = (isStart) ? 0 : readBuffer.size()-1;
+	//size_t cursorBack = (readBuffer.size() < 2) ? 0 : readBuffer.size()-1;
 
 	readBuffer.append(readData);
 

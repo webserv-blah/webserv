@@ -116,6 +116,9 @@ std::string StaticHandler::handlePostRequest(const RequestMessage& reqMsg, const
 
 	// 파일 이름 설정 (단순화된 방식, 실제로는 Content-Disposition 헤더 등을 참고할 수 있음)
 	std::string filename = "uploaded_file.txt";
+	if (uploadPath.size() > 0 && uploadPath[uploadPath.size() - 1] != '/') { //디렉토리 경로 끝에 / 없으면 추가.
+		uploadPath.push_back('/');
+	}
 	std::string filePath = uploadPath + filename;
 
 	// 파일 저장

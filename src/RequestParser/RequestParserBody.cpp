@@ -36,17 +36,17 @@ EnumStatusCode RequestParser::parseBody(std::string &readBuffer, RequestMessage 
 	std::string remainData = readBuffer.substr(substrSize);
 	
 	// 일차적으로 완성된 request이지만, 두 가지 우려사항을 검증해야함
-	const std::string methods[4] = {"GET", "HEAD", "POST", "DELETE"};
+	const std::string methods[3] = {"GET", "POST", "DELETE"};
 	bool suspicious = true;
 	// 1) 남은 데이터가 유효한 메서드로 시작하면 -> 정상 요청 가능성
-	for (size_t i = 0; i < 4; ++i) {
+	for (size_t i = 0; i < 3; ++i) {
 		if (remainData[0] == methods[i][0]) {
 			suspicious = false;
 			break;
 		}
 	}
 	// 2) body 안에 메서드가 들어있으면 → 의심스러운 요청
-	for (size_t i = 0; i < 4; ++i) {
+	for (size_t i = 0; i < 3; ++i) {
 		if (reqMsg.getBody().find(methods[i]) != std::string::npos) {
 			suspicious = true;
 			break;

@@ -12,8 +12,6 @@ EnumStatusCode RequestParser::parseStartLine(const std::string &line, RequestMes
 	if (std::getline(iss, buffer, ' ')) {
 		if (buffer == "GET")
 			reqMsg.setMethod(GET);
-		else if (buffer == "HEAD")
-			reqMsg.setMethod(HEAD);
 		else if (buffer == "POST")
 			reqMsg.setMethod(POST);
 		else if (buffer == "DELETE")

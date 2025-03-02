@@ -126,7 +126,6 @@ void RequestMessage::printResult() const {
 	switch (this->method_) {
 		case NONE: method = "NONE"; break;
 		case GET: method = "GET"; break;
-		case HEAD: method = "HEAD"; break;
 		case POST: method = "POST"; break;
 		case DELETE: method = "DELETE"; break;
 	}

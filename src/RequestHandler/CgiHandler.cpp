@@ -32,7 +32,7 @@ bool CgiHandler::isCGI(const std::string& targetUri, const std::string& cgiExten
     if (uriWithoutQuery.size() < cgiExtension.size()) {
         return false;
     }
-    return uriWithoutQuery.find(cgiExtension, uriWithoutQuery.size() - cgiExtension.size()) == std::string::npos;
+    return uriWithoutQuery.find(cgiExtension, uriWithoutQuery.size() - cgiExtension.size()) != std::string::npos;
 }
 
 // 클라이언트의 요청을 처리하여 CGI 결과를 반환하는 함수

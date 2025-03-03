@@ -56,7 +56,10 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 		if ((result == READ_COMPLETE || result == REQUEST_ERROR)
 		&& curSession.getConfig() == NULL) {
 			const GlobalConfig &globalConfig = GlobalConfig::getInstance();
-			curSession.setConfig(globalConfig.findRequestConfig(curSession.getListenFd(), curSession.accessReqMsg().getMetaHost(), curSession.accessReqMsg().getTargetURI()));
+			const RequestMessage *curMsg = curSession.getReqMsg();
+			size_t colonPos = curMsg->getMetaHost().find(":", 0);
+			std::string onlyDomainName = (colonPos == std::string::npos) ? curMsg->getMetaHost() : curMsg->getMetaHost().substr(0, colonPos);
+			curSession.setConfig(globalConfig.findRequestConfig(curSession.getListenFd(), onlyDomainName, curMsg->getTargetURI()));
 		}
 		return result;
 	}

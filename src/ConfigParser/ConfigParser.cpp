@@ -219,7 +219,7 @@ void ConfigParser::setDefaultReqHandling(RequestConfig& reqConfig) {
 bool ConfigParser::isDuplicateServer(const std::vector<ServerConfig>& servers, const ServerConfig& server) {
     for (std::vector<ServerConfig>::const_iterator it = servers.begin(); it != servers.end(); ++it) {
         // 호스트와 포트가 모두 일치하는 서버가 있으면 중복으로 판단
-        if (it->host_ == server.host_ && it->port_ == server.port_) {
+        if (it->serverNames_ == server.serverNames_ && it->port_ == server.port_) {
             return true;
         }
     }

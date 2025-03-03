@@ -100,44 +100,106 @@ std::string StaticHandler::handleGetRequest(const RequestMessage& reqMsg, const 
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────
-// POST 요청 처리 (단순화 버전)
-//  - 요청 바디를 그대로 특정 경로에 쓰거나, 혹은 설정에 따라 처리
-//  - 여기서는 단순히 uploadPath 위치에 파일을 생성/덮어쓰기 한다고 가정
+// POST 요청 처리 (multipart/form-data 지원 버전)
+//  - 요청 본문에서 파일을 추출하고, 지정된 업로드 경로에 저장
+//  - Content-Type이 multipart/form-data인지 확인 후 boundary를 추출하여 파일을 저장
 std::string StaticHandler::handlePostRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
-	std::string uploadPath = conf.uploadPath_;
+    std::string uploadPath = conf.uploadPath_;
 
-	if (uploadPath.empty()) {
-		return responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf);
+    // 업로드 경로가 설정되지 않은 경우 내부 서버 오류 반환
+    if (uploadPath.empty()) {
+        return responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf);
+    }
+
+    // Content-Type이 multipart/form-data인지 확인
+    std::string contentType = reqMsg.getMetaContentType();
+    if (contentType.find("multipart/form-data") == std::string::npos) {
+        return responseBuilder_.buildError(BAD_REQUEST, conf);
+    }
+
+    // boundary 값 추출
+    size_t boundaryPos = contentType.find("boundary=");
+    if (boundaryPos == std::string::npos) {
+        return responseBuilder_.buildError(BAD_REQUEST, conf);
+    }
+    std::string boundary = "--" + contentType.substr(boundaryPos + 9);
+
+    // multipart 데이터에서 파일 이름과 내용을 파싱
+    std::pair<std::string, std::string> fileData = parseMultipartData(reqMsg.getBody(), boundary);
+    
+    // 파일 데이터가 정상적으로 추출되지 않으면 오류 반환
+    if (fileData.first.empty() || fileData.second.empty()) {
+        return responseBuilder_.buildError(BAD_REQUEST, conf);
+    }
+
+    std::string filename = fileData.first;
+
+    // 업로드 경로가 디렉토리 형태인지 확인 후 슬래시 추가
+    if (uploadPath[uploadPath.size() - 1] != '/') {
+        uploadPath += "/";
+    }
+    std::string filePath = uploadPath + filename;
+
+    // 파일을 바이너리 모드로 저장
+    std::ofstream outFile;
+    outFile.open(filePath.c_str(), std::ios::binary);
+    if (!outFile) {
+        return responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf);
+    }
+    outFile << fileData.second;
+    outFile.close();
+
+    // HTTP 응답 생성 및 반환
+    std::map<std::string, std::string> headers;
+    headers.insert(std::make_pair("Content-Type", "text/plain"));
+    
+    std::string body = "File uploaded: " + filePath;
+    return responseBuilder_.build(OK, headers, body);
+}
+
+// multipart/form-data 본문에서 파일 데이터를 추출
+//  - boundary를 이용하여 요청 본문에서 파일 데이터를 분리
+//  - Content-Disposition 헤더에서 filename을 추출하여 파일명 설정
+std::pair<std::string, std::string> StaticHandler::parseMultipartData(const std::string& body, const std::string& boundary) {
+    // boundary 위치 찾기
+    size_t start = body.find(boundary);
+    if (start == std::string::npos) {
+		return std::make_pair(std::string(""), std::string(""));
 	}
-	// 유효한 파일 경로인지 간단히 확인 (디렉토리면 업로드 불가 등)
-	EnumValidationResult pathValidation = validatePath(uploadPath);
 
-	// 만약 디렉토리라면 바로 403
-	if (pathValidation == PATH_NOT_FOUND) {
-		return responseBuilder_.buildError(FORBIDDEN, conf);
-	} 
-
-	// 파일 이름 설정 (단순화된 방식, 실제로는 Content-Disposition 헤더 등을 참고할 수 있음)
-	std::string filename = "uploaded_file.txt";
-	if (uploadPath.size() > 0 && uploadPath[uploadPath.size() - 1] != '/') { //디렉토리 경로 끝에 / 없으면 추가.
-		uploadPath.push_back('/');
+    size_t end = body.find(boundary, start + boundary.length());
+    if (end == std::string::npos) {
+		return std::make_pair(std::string(""), std::string(""));
 	}
-	std::string filePath = uploadPath + filename;
+    // boundary 내부 데이터 추출
+    std::string part = body.substr(start + boundary.length(), end - start - boundary.length());
 
-	// 파일 저장
-	std::ofstream outFile(filePath.c_str(), std::ios::binary);
-	if (!outFile) {
-		return responseBuilder_.buildError(500, conf);
+    // 헤더와 본문을 구분하는 빈 줄("\r\n\r\n") 위치 찾기
+    size_t headerEnd = part.find("\r\n\r\n");
+    if (headerEnd == std::string::npos) {
+		return std::make_pair(std::string(""), std::string(""));
 	}
-	// 요청 바디 쓰기
-	outFile << reqMsg.getBody();
-	outFile.close();
+    std::string headers = part.substr(0, headerEnd);
+    std::string fileContent = part.substr(headerEnd + 4);
 
-	// 여기서는 단순히 OK 응답
-	std::map<std::string, std::string> headers;
-	headers["Content-Type"] = "text/plain";
-	std::string body = "File uploaded: " + uploadPath;
-	return responseBuilder_.build(OK, headers, body);
+    // 파일 이름 추출
+    std::string filename = extractFilename(headers);
+    return std::make_pair(filename, fileContent);
+}
+
+// Content-Disposition 헤더에서 파일 이름을 추출
+//  - Content-Disposition: form-data; name="file"; filename="example.txt"
+//  - filename 값을 찾아 파일명을 반환 (없으면 기본값 사용)
+std::string StaticHandler::extractFilename(const std::string& contentDisposition) {
+    size_t pos = contentDisposition.find("filename=\"");
+    if (pos == std::string::npos) {
+		return "default_upload.txt";
+	}
+    size_t endPos = contentDisposition.find("\"", pos + 10);
+    if (endPos == std::string::npos) {
+		return "default_upload.txt";
+	}
+    return contentDisposition.substr(pos + 10, endPos - (pos + 10));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────

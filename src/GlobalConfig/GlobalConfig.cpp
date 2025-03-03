@@ -150,7 +150,7 @@ void RequestConfig::print(int indentLevel) const {
 
     // Other configuration options
     std::cout << indent << "Return URL:         " << (returnUrl_.empty() ? "None" : returnUrl_) << "\n";
-    std::cout << indent << "Return Status:      " << (returnStatus_ == 0 ? "None" : std::to_string(returnStatus_)) << "\n";
+    std::cout << indent << "Return Status:      " << (returnStatus_ == 0 ? "None" : utils::int_tos(returnStatus_)) << "\n";
     std::cout << indent << "Root:               " << (root_.empty() ? "None" : root_) << "\n";
     std::cout << indent << "Index File:         " << (indexFile_.empty() ? "None" : indexFile_) << "\n";
     std::cout << indent << "Upload Path:        " << (uploadPath_.empty() ? "None" : uploadPath_) << "\n";

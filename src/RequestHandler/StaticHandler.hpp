@@ -44,6 +44,10 @@ private:
 
     // -- MIME 타입 결정 --
     std::string determineContentType(const std::string &filePath) const;
+
+    // -- file upload를 위한 헬퍼함수 --
+    std::pair<std::string, std::string> parseMultipartData(const std::string& body, const std::string& boundary);
+    std::string extractFilename(const std::string& contentDisposition);
 };
 
 #endif  // STATIC_HANDLER_HPP

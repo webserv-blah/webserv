@@ -67,10 +67,6 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 			if (status == REQ_HEADER_CRLF) {
 				readBuffer.erase(0, cursorBack);
 
-				// ClientSession에 Config설정
-				const GlobalConfig &globalConfig = GlobalConfig::getInstance();
-				curSession.setConfig(globalConfig.findRequestConfig(curSession.getListenFd(), reqMsg.getMetaHost(), reqMsg.getTargetURI()));
-
 				// 헤더필드 검증 및 처리
 				// 1) Host 헤더필드는 필수로 존재해야 함
 				if (reqMsg.getMetaHost().empty()) {
@@ -88,6 +84,13 @@ EnumStatusCode RequestParser::parse(const std::string &readData, ClientSession &
 					reqMsg.resetHostField(targetURI.substr(cursor, slashPos));
 					reqMsg.setTargetURI(targetURI.substr(slashPos, targetURI.size()));
 				}
+
+				// ClientSession에 Config설정
+				const GlobalConfig &globalConfig = GlobalConfig::getInstance();
+				size_t colonPos = reqMsg.getMetaHost().find(":", 0);
+				std::string onlyDomainName = (colonPos == std::string::npos) ? reqMsg.getMetaHost() : reqMsg.getMetaHost().substr(0, colonPos);
+				curSession.setConfig(globalConfig.findRequestConfig(curSession.getListenFd(), onlyDomainName, reqMsg.getTargetURI()));
+
 				// 3) Body size가 정해진 것이 없을때, 종료 처리
 				if (reqMsg.getMetaContentLength() == 0
 				&&  reqMsg.getMetaTransferEncoding() == NONE_ENCODING) {

@@ -106,6 +106,9 @@ std::string StaticHandler::handleGetRequest(const RequestMessage& reqMsg, const 
 std::string StaticHandler::handlePostRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
 	std::string uploadPath = conf.uploadPath_;
 
+	if (uploadPath.empty()) {
+		return responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf);
+	}
 	// 유효한 파일 경로인지 간단히 확인 (디렉토리면 업로드 불가 등)
 	EnumValidationResult pathValidation = validatePath(uploadPath);
 

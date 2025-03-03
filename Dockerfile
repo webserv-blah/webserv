@@ -5,7 +5,7 @@ RUN apt update && \
     g++ \
     make \
     libkqueue-dev \
-    php-cgi
+    python3
 
 WORKDIR /app
 

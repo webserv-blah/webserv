@@ -50,7 +50,7 @@ server {
     # CGI 스크립트를 위한 위치 블록
     location /cgi-bin/ {
         root /var/www;
-        cgi_extension .php;
+        cgi_extension .py;
         methods GET POST;
     }
     

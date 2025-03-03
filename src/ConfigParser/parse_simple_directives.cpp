@@ -113,8 +113,8 @@ void ConfigParser::parseCgiExtension(std::ifstream& configFile, std::string& cgi
 		throw std::runtime_error("Unexpected end of file in cgi_extension directive");
 	} else if (nextToken == ";") {
 		throw std::runtime_error("Expected CGI extension for cgi_extension directive");
-	} else if (nextToken != ".php") {
-		// CGI 확장자가 .php가 아니면 예외 발생
+	} else if (nextToken != ".py") {
+		// CGI 확장자가 .py가 아니면 예외 발생
 		throw std::runtime_error("Unsupported CGI extension");
 	}
 	// 읽어온 토큰을 CGI 확장자로 설정

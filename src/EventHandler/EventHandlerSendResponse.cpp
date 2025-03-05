@@ -23,12 +23,7 @@ EnumSesStatus EventHandler::sendResponse(ClientSession& session) {
     ssize_t sent = send(clientFd, writeBuffer.data(), bytesToSend, 0);
 
     if (sent < 0) {
-        // 재시도 가능한 오류인 경우 (EINTR, EAGAIN, EWOULDBLOCK)는 WRITE_CONTINUE 상태로 처리
-        if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) {
-            return WRITE_CONTINUE;
-        }
-        // 그 외의 오류는 치명적 오류로 간주하여 CONNECTION_CLOSED 상태로 처리
-        return CONNECTION_CLOSED;
+        return WRITE_CONTINUE;
     }
 
     // 전송된 만큼 버퍼에서 제거

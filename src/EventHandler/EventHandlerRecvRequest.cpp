@@ -13,17 +13,7 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 	buffer.resize(BUFFER_SIZE);
 
 	ssize_t res = recv(curSession.getClientFd(), &buffer[0], BUFFER_SIZE, MSG_DONTWAIT);
-	if (res == -1) {
-		if (errno == EAGAIN
-		||  errno == EWOULDBLOCK	//errno)non-blocking 모드에서 읽을 데이터가 없어 즉시 반환된 경우
-		||  errno == EINTR) {		//errno)인터럽트, 시스템 호출 중 시그널에 의해 중단되어 호출이 완료되지 않은 경우
-			// 일시적인 문제(non-blocking, 인터럽트)는 WARNING 레벨로 로깅
-			webserv::logSystemError(WARNING, "recv", 
-			                      "Client fd: " + utils::size_t_tos(curSession.getClientFd()), 
-			                      "EventHandler::recvRequest");
-			return READ_CONTINUE;
-		}
-			
+	if (res == -1) {	
 		// 심각한 오류 발생 시 ERROR 레벨로 로그만 출력하고 연결 종료 (서버는 계속 실행)
 		webserv::logSystemError(ERROR, "recv", 
 		                      "Client fd: " + utils::size_t_tos(curSession.getClientFd()),

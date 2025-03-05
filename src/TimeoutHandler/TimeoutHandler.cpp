@@ -62,8 +62,7 @@ void TimeoutHandler::updateActivity(int fd, EnumSesStatus status) {
 }
 
 // 만료된 클라이언트 정보 정리
-// eventHandler : 408 Request Timeout 응답 전송을 위한 객체
-// reactor, clientManager : 만료된 클라이언트 정보 삭제 시 필요한 객체(각 이벤트 감지, 클라이언트 정보)
+// eventHandler, reactor, clientManager : isReciving여부 판별 및 408 Request Timeout 응답 전송을 위한 객체
 void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& reactor, ClientManager& clientManager) {
     time_t currentTime = getTime();
 
@@ -87,12 +86,12 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
         } else if (client->isReceiving()) {
             // Request Timeout일 경우 HTTP 408 Request Timeout 처리
             eventHandler.handleError(408, *client);
+            reactor.addWriteEvent(fd);
+            client->setConnectionClosed();
         }
 
-        // client 정보 삭제 및 정리
+        // TimeoutHandler에서 관리하는 client 정보 삭제 및 정리
         removeConnection(fd, it);
-        reactor.removeSocket(fd);
-        clientManager.removeClient(fd);
     }
 }
 

@@ -157,8 +157,10 @@ namespace FileUtilities {
 	}
 
 	std::string joinPaths(const std::string& root, const std::string& path) {
-		if (root.empty()) return path;
-		
+		if (root.empty()) {
+			return path;	
+		}
+	
 		bool rootHasTrailingSlash = (!root.empty() && root[root.length()-1] == '/');
 		bool pathHasLeadingSlash = (!path.empty() && path[0] == '/');
 		

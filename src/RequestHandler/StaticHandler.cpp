@@ -74,8 +74,7 @@ std::string StaticHandler::handleRequest(const RequestMessage& reqMsg, const Req
 // GET 요청 처리
 std::string StaticHandler::handleGetRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
 	std::string uri = reqMsg.getTargetURI();
-	std::string documentRoot = conf.root_;
-	std::string fullPath = documentRoot + uri;
+	std::string fullPath = FileUtilities::joinPaths(conf.root_, uri);
 
 	// path 유효성 체크
 	EnumValidationResult pathValidation = validatePath(fullPath);
@@ -208,8 +207,7 @@ std::string StaticHandler::extractFilename(const std::string& contentDisposition
 //  - 실제로 remove() 호출
 std::string StaticHandler::handleDeleteRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
 	std::string uri = reqMsg.getTargetURI();
-	std::string documentRoot = conf.root_;
-	std::string fullPath = documentRoot + uri;
+	std::string fullPath = FileUtilities::joinPaths(conf.root_, uri);
 
 	// 경로 검사
 	EnumValidationResult pathValidation = validatePath(fullPath);
@@ -240,11 +238,7 @@ std::string StaticHandler::handleDirectory(const std::string &dirPath,
 	const std::string &uri,
 	const RequestConfig &conf)
 {
-	std::string indexPath = dirPath;
-	if (!indexPath.empty() && indexPath[indexPath.size()-1] != '/') {
-		indexPath.push_back('/');
-	}
-	indexPath += conf.indexFile_;
+	std::string indexPath = FileUtilities::joinPaths(conf.root_, conf.indexFile_);
 
 	EnumValidationResult indexValidation = validatePath(indexPath);
 

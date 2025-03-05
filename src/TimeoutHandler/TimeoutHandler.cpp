@@ -88,6 +88,10 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
             eventHandler.handleError(408, *client);
             reactor.addWriteEvent(fd);
             client->setConnectionClosed();
+        } else {
+            //IDLE Timeout일 경우 나머지 리소스도 정리
+            clientManager.removeClient(fd);
+            reactor.removeSocket(fd);
         }
 
         // TimeoutHandler에서 관리하는 client 정보 삭제 및 정리

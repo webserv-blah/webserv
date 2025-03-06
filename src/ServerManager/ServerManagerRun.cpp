@@ -52,22 +52,7 @@ void ServerManager::run() {
 			timeoutHandler.checkTimeouts(eventHandler, reactor, clientManager);
 		}
 	} catch (std::exception& e) {
-	    // 예외 발생 시, 서버 비정상 종료에 대비하여 연결된 모든 클라이언트에게 종료 알림을 전송
-		notifyClientsShutdown(clientManager, eventHandler);
 		throw; // 원래 예외 그대로 throw
-	}
-	// 서버가 정상 종료된 시 모든 클라이언트에게 종료 알림 전송
-	notifyClientsShutdown(clientManager, eventHandler);
-}
-
-// 서버 종료 전에, 모든 클라이언트에게 종료 메시지(503:SERVICE_UNAVAILABLE)를 전송합니다.
-void ServerManager::notifyClientsShutdown(ClientManager& clientManager, EventHandler& eventHandler) {
-	ClientManager::TypeClientMap& clientList = clientManager.accessClientSessionMap();
-	ClientManager::TypeClientMap::iterator it;
-
-	// 클라이언트 목록 전체를 순회하며 각 클라이언트에 종료 알림 전송
-	for (it = clientList.begin(); it != clientList.end(); ++it) {
-		eventHandler.handleError(SERVICE_UNAVAILABLE, *it->second);
 	}
 }
 
@@ -124,7 +109,7 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
 	} else {
 		timeoutHandler.updateActivity(fd, status);
-		if (status == WRITE_CONTINUE) {
+		if (status == READ_COMPLETE || status == REQUEST_ERROR) {
 			reactor.addWriteEvent(fd);
 		}
 	}

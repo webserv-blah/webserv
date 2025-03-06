@@ -74,7 +74,7 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
 			// 리다이렉션
 			DEBUG_LOG("[EventHandler]Redirection requested")
 			responseMsg = handleRedirection(reqConfig);
-		} else if (cgiHandler_.isCGI(requestMsg.getTargetURI(), reqConfig.cgiExtension_)) {
+		} else if (cgiHandler_.isCGI(requestMsg.getTargetURI(), reqConfig)) {
             // CGI 요청
             responseMsg = cgiHandler_.handleRequest(clientSession);
         } else {

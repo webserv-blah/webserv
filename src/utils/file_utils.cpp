@@ -49,6 +49,15 @@ namespace FileUtilities {
 		}
 	}
 
+	// 파일이 존재하는지 확인하는 함수
+	bool isDirectory(const char* path) {
+		struct stat st;
+		if (stat(path, &st) != 0) {
+			return false;
+		}
+		return S_ISDIR(st.st_mode);
+	}
+
 	// 파일의 실행 권한을 확인하는 함수
 	bool hasExecutePermission(const std::string& filePath) {
 		if (access(filePath.c_str(), X_OK) == 0) {

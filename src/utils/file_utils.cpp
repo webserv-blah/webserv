@@ -137,8 +137,9 @@ namespace FileUtilities {
 		}
 		
 		std::string result;
-		if (isAbsolutePath(path))
+		if (isAbsolutePath(path)) {
 			result = "/";
+		}
 		
 		for (size_t i = 0; i < stack.size(); ++i) {
 			result += stack[i];

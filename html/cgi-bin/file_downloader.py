@@ -15,7 +15,7 @@ current_directory = os.path.join(os.getcwd(), "html", "uploads")
 path_info = os.environ.get("PATH_INFO", "")
 file_name = unquote(path_info.lstrip('/'))
 
-# HTML 페이지 출력 함수
+# 파일 목록 출력 시 전체 경로 포함
 def print_html_page(selected_file, files):
     print("Content-type: text/html")
     print("")
@@ -35,11 +35,15 @@ def print_html_page(selected_file, files):
     print("</style></head><body><div class='container'>")
     print("<h1>File Downloader</h1><p>Select a file to download:</p>")
     print("<div class='file-list'><ul>")
+    
     if files:
         for f in files:
-            print(f"<li><a href='/cgi-bin/file_downloader.py/{escape(f)}'>{escape(f)}</a></li>")
+            full_path = os.path.abspath(os.path.join(current_directory, f))  # 절대 경로 변환
+            url_safe_path = full_path.lstrip("/")  # URL에서 불필요한 '/' 제거
+            print(f"<li><a href='/cgi-bin/file_downloader.py/{escape(url_safe_path)}'>{escape(f)}</a></li>")
     else:
         print("<li>No files found.</li>")
+    
     print("</ul></div>")
     
     # argv 출력 추가

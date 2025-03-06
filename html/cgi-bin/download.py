@@ -9,7 +9,7 @@ from html import escape
 
 cgitb.enable()
 
-current_directory = os.path.join(os.getcwd(), "html", "uploads")
+current_directory = os.path.join(os.getcwd())
 
 # CGI 폼 데이터 가져오기
 form = cgi.FieldStorage()

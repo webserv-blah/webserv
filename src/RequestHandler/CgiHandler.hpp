@@ -22,7 +22,7 @@ public:
     ~CgiHandler();
 
     // 주어진 URI가 CGI 대상인지 확인하는 함수
-    bool isCGI(const std::string& targetUri, const std::string& cgiExtension);
+    bool isCGI(const std::string& targetUri, const RequestConfig& conf);
     // 클라이언트 요청을 처리하여 CGI 실행 결과를 반환하는 함수
     std::string handleRequest(const ClientSession& clientSession);
 
@@ -50,7 +50,7 @@ private:
     // "이름=값" 형태의 환경 변수 문자열을 생성하는 함수
     std::string makeEnvVar(const std::string& name, const std::string& value);
     // URI를 파싱하여 스크립트 경로, 추가 경로 정보, 쿼리 문자열을 추출하는 함수
-    UriParts parseUri(const std::string& root, const std::string& uri);
+    UriParts parseUri(const std::string& uri, const RequestConfig& conf);
 };
 
 #endif

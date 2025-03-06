@@ -29,14 +29,17 @@ public:
 private:
     const ResponseBuilder& responseBuilder_; // 응답 생성에 필요한 빌더 객체
 
+    // CGI 실행에 필요한 인자 목록을 만드는 함수
+    void buildArg(const UriParts& uriParts, std::vector<std::string>& arg);
+
     // CGI 실행에 필요한 환경 변수를 설정하는 함수
     void buildCgiEnv(const ClientSession& clientSession, 
                      const UriParts& uriParts,
                      std::vector<std::string>& envVars);
 
     // CGI 스크립트를 실행하고 결과를 반환하는 함수
-    std::string executeCgi(const std::string& scriptPath,
-                           const std::vector<std::string>& cgiEnv,
+    std::string executeCgi(std::vector<std::string>& arg,
+                           std::vector<std::string>& cgiEnv,
                            const std::string& requestBody);
 
     // 생성된 파이프들을 모두 닫는 함수
@@ -44,7 +47,7 @@ private:
     // 자식 프로세스에서 파이프를 표준 입출력으로 재설정하는 함수
     void setupChildPipes(int inPipe[2], int outPipe[2]);
     // 자식 프로세스에서 CGI 스크립트를 실행하는 함수
-    void executeChild(const std::string& scriptPath, const std::vector<std::string>& cgiEnv);
+    void executeChild(std::vector<std::string>& arg, std::vector<std::string>& cgiEnv);
     // 부모 프로세스에서 자식 프로세스를 관리하며 결과를 수신하는 함수
     std::string handleParent(pid_t pid, int inPipe[2], int outPipe[2], const std::string& requestBody);
     // "이름=값" 형태의 환경 변수 문자열을 생성하는 함수

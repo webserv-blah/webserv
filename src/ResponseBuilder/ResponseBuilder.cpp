@@ -113,24 +113,40 @@ std::string ResponseBuilder::AddHeaderForCgi(const std::string &cgiOutput) const
         pos = cgiOutput.find(separator);
     }
     
-    // 본문만 추출: 구분자가 없으면 전체를 본문으로 간주
+    // 헤더와 본문 분리
+    std::string cgiHeaders;
     std::string body;
     if (pos != std::string::npos) {
-        body = cgiOutput.substr(pos + separator.length());
+        cgiHeaders = cgiOutput.substr(0, pos); // CGI 헤더
+        body = cgiOutput.substr(pos + separator.length()); // 본문
     } else {
+        // 헤더가 없는 경우 전체를 본문으로 간주
         body = cgiOutput;
     }
     
-    // 본문의 바이트 크기를 계산
+    // 본문의 바이트 크기 계산
     std::size_t contentLength = body.size();
     
-    // 새 HTTP 응답 메시지를 구성 (문자열로)
+    // 새로운 HTTP 응답 구성
     std::ostringstream oss;
     oss << "HTTP/1.1 200 OK\r\n";
     oss << "Date: " << getCurrentDateString() << "\r\n";
-    oss << "Content-Length: " << contentLength << "\r\n";
-    oss << "\r\n";  // 헤더와 본문을 구분하는 빈 줄
+
+    // CGI가 `Content-Length`를 설정했는지 확인하고 없으면 추가
+    if (cgiHeaders.find("Content-Length:") == std::string::npos) {
+        oss << "Content-Length: " << contentLength << "\r\n";
+    }
+
+    // CGI가 출력한 헤더 추가
+    oss << cgiHeaders << "\r\n\r\n";
+
+	// 헤더 디버그 로그 출력
+	DEBUG_LOG("\n-CGI Response-");
+	DEBUG_LOG(oss.str());
+
+    // 본문 추가
     oss << body;
     
+	// 리턴 내용 출력
     return oss.str();
 }

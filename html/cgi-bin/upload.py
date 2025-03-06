@@ -8,7 +8,7 @@ import shutil
 # Enable debugging
 cgitb.enable()
 
-UPLOAD_DIR = "uploads"  # 업로드된 파일을 저장할 디렉토리
+UPLOAD_DIR = "html/uploads"  # 업로드된 파일을 저장할 디렉토리
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 print("Content-type: text/html\n")

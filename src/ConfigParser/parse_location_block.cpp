@@ -22,10 +22,20 @@ void ConfigParser::parseMethods(std::ifstream& configFile, std::vector<std::stri
 		if (nextToken.empty()) {
 			throw std::runtime_error("Unexpected end of file in methods directive");
 		} else if (nextToken == ";") {
+			if (methods.empty()) {
+				// 메서드가 비어있으면 빈 문자열로 아무 메서드도 허용하지 않음을 나타냄
+				methods.push_back("");
+			}
 			break;
 		} else {
-			// 메서드 이름들을 methods 벡터에 추가
-			methods.push_back(nextToken);
+			if (!methods.empty() && methods.front() == "") {
+				// 첫 번째 원소가 빈 문자열이면 제거
+				methods.erase(methods.begin());
+			}
+			if (methods.end() == std::find(methods.begin(), methods.end(), nextToken)) {
+				// 메서드가 중복되지 않으면 추가
+				methods.push_back(nextToken);
+			}
 			nextToken = getNextToken(configFile);
 		}
 	}

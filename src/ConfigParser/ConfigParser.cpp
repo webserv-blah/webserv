@@ -40,14 +40,14 @@ void ConfigParser::parse(GlobalConfig& globalConfig, const char* path) {
 	// 각 location 블록에 대해 server의 request handling을 적용
 	for (std::vector<ServerConfig>::iterator server = globalConfig.servers_.begin(); server != globalConfig.servers_.end(); ++server) {
 		for (std::vector<LocationConfig>::iterator location = server->locations_.begin(); location != server->locations_.end(); ++location) {
-			getEffectiveReqHandling(server->reqConfig_, location->reqConfig_);
+			getEffectiveReqConfig(server->reqConfig_, location->reqConfig_);
 		}
 	}
 	// 각 request handling에 대해 기본값을 설정
 	for (std::vector<ServerConfig>::iterator server = globalConfig.servers_.begin(); server != globalConfig.servers_.end(); ++server) {
-		setDefaultReqHandling(server->reqConfig_);
+		setDefaultReqConfig(server->reqConfig_);
 		for (std::vector<LocationConfig>::iterator location = server->locations_.begin(); location != server->locations_.end(); ++location) {
-			setDefaultReqHandling(location->reqConfig_);
+			setDefaultReqConfig(location->reqConfig_);
 		}
 	}
 }
@@ -100,7 +100,7 @@ void ConfigParser::parseServerBlock(std::ifstream& configFile, ServerConfig& ser
 // location 블록을 파싱하는 함수
 void ConfigParser::parseLocationBlock(std::ifstream& configFile, LocationConfig& locationBlock) {
 	// location 경로 토큰을 파싱함
-	parsePath(configFile, locationBlock.path_);
+	parseLocationPath(configFile, locationBlock.reqConfig_.locationPath_);
 
 	// location 블록 시작 '{'를 기대함
 	std::string token = getNextToken(configFile);
@@ -160,41 +160,41 @@ void ConfigParser::parseRequestConfig(std::ifstream& configFile, RequestConfig& 
 }
 
 // 서버 설정의 request handling을 location 설정에 적용하는 함수
-void ConfigParser::getEffectiveReqHandling(const RequestConfig& serverReqHandling, RequestConfig& locationReqHandling) {
-	if (locationReqHandling.methods_.empty()) {
-		locationReqHandling.methods_ = serverReqHandling.methods_;
+void ConfigParser::getEffectiveReqConfig(const RequestConfig& serverReqConfig, RequestConfig& locationReqConfig) {
+	if (locationReqConfig.methods_.empty()) {
+		locationReqConfig.methods_ = serverReqConfig.methods_;
 	}
-	if (locationReqHandling.errorPages_.empty()) {
-		locationReqHandling.errorPages_ = serverReqHandling.errorPages_;
+	if (locationReqConfig.errorPages_.empty()) {
+		locationReqConfig.errorPages_ = serverReqConfig.errorPages_;
 	}
-	if (locationReqHandling.returnUrl_.empty()) {
-		locationReqHandling.returnUrl_ = serverReqHandling.returnUrl_;
+	if (locationReqConfig.returnUrl_.empty()) {
+		locationReqConfig.returnUrl_ = serverReqConfig.returnUrl_;
 	}
-	if (locationReqHandling.returnStatus_ == 0) {
-		locationReqHandling.returnStatus_ = serverReqHandling.returnStatus_;
+	if (locationReqConfig.returnStatus_ == 0) {
+		locationReqConfig.returnStatus_ = serverReqConfig.returnStatus_;
 	}
-	if (locationReqHandling.root_.empty()) {
-		locationReqHandling.root_ = serverReqHandling.root_;
+	if (locationReqConfig.root_.empty()) {
+		locationReqConfig.root_ = serverReqConfig.root_;
 	}
-	if (locationReqHandling.indexFile_.empty()) {
-		locationReqHandling.indexFile_ = serverReqHandling.indexFile_;
+	if (locationReqConfig.indexFile_.empty()) {
+		locationReqConfig.indexFile_ = serverReqConfig.indexFile_;
 	}
-	if (locationReqHandling.uploadPath_.empty()) {
-		locationReqHandling.uploadPath_ = serverReqHandling.uploadPath_;
+	if (locationReqConfig.uploadPath_.empty()) {
+		locationReqConfig.uploadPath_ = serverReqConfig.uploadPath_;
 	}
-	if (locationReqHandling.cgiExtension_.empty()) {
-		locationReqHandling.cgiExtension_ = serverReqHandling.cgiExtension_;
+	if (locationReqConfig.cgiExtension_.empty()) {
+		locationReqConfig.cgiExtension_ = serverReqConfig.cgiExtension_;
 	}
-	if (!locationReqHandling.clientMaxBodySize_.isSet()) {
-		locationReqHandling.clientMaxBodySize_ = serverReqHandling.clientMaxBodySize_;
+	if (!locationReqConfig.clientMaxBodySize_.isSet()) {
+		locationReqConfig.clientMaxBodySize_ = serverReqConfig.clientMaxBodySize_;
 	}
-	if (!locationReqHandling.autoIndex_.isSet()) {
-		locationReqHandling.autoIndex_ = serverReqHandling.autoIndex_;
+	if (!locationReqConfig.autoIndex_.isSet()) {
+		locationReqConfig.autoIndex_ = serverReqConfig.autoIndex_;
 	}
 }
 
 // request handling에 기본값을 설정하는 함수
-void ConfigParser::setDefaultReqHandling(RequestConfig& reqConfig) {
+void ConfigParser::setDefaultReqConfig(RequestConfig& reqConfig) {
 	if (reqConfig.methods_.empty()) {
 		// 기본 메서드는 GET, POST, DELETE
 		reqConfig.methods_.push_back("GET");

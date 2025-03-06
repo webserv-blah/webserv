@@ -238,7 +238,8 @@ std::string StaticHandler::handleDirectory(const std::string &dirPath,
 	const std::string &uri,
 	const RequestConfig &conf)
 {
-	std::string indexPath = FileUtilities::joinPaths(conf.root_, conf.indexFile_);
+	std::string locationRootPath = FileUtilities::joinPaths(conf.root_, conf.locationPath_);
+	std::string indexPath = FileUtilities::joinPaths(locationRootPath, conf.indexFile_);
 
 	EnumValidationResult indexValidation = validatePath(indexPath);
 

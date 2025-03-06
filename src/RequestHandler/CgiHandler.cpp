@@ -26,18 +26,63 @@ CgiHandler::~CgiHandler() {
 bool CgiHandler::isCGI(const std::string& targetUri, const RequestConfig& conf)
 {
     const std::string& cgiExtension = conf.cgiExtension_;
-    if (FileUtilities::isDirectory(FileUtilities::joinPaths(conf.root_, targetUri).c_str()) &&\
-        conf.indexFile_.find(cgiExtension, conf.indexFile_.size() - cgiExtension.size()) != std::string::npos) {
+
+    // 디렉터리인지 확인하고 indexFile이 CGI인지 검사
+    if (FileUtilities::isDirectory(FileUtilities::joinPaths(conf.root_, targetUri).c_str())) {
+        if (!conf.indexFile_.empty() &&
+            conf.indexFile_.size() >= cgiExtension.size() &&
+            conf.indexFile_.compare(conf.indexFile_.size() - cgiExtension.size(), cgiExtension.size(), cgiExtension) == 0) {
+            return true;
+        }
+    }
+
+    // CGI 확장자의 위치 찾기
+    size_t extPos = targetUri.find(cgiExtension);
+    if (extPos == std::string::npos) {
+        return false; // 확장자가 없는 경우 CGI 아님
+    }
+
+    // 확장자가 URI의 일부가 맞는지 확인 (중간에 있을 가능성 배제)
+    if (extPos + cgiExtension.size() < targetUri.size()) {
+        char nextChar = targetUri[extPos + cgiExtension.size()];
+        if (nextChar != '/' && nextChar != '?' && nextChar != '\0') {
+            return false; // 확장자 이후에 올바른 PATH_INFO 또는 query string이 아님
+        }
+    }
+
+    // 확장자 이후 첫 번째 `/`이 PATH_INFO의 시작점
+    size_t pathInfoPos = targetUri.find('/', extPos + cgiExtension.size());
+
+    // `?` 위치 찾기
+    size_t queryPos = targetUri.find('?');
+
+    // `pathEnd` 결정: 확장자 이후의 `/` 또는 `?` 중 가장 먼저 오는 것
+    size_t pathEnd;
+    if (pathInfoPos != std::string::npos && queryPos != std::string::npos) {
+        pathEnd = (pathInfoPos < queryPos) ? pathInfoPos : queryPos;
+    } else if (pathInfoPos != std::string::npos) {
+        pathEnd = pathInfoPos;
+    } else if (queryPos != std::string::npos) {
+        pathEnd = queryPos;
+    } else {
+        pathEnd = std::string::npos;
+    }
+
+    // 확장자가 포함된 스크립트 경로 추출
+    std::string scriptPath;
+    if (pathEnd == std::string::npos) {
+        scriptPath = targetUri;
+    } else {
+        scriptPath = targetUri.substr(0, pathEnd);
+    }
+
+    // CGI 확장자가 scriptPath의 일부인지 확인
+    if (scriptPath.size() >= cgiExtension.size() &&
+        scriptPath.compare(scriptPath.size() - cgiExtension.size(), cgiExtension.size(), cgiExtension) == 0) {
         return true;
     }
-    // 쿼리 문자열이 있으면 그 이전까지만 잘라서 확인
-    size_t queryPos = targetUri.find('?');
-    std::string uriWithoutQuery = (queryPos == std::string::npos) ? targetUri : targetUri.substr(0, queryPos);
 
-    if (uriWithoutQuery.size() < cgiExtension.size()) {
-        return false;
-    }
-    return uriWithoutQuery.find(cgiExtension, uriWithoutQuery.size() - cgiExtension.size()) != std::string::npos;
+    return false;
 }
 
 // 클라이언트의 요청을 처리하여 CGI 결과를 반환하는 함수

@@ -12,7 +12,7 @@
             margin: 0 auto;
         }
         h1 {
-            color: #d00ca2;
+            color: #e02020;
             border-bottom: 2px solid #eee;
             padding-bottom: 10px;
         }
@@ -62,16 +62,21 @@
             <a href="/cgi-bin/form.py">Form Processing</a>
             <div class="description">Demonstrates form handling with both GET and POST methods in PYTHON.</div>
         </li>
+        
+        <li>
+            <a href="/cgi-bin/upload.py">File Upload</a>
+            <div class="description">Allows users to upload files through a form and saves them to the server.</div>
+        </li>
     </ul>
     
     <h2>How It Works</h2>
     
-    <p>These scripts showcase the integration between our webserver and PYHON through the CGI interface. When you request a PYTHON script:</p>
+    <p>These scripts showcase the integration between our webserver and PYTHON through the CGI interface. When you request a PYTHON script:</p>
     
     <ol>
         <li>The webserver recognizes the script as a CGI resource</li>
         <li>The server sets up environment variables and pipes for communication</li>
-        <li>The PYHON interpreter executes the script and returns the response</li>
+        <li>The PYTHON interpreter executes the script and returns the response</li>
         <li>The webserver forwards this response back to your browser</li>
     </ol>
     

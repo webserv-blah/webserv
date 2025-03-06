@@ -3,7 +3,7 @@
 // LocationBlock 파서를 위한 함수들
 
 // location 지시문의 경로를 파싱하는 함수
-void ConfigParser::parsePath(std::ifstream& configFile, std::string& path) {
+void ConfigParser::parseLocationPath(std::ifstream& configFile, std::string& locationPath) {
 	std::string nextToken = getNextToken(configFile);
 	if (nextToken.empty()) {
 		throw std::runtime_error("Unexpected end of file in location directive");
@@ -11,7 +11,7 @@ void ConfigParser::parsePath(std::ifstream& configFile, std::string& path) {
 		throw std::runtime_error("Expected path for location directive");
 	}
 	// 읽어온 토큰을 경로로 설정
-	path = nextToken;
+	locationPath = nextToken;
 }
 
 // methods 지시문을 파싱하는 함수

@@ -270,7 +270,8 @@ UriParts CgiHandler::parseUri(const std::string& uri, const RequestConfig& conf)
     UriParts parts;                                             // 결과를 저장할 UriParts 구조체
     std::string fullPath;                   
     if (FileUtilities::isDirectory(FileUtilities::joinPaths(conf.root_, uri).c_str())) {
-        fullPath = FileUtilities::joinPaths(conf.root_, conf.indexFile_);
+		std::string locationRootPath = FileUtilities::joinPaths(conf.root_, conf.locationPath_);
+        fullPath = FileUtilities::joinPaths(locationRootPath, conf.indexFile_);
     } else {
         fullPath = FileUtilities::joinPaths(conf.root_, uri);  // 루트 경로와 URI를 결합하여 전체 경로 생성
     }

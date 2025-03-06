@@ -32,7 +32,7 @@ void GlobalConfig::destroyInstance() {
 // GlobalConfig 클래스 내의 findRequestConfig 함수: 
 // listenFd, 도메인 이름, 그리고 target URL에 해당하는 RequestConfig를 찾는다.
 const RequestConfig* GlobalConfig::findRequestConfig(const int listenFd, const std::string& domainName, \
-const std::string& targetUrl) const {
+const std::string& targetUri) const {
 	// listenFd가 등록된 서버 목록에 없다면 NULL 반환
 	if (listenFdToServers_.find(listenFd) == listenFdToServers_.end())
 		return NULL;
@@ -41,7 +41,7 @@ const std::string& targetUrl) const {
 	// 주어진 도메인 이름과 일치하는 서버 구성을 찾음
 	const ServerConfig& server = findServerConfig(servers, domainName);
 	// 해당 서버에서 target URL에 해당하는 location 설정을 찾음
-	return findLocationConfig(server, targetUrl);
+	return findLocationConfig(server, targetUri);
 }
 
 
@@ -67,19 +67,19 @@ const std::string& domainName) const {
 // GlobalConfig 클래스 내의 findLocationConfig 함수: 
 // 주어진 서버 설정 내에서 target URL과 가장 잘 맞는 location 설정을 찾는다.
 const RequestConfig* GlobalConfig::findLocationConfig(const ServerConfig& server, \
-const std::string& targetUrl) const {
-	// targetUrl이 비어있으면 서버의 기본 RequestConfig를 반환
-	if (targetUrl.empty()) {
+const std::string& targetUri) const {
+	// targetUri이 비어있으면 서버의 기본 RequestConfig를 반환
+	if (targetUri.empty()) {
 		return &server.reqConfig_;
 	}
 	const LocationConfig* longestPrefixMatch = NULL; // 가장 긴 접두어 매칭을 저장할 포인터 초기화
 	// 서버의 location 설정 목록을 순회
 	for (size_t i = 0; i < server.locations_.size(); ++i) {
-		// targetUrl이 현재 location의 path_로 시작하는지 확인
-		if (targetUrl.find(server.locations_[i].path_) == 0) {
+		// targetUri이 현재 location의 locationPath_로 시작하는지 확인
+		if (targetUri.find(server.locations_[i].reqConfig_.locationPath_) == 0) {
 			// 현재 매칭이 이전보다 길거나 아직 매칭이 없으면 업데이트
 			if (longestPrefixMatch == NULL || \
-				server.locations_[i].path_.size() > longestPrefixMatch->path_.size())
+				server.locations_[i].reqConfig_.locationPath_.size() > longestPrefixMatch->reqConfig_.locationPath_.size())
 				longestPrefixMatch = &server.locations_[i];
 		}
 	}
@@ -111,7 +111,7 @@ void GlobalConfig::print() const {
         if (!servers_[i].locations_.empty()) {
             std::cout << "\n--- Location Blocks ---\n";
             for (size_t j = 0; j < servers_[i].locations_.size(); j++) {
-                std::cout << "Location [" << servers_[i].locations_[j].path_ << "]:\n";
+                std::cout << "Location [" << servers_[i].locations_[j].reqConfig_.locationPath_ << "]:\n";
                 servers_[i].locations_[j].reqConfig_.print(1);  // Pass indentation level
                 std::cout << "\n";
             }

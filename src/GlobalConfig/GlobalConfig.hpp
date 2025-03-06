@@ -18,6 +18,7 @@ public:
 	RequestConfig() : returnStatus_(0) {}			// 기본 생성자는 멤버를 기본값으로 초기화합니다.
 
 	std::vector<std::string>	methods_;			// 예: GET, POST 등
+	std::string					locationPath_;		// 위치 경로 (예: "/images")
 	std::map<int, std::string>	errorPages_;		// 오류 코드와 오류 페이지 매핑
 	std::string					returnUrl_;			// 반환 또는 리디렉션할 URL
 	int							returnStatus_;		// 리디렉션/반환을 위한 HTTP 상태 코드
@@ -35,7 +36,6 @@ public:
 // LocationConfig는 특정 위치 블록의 구성을 나타냅니다.
 class LocationConfig {
 public:
-	std::string					path_;				// 위치 경로 (예: "/images")
 	RequestConfig				reqConfig_;			// 이 위치의 요청 처리 구성
 };
 
@@ -70,7 +70,7 @@ public:
 	// 리스닝 소켓 디스크립터, 도메인 이름, 대상 URL에 해당하는 요청 설정 찾기
 	const RequestConfig*		findRequestConfig(const int listenFd, \
 												const std::string& domainName, \
-												const std::string& targetUrl) const;
+												const std::string& targetUri) const;
 	// 설정 정보 출력
 	void						print() const;
 
@@ -87,7 +87,7 @@ private:
 											const std::string& domainName) const;
 	// 대상 URI에 해당하는 location 설정 찾기
 	const RequestConfig*	findLocationConfig(const ServerConfig& server, \
-												const std::string& targetUrl) const;
+												const std::string& targetUri) const;
 };
 
 #endif

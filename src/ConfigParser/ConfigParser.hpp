@@ -30,10 +30,10 @@ private:
 	static void	parseRequestConfig(std::ifstream& configFile, RequestConfig& reqConfig, const std::string& token);
 
 	// LocationBlock이 ServerBlock의 값을 상속받은 후 오버라이드
-	static void	getEffectiveReqHandling(const RequestConfig& serverReqHandling, \
-										RequestConfig& locationReqHandling);
+	static void	getEffectiveReqConfig(const RequestConfig& serverReqConfig, \
+										RequestConfig& locationReqConfig);
 	// 설정값이 없을 경우 기본값으로 초기화
-	static void	setDefaultReqHandling(RequestConfig& ReqHandling);
+	static void	setDefaultReqConfig(RequestConfig& ReqConfig);
 	// 주어진 서버 목록에서 같은 호스트와 포트를 가진 중복 서버가 있는지 확인
 	static bool isDuplicateServer(const std::vector<ServerConfig>& servers, const ServerConfig& server);
 
@@ -42,7 +42,7 @@ private:
 	static void	parseServerNames(std::ifstream& configFile, std::vector<std::string>& serverNames);
 	
 	// LocationBlock 파서
-	static void	parsePath(std::ifstream& configFile, std::string& path);
+	static void	parseLocationPath(std::ifstream& configFile, std::string& path);
 	static void	parseMethods(std::ifstream& configFile, std::vector<std::string>& methods);
 
 	// RequestConfig 파서

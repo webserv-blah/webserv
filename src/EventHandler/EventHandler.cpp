@@ -85,18 +85,19 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
         }
         // 생성된 응답 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
         clientSession.setWriteBuffer(responseMsg);
-
+        status = sendResponse(clientSession);
     } else if (status == REQUEST_ERROR) {
         // 요청 처리 도중 에러가 발생한 경우
         // Http 상태 코드(에러)를 가져와서 에러 응답 세팅
         int statusCode = clientSession.getErrorStatusCode();
         handleError(statusCode, clientSession);
-        // 추후 응답 전송 후 연결 종료 처리를 위해 flag 설정
-        clientSession.setConnectionClosed();
+        sendResponse(clientSession);
+        status = CONNECTION_CLOSED;
     } 
 
     return status;
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────────────
 // 리다이렉션 처리
@@ -123,9 +124,8 @@ std::string EventHandler::handleRedirection(const RequestConfig& conf) {
 EnumSesStatus EventHandler::handleClientWriteEvent(ClientSession& clientSession) {
     // 클라이언트에게 응답 전송을 시도하고, 전송 결과 상태를 반환
     EnumSesStatus status = sendResponse(clientSession);
-    if (clientSession.isConnectionClosed()) {
+    if (clientSession.getErrorStatusCode() == REQUEST_TIMEOUT) 
         status = CONNECTION_CLOSED;
-    }
     return status;
 }
 

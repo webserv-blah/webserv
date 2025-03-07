@@ -12,47 +12,42 @@
 void ServerManager::run() {
 	EventHandler 	eventHandler;
 	ClientManager	clientManager;
+	Demultiplexer	reactor(listenFds_);
+	TimeoutHandler	timeoutHandler;
 
-	try {
-		Demultiplexer	reactor(listenFds_);
-		TimeoutHandler	timeoutHandler;
+	while (isServerRunning()) {
+		// 발생한 이벤트의 개수를 확인
+		DEBUG_LOG("[ServerManager]Waiting for events...")
 
-		while (isServerRunning()) {
-			// 발생한 이벤트의 개수를 확인
-			DEBUG_LOG("[ServerManager]Waiting for events...")
+		timespec* timeout = timeoutHandler.getEarliestTimeout();
+		int	numEvents = reactor.waitForEvent(timeout);
 
-			timespec* timeout = timeoutHandler.getEarliestTimeout();
-			int	numEvents = reactor.waitForEvent(timeout);
+		// 발생한 각 이벤트를 순회하며 처리
+		for (int i = 0; i < numEvents; ++i) {
+			EnumEvent	type = reactor.getEventType(i);
+			int 		fd = reactor.getSocketFd(i);
 
-			// 발생한 각 이벤트를 순회하며 처리
-			for (int i = 0; i < numEvents; ++i) {
-				EnumEvent	type = reactor.getEventType(i);
-				int 		fd = reactor.getSocketFd(i);
-
-				if (type == READ_EVENT) {
-					if (isListeningSocket(fd)) {
-						DEBUG_LOG("[ServerManager]READ Event on Listening Socket: fd " << fd)
-						// 리스닝 소켓에서 읽기 이벤트 발생: 새로운 클라이언트의 연결 요청 처리
-						processServerReadEvent(
-							fd, clientManager, eventHandler, timeoutHandler, reactor);
-					} else {
-						DEBUG_LOG("[ServerManager]READ Event on Client Socket: fd " << fd)
-						// 기존 클라이언트 소켓에서 읽기 이벤트 발생: 클라이언트로부터 데이터 수신 처리
-						processClientReadEvent(
-							fd, clientManager, eventHandler, timeoutHandler, reactor);
-					}
-				} else if (type == WRITE_EVENT) {
-					DEBUG_LOG("[ServerManager]WRITE Event on Client Socket: fd " << fd)
-					// 쓰기 이벤트 발생: 클라이언트에게 데이터를 전송하는 작업 처리
-					processClientWriteEvent(
+			if (type == READ_EVENT) {
+				if (isListeningSocket(fd)) {
+					DEBUG_LOG("[ServerManager]READ Event on Listening Socket: fd " << fd)
+					// 리스닝 소켓에서 읽기 이벤트 발생: 새로운 클라이언트의 연결 요청 처리
+					processServerReadEvent(
+						fd, clientManager, eventHandler, timeoutHandler, reactor);
+				} else {
+					DEBUG_LOG("[ServerManager]READ Event on Client Socket: fd " << fd)
+					// 기존 클라이언트 소켓에서 읽기 이벤트 발생: 클라이언트로부터 데이터 수신 처리
+					processClientReadEvent(
 						fd, clientManager, eventHandler, timeoutHandler, reactor);
 				}
+			} else if (type == WRITE_EVENT) {
+				DEBUG_LOG("[ServerManager]WRITE Event on Client Socket: fd " << fd)
+				// 쓰기 이벤트 발생: 클라이언트에게 데이터를 전송하는 작업 처리
+				processClientWriteEvent(
+					fd, clientManager, eventHandler, timeoutHandler, reactor);
 			}
-			// 타임아웃된 클라이언트 확인 후 처리
-			timeoutHandler.checkTimeouts(eventHandler, reactor, clientManager);
 		}
-	} catch (std::exception& e) {
-		throw; // 원래 예외 그대로 throw
+		// 타임아웃된 클라이언트 확인 후 처리
+		timeoutHandler.checkTimeouts(eventHandler, reactor, clientManager);
 	}
 }
 
@@ -109,7 +104,7 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
 	} else {
 		timeoutHandler.updateActivity(fd, status);
-		if (status == READ_COMPLETE || status == REQUEST_ERROR) {
+		if (status == WRITE_CONTINUE) {
 			reactor.addWriteEvent(fd);
 		}
 	}

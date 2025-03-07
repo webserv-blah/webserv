@@ -25,8 +25,6 @@ class ClientSession {
 		void					setConfig(const RequestConfig *config);
 		void					setReadBuffer(const std::string &remainData);
 		void					setWriteBuffer(const std::string &remainData);
-		void					setConnectionClosed();
-		bool					isConnectionClosed() const;
 		bool					isReceiving() const;
 
 		RequestMessage			&accessReqMsg();
@@ -42,7 +40,6 @@ class ClientSession {
 		std::string				readBuffer_;
 		std::string				writeBuffer_;
 		std::string				clientIP_;
-		bool					connectionClosed_;
 		
 		void					resetRequest();
 };

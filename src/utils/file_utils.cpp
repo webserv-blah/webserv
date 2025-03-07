@@ -8,6 +8,16 @@ namespace FileUtilities {
 		struct stat st;
 
 		if (stat(path.c_str(), &st) != 0) {
+			DEBUG_LOG("[FileUtilities::validatePath]stat failed: " + path);
+
+			// 경로의 실행 권한이 없는 경우
+			if (errno == EACCES) {
+				webserv::logError(WARNING, "Permission denied", 
+								 path, 
+								 "FileUtilities::validatePath, errno: " + utils::size_t_tos(errno));
+				return PATH_NO_PERMISSION;
+			}
+
 			// 경로가 존재하지 않는 경우
 			// "마지막 문자가 '/'이면 디렉터리로 간주, 아니면 파일"로 구분
 			if (!path.empty() && path[path.size() - 1] == '/') {
@@ -25,10 +35,7 @@ namespace FileUtilities {
 
 		// 2) 경로가 디렉터리인지 확인
 		if (S_ISDIR(st.st_mode)) {
-			// 디렉터리 접근 권한(검색 권한, X_OK) 체크
-			if (access(path.c_str(), X_OK) != 0) {
-				return PATH_NO_PERMISSION;
-			}
+			// 접근 권한의 확인은 stat() 호출의 반환값으로 위에서 확인
 			return VALID_PATH;
 		}
 		// 3) 경로가 정규파일인지 확인

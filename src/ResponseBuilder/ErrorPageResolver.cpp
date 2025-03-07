@@ -15,7 +15,8 @@ namespace ErrorPageResolver {
 			case NOT_FOUND: return "Not Found";
 			case METHOD_NOT_ALLOWED: return "Method Not Allowed";
 			case REQUEST_TIMEOUT: return "Request Timeout";
-			case CONTENT_TOO_LARGE: return "Payload Too Large";
+			case CONTENT_TOO_LARGE: return "Content Too Large";
+			case URI_TOO_LONG: return "Uri Too Large";
 			case INTERNAL_SERVER_ERROR: return "Internal Server Error";
 			case NOT_IMPLEMENTED: return "Not Implemented";
 			case SERVICE_UNAVAILABLE: return "Service Unavailable";
@@ -38,6 +39,8 @@ namespace ErrorPageResolver {
 				return "The server timed out waiting for the request.";
 			case CONTENT_TOO_LARGE:
 				return "The request entity is larger than the server is willing or able to process.";
+			case URI_TOO_LONG:
+				return "The requested URI is longer than the server is willing or able to process.";
 			case INTERNAL_SERVER_ERROR:
 				return "The server encountered an unexpected condition that prevented it from fulfilling the request.";
 			case NOT_IMPLEMENTED:

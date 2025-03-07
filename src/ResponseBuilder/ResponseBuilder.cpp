@@ -33,7 +33,7 @@ std::string ResponseBuilder::getReasonPhrase(int errorCode) const {
 		case METHOD_NOT_ALLOWED: return "Method Not Allowed";   		// 405: 허용되지 않은 메소드
 		case REQUEST_TIMEOUT: return "Request Timeout";        			// 408: 요청 시간 초과
 		case CONTENT_TOO_LARGE: return "Content Too Large";     		// 413: 요청 페이로드가 너무 큼
-		case URI_TOO_LONG: return "Uri Too Large";     		// 413: 요청 페이로드가 너무 큼
+		case URI_TOO_LONG: return "Uri Too Large";     					// 413: 요청 페이로드가 너무 큼
 		case INTERNAL_SERVER_ERROR: return "Internal Server Error"; 	// 500: 내부 서버 오류
 		case NOT_IMPLEMENTED: return "Not Implemented";					// 501: 구현되지 않음
 		case SERVICE_UNAVAILABLE: return "Service Unavailable";			// 503: 서비스 이용 불가

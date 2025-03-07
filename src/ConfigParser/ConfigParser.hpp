@@ -12,6 +12,7 @@
 #include <cctype>			// std::isdigit, std::isxdigit, std::isspace, std::tolower
 #include <iterator>			// std::iterator
 #include <cstdlib>			// strtoul
+#include <algorithm>		// std::find
 
 class GlobalConfig;
 class ServerConfig;

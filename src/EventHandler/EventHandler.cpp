@@ -74,11 +74,13 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
 			// 리다이렉션
 			DEBUG_LOG("[EventHandler]Redirection requested")
 			responseMsg = handleRedirection(reqConfig);
-		} else if (cgiHandler_.isCGI(requestMsg.getTargetURI(), reqConfig)) {
+		} else if (cgiHandler_.isCGI(requestMsg.getMethod(), requestMsg.getTargetURI(), reqConfig)) {
             // CGI 요청
+			DEBUG_LOG("[EventHandler]CGI request");
             responseMsg = cgiHandler_.handleRequest(clientSession);
         } else {
             // 정적 파일 요청
+			DEBUG_LOG("[EventHandler]Static file request");
             responseMsg = staticHandler_.handleRequest(requestMsg, reqConfig);
         }
         // 생성된 응답 메시지를 클라이언트 세션의 쓰기 버퍼에 저장

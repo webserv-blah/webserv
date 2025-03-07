@@ -1,5 +1,6 @@
 #include "StaticHandler.hpp"
 #include "../include/commonEnums.hpp"
+#include "errorUtils.hpp"
 #include <dirent.h>
 #include <errno.h>
 #include <cctype>
@@ -206,6 +207,7 @@ std::string StaticHandler::extractFilename(const std::string& contentDisposition
 //  - 파일만 삭제한다 가정 (디렉토리 삭제는 고려하지 않음)
 //  - 실제로 remove() 호출
 std::string StaticHandler::handleDeleteRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
+	DEBUG_LOG("[StaticHandler]DELETE request received");
 	std::string uri = reqMsg.getTargetURI();
 	std::string fullPath = FileUtilities::joinPaths(conf.root_, uri);
 
@@ -213,6 +215,7 @@ std::string StaticHandler::handleDeleteRequest(const RequestMessage& reqMsg, con
 	EnumValidationResult pathValidation = validatePath(fullPath);
 
 	if (pathValidation == VALID_FILE) {
+		DEBUG_LOG("[StaticHandler]Deleting file: " + fullPath);
 		// 파일 삭제 시도
 		if (std::remove(fullPath.c_str()) == 0) {
 			// 성공
@@ -226,9 +229,11 @@ std::string StaticHandler::handleDeleteRequest(const RequestMessage& reqMsg, con
 	}
 	// 디렉토리거나 없으면 에러
 	if (pathValidation == VALID_PATH) {
+		DEBUG_LOG("[StaticHandler]Deleting directory: " + fullPath);
 		// 디렉토리
 		return responseBuilder_.buildError(FORBIDDEN, conf);
 	}
+	DEBUG_LOG("[StaticHandler]File not found: " + fullPath);
 	return responseBuilder_.buildError(NOT_FOUND, conf);
 }
 

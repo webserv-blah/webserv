@@ -227,14 +227,18 @@ std::string StaticHandler::handleDeleteRequest(const RequestMessage& reqMsg, con
 			return responseBuilder_.buildError(FORBIDDEN, conf);
 		}
 	}
-	// 디렉토리거나 없으면 에러
+	// 디렉토리는 삭제를 허용하지 않음
 	if (pathValidation == VALID_PATH) {
 		DEBUG_LOG("[StaticHandler]Deleting directory: " + fullPath);
-		// 디렉토리
 		return responseBuilder_.buildError(FORBIDDEN, conf);
 	}
-	DEBUG_LOG("[StaticHandler]File not found: " + fullPath);
-	return responseBuilder_.buildError(NOT_FOUND, conf);
+	// 파일이나 경로가 없음
+	if (pathValidation == PATH_NOT_FOUND || pathValidation == FILE_NOT_FOUND) {
+		DEBUG_LOG("[StaticHandler]File not found: " + fullPath);
+		return responseBuilder_.buildError(NOT_FOUND, conf);
+	}
+	// 접근 권한 없음
+	return responseBuilder_.buildError(FORBIDDEN, conf);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────

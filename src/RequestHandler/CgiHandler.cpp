@@ -23,8 +23,13 @@ CgiHandler::~CgiHandler() {
 }
 
 // 요청된 URI가 CGI 실행 대상인지 확인하는 함수
-bool CgiHandler::isCGI(const std::string& targetUri, const RequestConfig& conf)
+bool CgiHandler::isCGI(const EnumMethod method, const std::string& targetUri, const RequestConfig& conf)
 {
+	// 요청 메서드가 GET 또는 POST가 아니면 CGI 아님
+	if (method != GET && method != POST) {
+		return false;
+	}
+
     const std::string& cgiExtension = conf.cgiExtension_;
 
     // 디렉터리인지 확인하고 indexFile이 CGI인지 검사

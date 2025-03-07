@@ -168,7 +168,7 @@ void RequestMessage::printBody(void) const {
 void RequestMessage::printMetaData(void) const {
 	std::cout << "\033[37;7m MetaData :\033[0m"<<std::endl;
 	std::cout <<"\033[37;2mHost_: ";
-	if (this->metaHost_.empty())
+	if (!this->metaHost_.empty())
 		std::cout <<this->metaHost_ <<";\033[0m\n";
 	else
 		std::cout <<"(none);\033[0m\n";

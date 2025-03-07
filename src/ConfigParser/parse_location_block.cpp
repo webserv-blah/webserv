@@ -9,6 +9,9 @@ void ConfigParser::parseLocationPath(std::ifstream& configFile, std::string& loc
 		throw std::runtime_error("Unexpected end of file in location directive");
 	} else if (nextToken == ";") {
 		throw std::runtime_error("Expected path for location directive");
+	} else if (nextToken[0] != '/') {
+		// 가장 앞글자가 "/"가 아니면 예외 발생
+		throw std::runtime_error("Expected '/' at the beginning of location path");
 	}
 	// 읽어온 토큰을 경로로 설정
 	locationPath = nextToken;

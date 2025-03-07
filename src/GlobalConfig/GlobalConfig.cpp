@@ -123,6 +123,10 @@ void GlobalConfig::print() const {
 void RequestConfig::print(int indentLevel) const {
     std::string indent(indentLevel * 2, ' ');
     
+	// locationPath
+	std::cout << indent << "Location Path:     ";
+	std::cout << locationPath_ << "\n";
+
     // Methods
     std::cout << indent << "Methods:            ";
     if (methods_.empty()) {

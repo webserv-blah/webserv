@@ -87,7 +87,6 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
             // Request Timeout일 경우 HTTP 408 Request Timeout 처리
             eventHandler.handleError(408, *client);
             reactor.addWriteEvent(fd);
-            client->setConnectionClosed();
         } else {
             //IDLE Timeout일 경우 나머지 리소스도 정리
             clientManager.removeClient(fd);

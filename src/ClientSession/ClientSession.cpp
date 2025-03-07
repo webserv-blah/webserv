@@ -4,7 +4,7 @@
 #define BUFFER_SIZE 8192
 #endif
 
-ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : listenFd_(listenFd), clientFd_(clientFd), reqMsg_(NULL), config_(NULL), clientIP_(clientIP), connectionClosed_(false) {
+ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : listenFd_(listenFd), clientFd_(clientFd), reqMsg_(NULL), config_(NULL), clientIP_(clientIP) {
 	this->readBuffer_.reserve(BUFFER_SIZE * 2);
 	this->defConfig_ = GlobalConfig::getInstance().findRequestConfig(listenFd, "", "");
 }
@@ -75,14 +75,6 @@ void ClientSession::setReadBuffer(const std::string &remainData) {
 void ClientSession::setWriteBuffer(const std::string &remainData) {
 	this->writeBuffer_ = remainData;
 	resetRequest();
-}
-
-void ClientSession::setConnectionClosed() {
-	connectionClosed_ = true;
-}
-
-bool ClientSession::isConnectionClosed() const{
-	return this->connectionClosed_;
 }
 
 bool ClientSession::isReceiving() const {

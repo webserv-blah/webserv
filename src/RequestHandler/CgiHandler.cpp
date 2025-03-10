@@ -281,6 +281,10 @@ std::string CgiHandler::handleParent(pid_t pid, int inPipe[2], int outPipe[2], c
 	}
 	close(outPipe[0]);                 // 출력 파이프 읽기 닫기
 
+	if (bytesRead == -1) {			   // read의 반환값이 -1인 경우 cgi 오류 0인 경우 진행
+		return "";
+	}
+
 	int status;
 	waitpid(pid, &status, 0);          // 자식 프로세스 종료 상태를 대기 및 수신
 	// 자식 프로세스가 정상 종료하면 결과 문자열 반환, 그렇지 않으면 빈 문자열 반환

@@ -28,9 +28,6 @@ private:
     std::string handlePostRequest(const RequestMessage& reqMsg, const RequestConfig& conf);
     std::string handleDeleteRequest(const RequestMessage& reqMsg, const RequestConfig& conf);
 
-    // -- 메소드 허용 여부 확인 --
-    bool isMethodAllowed(EnumMethod method, const RequestConfig &conf) const;
-
     // -- 디렉토리 처리 --
     std::string handleDirectory(const std::string &dirPath,
                                 const std::string &uri,

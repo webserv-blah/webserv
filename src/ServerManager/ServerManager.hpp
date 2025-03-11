@@ -7,8 +7,10 @@
 #include "../EventHandler/EventHandler.hpp"
 #include "../ClientManager/ClientManager.hpp"
 #include "../include/commonEnums.hpp"
+#include "CgiProcessInfo.hpp"
 
 #include <set>
+#include <vector>
 
 class ServerManager {
     public:
@@ -54,7 +56,8 @@ class ServerManager {
 		EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor);
         // 클라이언트 소켓에서 읽기 이벤트가 발생한 경우, 클라이언트 데이터를 처리
 		void processClientReadEvent(int fd, ClientManager& clientManager, \
-		EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor);
+		EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor,  CgiWaitList);
+
         // 클라이언트 소켓에 쓰기 이벤트가 발생한 경우 데이터를 전송
 		void processClientWriteEvent(int fd, ClientManager& clientManager, \
 		EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor);

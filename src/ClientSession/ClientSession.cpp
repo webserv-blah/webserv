@@ -48,6 +48,10 @@ std::string	ClientSession::getClientIP() const {
 	return this->clientIP_;
 }
 
+const CgiProcessInfo *ClientSession::getCgiProcessInfo() const {
+	return &(this->cgiProcessInfo_);
+}
+
 void ClientSession::setListenFd(const int &listenFd) {
 	this->listenFd_ = listenFd;
 }
@@ -75,6 +79,10 @@ void ClientSession::setReadBuffer(const std::string &remainData) {
 void ClientSession::setWriteBuffer(const std::string &remainData) {
 	this->writeBuffer_ = remainData;
 	resetRequest();
+}
+
+void ClientSession::setCgiProcessInfo(CgiProcessInfo &cgiProcessInfo) {
+	this->cgiProcessInfo_ = cgiProcessInfo;
 }
 
 bool ClientSession::isReceiving() const {

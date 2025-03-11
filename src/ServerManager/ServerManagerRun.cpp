@@ -1,4 +1,5 @@
 #include "ServerManager.hpp"
+#include "CgiProcessHandler.hpp"
 #include "../include/errorUtils.hpp"
 
 // 서버의 메인 이벤트 루프를 실행합니다.
@@ -10,15 +11,18 @@
 // 서버가 실행되는 동안 발생하는 이벤트(EXCEPTION, READ, WRITE)를
 // 감지하여 각각의 처리 함수를 호출합니다.
 void ServerManager::run() {
-	EventHandler 	eventHandler;
-	ClientManager	clientManager;
-	Demultiplexer	reactor(listenFds_);
-	TimeoutHandler	timeoutHandler;
+	CgiProcessHandler				cgiProcessHandler;
+	EventHandler					eventHandler;
+	ClientManager					clientManager;
+	Demultiplexer					reactor(listenFds_);
+	TimeoutHandler					timeoutHandler;
 
 	while (isServerRunning()) {
 		// 발생한 이벤트의 개수를 확인
 		DEBUG_LOG("[ServerManager]Waiting for events...")
 
+
+		cgiProcessHandler.waitForCgi();
 		timespec* timeout = timeoutHandler.getEarliestTimeout();
 		int	numEvents = reactor.waitForEvent(timeout);
 
@@ -37,7 +41,7 @@ void ServerManager::run() {
 					DEBUG_LOG("[ServerManager]READ Event on Client Socket: fd " << fd)
 					// 기존 클라이언트 소켓에서 읽기 이벤트 발생: 클라이언트로부터 데이터 수신 처리
 					processClientReadEvent(
-						fd, clientManager, eventHandler, timeoutHandler, reactor);
+						fd, clientManager, eventHandler, timeoutHandler, reactor, cgiProcessHandler);
 				}
 			} else if (type == WRITE_EVENT) {
 				DEBUG_LOG("[ServerManager]WRITE Event on Client Socket: fd " << fd)
@@ -86,7 +90,7 @@ void ServerManager::processServerReadEvent(int fd, ClientManager& clientManager,
 
 // 기존 클라이언트 소켓에서 읽기 이벤트가 발생한 경우, 클라이언트 데이터를 처리합니다.
 void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
-	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
+	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor, CgiProcessHandler& cgiProcessHandler) {
 	// 파일 디스크립터에 해당하는 클라이언트 세션을 획득
 	ClientSession* client = clientManager.accessClientSession(fd);
 	if (!client) {
@@ -102,6 +106,9 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 	if (status == CONNECTION_CLOSED) { 
 		// 클라이언트가 연결을 종료한 경우, 관련 정보를 삭제
 		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
+	} else if (status == WAIT_FOR_CGI) {
+		timeoutHandler.updateActivity(fd, status);
+		cgiProcessHandler.cgiWaitList.push_back(client->getCgiProcessInfo());
 	} else {
 		timeoutHandler.updateActivity(fd, status);
 		if (status == WRITE_CONTINUE) {
@@ -131,4 +138,8 @@ void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager
 		// 데이터 전송이 완료된 경우, 리액터에서 쓰기 이벤트를 제거하여 더 이상 쓰기 이벤트를 감시하지 않음
 		reactor.removeWriteEvent(fd);
 	}
+}
+
+void ServerManager::waitForCgi(CgiWaitList) {
+	
 }

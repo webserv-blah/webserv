@@ -1,6 +1,7 @@
 #ifndef CLIENT_SESSION_HPP
 #define CLIENT_SESSION_HPP
 
+#include "../RequestHandler/CgiProcessInfo.hpp"
 #include "../RequestMessage/RequestMessage.hpp"
 #include "../GlobalConfig/GlobalConfig.hpp"
 #include "../include/commonEnums.hpp"
@@ -18,6 +19,8 @@ class ClientSession {
 		std::string				getReadBuffer() const;
 		std::string				getWriteBuffer() const;
 		std::string				getClientIP() const;
+		const CgiProcessInfo	*getCgiProcessInfo() const;
+
 		void					setListenFd(const int &listenFd);
 		void					setClientFd(const int &clientFd);
 		void					setErrorStatusCode(const int &statusCode);
@@ -25,6 +28,7 @@ class ClientSession {
 		void					setConfig(const RequestConfig *config);
 		void					setReadBuffer(const std::string &remainData);
 		void					setWriteBuffer(const std::string &remainData);
+		void					setCgiProcessInfo(CgiProcessInfo &cgiProcessInfo);
 		bool					isReceiving() const;
 
 		RequestMessage			&accessReqMsg();
@@ -40,6 +44,7 @@ class ClientSession {
 		std::string				readBuffer_;
 		std::string				writeBuffer_;
 		std::string				clientIP_;
+		CgiProcessInfo			cgiProcessInfo_;
 		
 		void					resetRequest();
 };

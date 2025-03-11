@@ -7,7 +7,8 @@ typedef enum EnumSessionStatus {
 	READ_COMPLETE,
 	WRITE_CONTINUE,
 	WRITE_COMPLETE,
-	CONNECTION_CLOSED
+	CONNECTION_CLOSED,
+	WAIT_FOR_CGI
 } EnumSesStatus;
 
 enum EnumEvent {

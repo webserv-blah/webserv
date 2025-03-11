@@ -29,7 +29,8 @@ class EventHandler {
 
 		EnumSesStatus	recvRequest(ClientSession& clientSession); //recv()
 		EnumSesStatus	sendResponse(ClientSession& clientSession); //send()
-		
+
+		bool 			isMethodAllowed(EnumMethod method, const RequestConfig &conf) const;
 		std::string 	handleRedirection(const RequestConfig& config);
 };
 

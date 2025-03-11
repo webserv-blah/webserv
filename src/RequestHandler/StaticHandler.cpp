@@ -52,10 +52,6 @@ StaticHandler::~StaticHandler() {
 std::string StaticHandler::handleRequest(const RequestMessage& reqMsg, const RequestConfig& conf) {
 	// 우선, 설정에서 현재 요청 메소드가 허용되는지 확인 (methods_ 벡터 사용)
 	EnumMethod method = reqMsg.getMethod();
-	if (!isMethodAllowed(method, conf)) {
-		// 허용되지 않은 메소드
-		return responseBuilder_.buildError(METHOD_NOT_ALLOWED, conf);
-	}
 
 	// GET, POST, DELETE 등 각각 분기 처리
 	switch (method) {
@@ -334,26 +330,4 @@ std::string StaticHandler::determineContentType(const std::string &filePath) con
 		return iter->second;
 	}
 	return "application/octet-stream";
-}
-
-// ─────────────────────────────────────────────────────────────────────────────────────
-// 현재 요청 메소드가 conf.methods_에 포함되는지 확인
-bool StaticHandler::isMethodAllowed(EnumMethod method, const RequestConfig &conf) const {
-	// RequestConfig::methods_는 문자열 벡터 예: {"GET", "POST", "DELETE"} 
-	// EnumMethod를 문자열로 변환하거나, conf.methods_를 enum화하여 비교하는 식으로 구현 가능
-	// 여기서는 간단히 문자열 비교 버전으로 가정
-	std::string methodStr;
-	switch (method) {
-		case GET:       methodStr = "GET";    break;
-		case POST:      methodStr = "POST";   break;
-		case DELETE:   methodStr = "DELETE"; break;
-		default:        methodStr = "UNKNOWN";break;
-	}
-
-	for (size_t i = 0; i < conf.methods_.size(); i++) {
-		if (conf.methods_[i] == methodStr) {
-			return true;
-		}
-	}
-	return false;
 }

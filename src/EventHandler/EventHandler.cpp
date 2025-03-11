@@ -70,10 +70,14 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
 		requestMsg.printResult();
 		std::cout << std::endl;
 		#endif
-		if (reqConfig.returnStatus_) {
+        if (reqConfig.returnStatus_) {
 			// 리다이렉션
 			DEBUG_LOG("[EventHandler]Redirection requested")
 			responseMsg = handleRedirection(reqConfig);
+        } else if (!isMethodAllowed(requestMsg.getMethod(), reqConfig)) {
+            // 허용되지 않은 메서드인 경우
+            DEBUG_LOG("[EventHandler]Method not allowed")
+            responseMsg = responseBuilder_.buildError(METHOD_NOT_ALLOWED, reqConfig);
 		} else if (cgiHandler_.isCGI(requestMsg.getMethod(), requestMsg.getTargetURI(), reqConfig)) {
             // CGI 요청
 			DEBUG_LOG("[EventHandler]CGI request");
@@ -98,6 +102,27 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
     return status;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────────────
+// 현재 요청 메소드가 conf.methods_에 포함되는지 확인
+bool EventHandler::isMethodAllowed(EnumMethod method, const RequestConfig &conf) const {
+	// RequestConfig::methods_는 문자열 벡터 예: {"GET", "POST", "DELETE"} 
+	// EnumMethod를 문자열로 변환하거나, conf.methods_를 enum화하여 비교하는 식으로 구현 가능
+	// 여기서는 간단히 문자열 비교 버전으로 가정
+	std::string methodStr;
+	switch (method) {
+		case GET:       methodStr = "GET";    break;
+		case POST:      methodStr = "POST";   break;
+		case DELETE:   methodStr = "DELETE"; break;
+		default:        methodStr = "UNKNOWN";break;
+	}
+
+	for (size_t i = 0; i < conf.methods_.size(); i++) {
+		if (conf.methods_[i] == methodStr) {
+			return true;
+		}
+	}
+	return false;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────────────
 // 리다이렉션 처리

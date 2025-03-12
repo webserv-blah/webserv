@@ -5,7 +5,6 @@
 #include <map>
 #include <vector>
 
-<<<<<<< Updated upstream
 #define CR "\r"
 #define LF "\n"
 #define CRLF "\r\n"
@@ -13,10 +12,6 @@
 enum EnumMethod { NONE, GET, POST, DELETE };
 typedef enum EnumConnection { KEEP_ALIVE, CLOSE } EnumConnect;
 typedef enum EnumTransferEncoding { NONE_ENCODING, CHUNK } EnumTransEnc;
-=======
-enum EnumMethod { NONE, GET, POST, DELETE };
-enum EnumConnection { KEEP_ALIVE, CLOSE };
->>>>>>> Stashed changes
 typedef enum EnumRequestStatus {
 	REQ_INIT,
 	REQ_TOP_CRLF,		// CRLF(0,1)
@@ -35,33 +30,21 @@ class RequestMessage {
 		typedef std::map<std::string, std::vector<std::string> >	TypeField;
 
 		RequestMessage();
-<<<<<<< Updated upstream
-=======
-		RequestMessage(EnumMethod method, std::string target);
->>>>>>> Stashed changes
 		~RequestMessage();
 
 		EnumMethod		getMethod() const;
 		std::string		getTargetURI() const;
 		TypeField		getFields() const;
 		std::string		getBody() const;
-<<<<<<< Updated upstream
 		size_t			getBodyLength() const;
 		void			setMethod(const EnumMethod &method);
 		void			setTargetURI(const std::string &targetURI);
 		void			addFieldLine(const std::string &name, const std::vector<std::string> &values);
 		void			addBody(const std::string &bodyData);
-=======
-		void			setMethod(const EnumMethod &method);
-		void			setTargetURI(const std::string &targetURI);
-		void			addFields(std::string field, std::vector<std::string> values);
-		void			addBody(std::string bodyData);
->>>>>>> Stashed changes
 		
 		EnumReqStatus	getStatus() const;
 		std:: string	getMetaHost() const;
 		EnumConnection	getMetaConnection() const;
-<<<<<<< Updated upstream
 		size_t			getMetaContentLength() const;
 		EnumTransEnc	getMetaTransferEncoding() const;
 		std:: string	getMetaContentType() const;
@@ -74,14 +57,6 @@ class RequestMessage {
 
 		void			resetHostField(const std::string &value);
 
-=======
-		ssize_t			getMetaContentLength() const;
-		void			setStatus(const EnumReqStatus &status);
-		void			setMetaHost(const std::string &value);
-		void			setMetaConnection(const std::string &value);
-		void			setMetaContentLength(const std::string &value);
-
->>>>>>> Stashed changes
 		// 파싱 후, 결과 출력을 위한 함수
 		void printResult() const;
 		void printFields() const;
@@ -95,23 +70,15 @@ class RequestMessage {
 		std::string		targetURI_;
 		TypeField		fieldLines_;
 		std::string		body_;
-<<<<<<< Updated upstream
 		size_t			bodyLength_;
-=======
->>>>>>> Stashed changes
 
 		// Header Field에 작성되어있던 메타데이터
 		EnumReqStatus	status_;
 		std::string		metaHost_;
-<<<<<<< Updated upstream
 		EnumConnect		metaConnection_;
 		size_t			metaContentLength_;
 		EnumTransEnc	metaTransferEncoding_;
 		std::string		metaContentType_;
-=======
-		EnumConnection	metaConnection_;
-		ssize_t			metaContentLength_;
->>>>>>> Stashed changes
 };
 
 #endif

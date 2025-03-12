@@ -82,14 +82,19 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
             // CGI 요청
 			DEBUG_LOG("[EventHandler]CGI request");
             responseMsg = cgiHandler_.handleRequest(clientSession);
+            if (responseMsg.empty()) {
+                status = WAIT_FOR_CGI;
+            }
         } else {
             // 정적 파일 요청
 			DEBUG_LOG("[EventHandler]Static file request");
             responseMsg = staticHandler_.handleRequest(requestMsg, reqConfig);
         }
-        // 생성된 응답 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
-        clientSession.setWriteBuffer(responseMsg);
-        status = sendResponse(clientSession);
+        if (status != WAIT_FOR_CGI) {
+            // 생성된 응답 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
+            clientSession.setWriteBuffer(responseMsg);
+            status = sendResponse(clientSession);
+        }
     } else if (status == REQUEST_ERROR) {
         // 요청 처리 도중 에러가 발생한 경우
         // Http 상태 코드(에러)를 가져와서 에러 응답 세팅
@@ -122,6 +127,38 @@ bool EventHandler::isMethodAllowed(EnumMethod method, const RequestConfig &conf)
 		}
 	}
 	return false;
+}
+
+EnumSesStatus	EventHandler::handleCgiReadEvent(ClientSession& clientSession) {
+    CgiProcessInfo&	cgiProcessInfo = clientSession.accessCgiProcessInfo();
+    int pipeFd = cgiProcessInfo.outPipe_;
+
+	std::ostringstream	&cgiResultBuffer = cgiProcessInfo.cgiResultBuffer;
+	char	buffer[4096];                 // 읽기 버퍼 생성
+	ssize_t	bytesRead;
+	int		status;
+
+	while ((bytesRead = read(pipeFd, buffer, sizeof(buffer))) > 0) {
+		cgiResultBuffer.write(buffer, bytesRead);  // 버퍼에서 읽은 데이터를 스트림에 기록
+	}
+
+	if (bytesRead == 0) {
+		close(pipeFd);
+		//WNOHANG으로 wait
+		waitpid(cgiProcessInfo.pid_, &status, WNOHANG);
+		if (!WIFEXITED(status)) {
+            //자식 프로세스 종료
+			kill(cgiProcessInfo.pid_, SIGKILL);
+			webserv::logError(ERROR, "CGI Process Error", 
+		                 "CGI Process Error", 
+		                 "ServerManager::processCgiReadEvent");
+		}
+        clientSession.setWriteBuffer(responseBuilder_.AddHeaderForCgi(cgiProcessInfo.cgiResultBuffer.str()));
+        cgiResultBuffer.str("");
+        return sendResponse(clientSession);
+	}
+    // bytesRead가 -1인 경우
+	return WAIT_FOR_CGI;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────

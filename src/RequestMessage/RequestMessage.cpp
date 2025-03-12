@@ -30,7 +30,6 @@ void RequestMessage::setMethod(const EnumMethod &method) {
 }
 
 void RequestMessage::setTargetURI(const std::string &targetURI) {
-void RequestMessage::setTargetURI(const std::string &targetURI) {
 	this->targetURI_ = targetURI;
 }
 

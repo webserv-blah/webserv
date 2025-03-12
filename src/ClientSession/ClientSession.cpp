@@ -4,7 +4,7 @@
 #define BUFFER_SIZE 8192
 #endif
 
-ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : listenFd_(listenFd), clientFd_(clientFd), reqMsg_(NULL), config_(NULL), clientIP_(clientIP) {
+ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : listenFd_(listenFd), clientFd_(clientFd), clientIP_(clientIP), reqMsg_(NULL), config_(NULL) {
 	this->readBuffer_.reserve(BUFFER_SIZE * 2);
 	this->defConfig_ = GlobalConfig::getInstance().findRequestConfig(listenFd, "", "");
 }
@@ -98,6 +98,10 @@ RequestMessage &ClientSession::accessReqMsg() {
 
 std::string &ClientSession::accessReadBuffer() {
 	return this->readBuffer_;
+}
+
+CgiProcessInfo	&ClientSession::accessCgiProcessInfo() {
+	return this->cgiProcessInfo_;
 }
 
 void ClientSession::resetRequest() {

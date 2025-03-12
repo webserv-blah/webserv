@@ -21,6 +21,18 @@ void ClientManager::addClient(int listenFd, int clientFd, std::string clientAddr
 	clientList_.insert(std::make_pair(clientFd, newClient)); // clientFd를 key로 하여 추가
 }
 
+void	ClientManager::removePipeFromMap(int pipeFd) {
+	std::map<int, int>::iterator it = pipeToClientFdMap_.find(pipeFd);
+	if (it == pipeToClientFdMap_.end()) {
+		// 존재하지 않는 fd에 대한 요청 시 오류 로깅
+		webserv::logError(WARNING, "Pipe Fd Not Found", 
+		                 "fd: " + utils::size_t_tos(pipeFd), 
+		                 "ClientManager::removePipeToClientMap");
+		return;
+	}
+	pipeToClientFdMap_.erase(it);
+}
+
 // clientSession 제거 및 목록에서 삭제
 ClientManager::TypeClientMap::iterator ClientManager::removeClient(int fd) {
 	TypeClientMap::iterator it = clientList_.find(fd);
@@ -55,4 +67,13 @@ ClientSession* ClientManager::accessClientSession(int fd) {
 // 전체 clientSession 목록(clientList_) 참조 반환
 ClientManager::TypeClientMap& ClientManager::accessClientSessionMap() {
 	return clientList_;
+}
+
+bool	ClientManager::isClientSocket(int fd) {
+	// 해당 fd가 존재하지 않으면 NULL 반환
+	TypeClientMap::iterator it = clientList_.find(fd);
+	if (it == clientList_.end()) {
+		return false;
+	}
+	return true; // ClientSession 포인터 반환
 }

@@ -1,7 +1,6 @@
 #ifndef CGI_HANDLER_HPP
 #define CGI_HANDLER_HPP
 
-#include "./CgiProcessInfo.hpp"                        // 
 #include "../ResponseBuilder/ResponseBuilder.hpp"      // 응답 빌더 클래스 선언 포함
 #include "../ClientSession/ClientSession.hpp"        // 클라이언트 세션 클래스 선언 포함
 #include <string>                   // 문자열 사용을 위한 헤더 포함
@@ -27,7 +26,7 @@ public:
 				const std::string& targetUri,
 				const RequestConfig& conf);
     // 클라이언트 요청을 처리하여 CGI 실행 결과를 반환하는 함수
-    std::string handleRequest(const ClientSession& clientSession);
+    std::string handleRequest(ClientSession& clientSession);
 
 private:
     const ResponseBuilder& responseBuilder_; // 응답 생성에 필요한 빌더 객체
@@ -41,9 +40,9 @@ private:
                      std::vector<std::string>& envVars);
 
     // CGI 스크립트를 실행하고 결과를 반환하는 함수
-    std::string executeCgi(std::vector<std::string>& arg,
+    bool executeCgi(std::vector<std::string>& arg,
                            std::vector<std::string>& cgiEnv,
-                           const std::string& requestBody);
+                           const std::string& requestBody, pid_t &childPid, int &inPipe_);
 
     // 생성된 파이프들을 모두 닫는 함수
     void closePipes(int inPipe[2], int outPipe[2]);
@@ -52,7 +51,7 @@ private:
     // 자식 프로세스에서 CGI 스크립트를 실행하는 함수
     void executeChild(std::vector<std::string>& arg, std::vector<std::string>& cgiEnv);
     // 부모 프로세스에서 자식 프로세스를 관리하며 결과를 수신하는 함수
-    std::string handleParent(pid_t pid, int inPipe[2], int outPipe[2], const std::string& requestBody);
+    void handleParent(int inPipe[2], int outPipe[2], const std::string& requestBody);
     // "이름=값" 형태의 환경 변수 문자열을 생성하는 함수
     std::string makeEnvVar(const std::string& name, const std::string& value);
     // URI를 파싱하여 스크립트 경로, 추가 경로 정보, 쿼리 문자열을 추출하는 함수

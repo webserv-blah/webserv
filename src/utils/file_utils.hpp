@@ -20,6 +20,7 @@ namespace FileUtilities {
 
 	//  존재 / 권한 상태를 7가지 결과 중 하나로 반환
 	EnumValidationResult	validatePath(const std::string& path);
+	bool					hasExtension(const std::string& path, const std::string& extension);
 	bool					isDirectory(const char* path);
 	bool					hasExecutePermission(const std::string& filePath);
 	std::string			    readFile(const std::string &filePath);

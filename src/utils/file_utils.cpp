@@ -56,7 +56,15 @@ namespace FileUtilities {
 		}
 	}
 
-	// 파일이 존재하는지 확인하는 함수
+	// 파일 경로의 확장자가 주어진 확장자와 일치하는지 확인하는 함수
+	bool hasExtension(const std::string& path, const std::string& extension) {
+		if (path.size() < extension.size()) {
+			return false;
+		}
+		return path.compare(path.size() - extension.size(), extension.size(), extension) == 0;
+	}
+
+	// 디렉토리가 존재하는지 확인하는 함수
 	bool isDirectory(const char* path) {
 		struct stat st;
 		if (stat(path, &st) != 0) {

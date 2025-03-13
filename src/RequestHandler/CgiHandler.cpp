@@ -36,8 +36,8 @@ bool CgiHandler::isCGI(const EnumMethod method, const std::string& targetUri, co
 	// 디렉터리인지 확인하고 indexFile이 CGI인지 검사
 	if (FileUtilities::isDirectory(FileUtilities::joinPaths(conf.root_, targetUri).c_str())) {
 		if (!conf.indexFile_.empty() &&
-			conf.indexFile_.size() >= cgiExtension.size() &&
-			conf.indexFile_.compare(conf.indexFile_.size() - cgiExtension.size(), cgiExtension.size(), cgiExtension) == 0) {
+			FileUtilities::hasExtension(conf.indexFile_, cgiExtension) &&
+			FileUtilities::hasExecutePermission(FileUtilities::joinPaths(conf.root_, conf.indexFile_))) {
 			return true;
 		}
 	}
@@ -83,8 +83,7 @@ bool CgiHandler::isCGI(const EnumMethod method, const std::string& targetUri, co
 	}
 
 	// CGI 확장자가 scriptPath의 일부인지 확인
-	if (scriptPath.size() >= cgiExtension.size() &&
-		scriptPath.compare(scriptPath.size() - cgiExtension.size(), cgiExtension.size(), cgiExtension) == 0) {
+	if (hasExtension(scriptPath, cgiExtension)) {
 		return true;
 	}
 

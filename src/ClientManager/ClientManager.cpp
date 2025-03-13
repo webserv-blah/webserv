@@ -33,6 +33,11 @@ void	ClientManager::removePipeFromMap(int pipeFd) {
 	pipeToClientFdMap_.erase(it);
 }
 
+// pipeToClientMap에 파이프 추가
+void	ClientManager::addPipeMap(int outPipe, int clientFd) {
+	pipeToClientFdMap_.insert(std::make_pair(outPipe, clientFd));
+}
+
 // clientSession 제거 및 목록에서 삭제
 ClientManager::TypeClientMap::iterator ClientManager::removeClient(int fd) {
 	TypeClientMap::iterator it = clientList_.find(fd);
@@ -69,6 +74,15 @@ ClientManager::TypeClientMap& ClientManager::accessClientSessionMap() {
 	return clientList_;
 }
 
+int		ClientManager::accessClientFd(int pipeFd) {
+	// 해당 fd가 존재하지 않으면 NULL 반환
+	std::map<int, int>::iterator it = pipeToClientFdMap_.find(pipeFd);
+	if (it == pipeToClientFdMap_.end()) {
+		return -1;
+	}
+	return it->second;
+}
+
 bool	ClientManager::isClientSocket(int fd) {
 	// 해당 fd가 존재하지 않으면 NULL 반환
 	TypeClientMap::iterator it = clientList_.find(fd);
@@ -77,3 +91,4 @@ bool	ClientManager::isClientSocket(int fd) {
 	}
 	return true; // ClientSession 포인터 반환
 }
+

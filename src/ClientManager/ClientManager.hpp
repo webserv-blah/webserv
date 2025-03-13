@@ -18,7 +18,7 @@ class ClientManager {
 		TypeClientMap::iterator	removeClient(int fd);
 		ClientSession*			accessClientSession(int fd);
 		TypeClientMap&			accessClientSessionMap();
-		int						accessClientFd(int fd);
+		int						accessClientFd(int pipeFd);
 
 		bool					isClientSocket(int fd);
 

@@ -81,10 +81,6 @@ void ClientSession::setWriteBuffer(const std::string &remainData) {
 	resetRequest();
 }
 
-void ClientSession::setCgiProcessInfo(CgiProcessInfo &cgiProcessInfo) {
-	this->cgiProcessInfo_ = cgiProcessInfo;
-}
-
 bool ClientSession::isReceiving() const {
 	if (this->reqMsg_) {
 		return true;

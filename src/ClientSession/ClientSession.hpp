@@ -28,7 +28,6 @@ class ClientSession {
 		void					setConfig(const RequestConfig *config);
 		void					setReadBuffer(const std::string &remainData);
 		void					setWriteBuffer(const std::string &remainData);
-		void					setCgiProcessInfo(CgiProcessInfo &cgiProcessInfo);
 		bool					isReceiving() const;
 
 		RequestMessage			&accessReqMsg();

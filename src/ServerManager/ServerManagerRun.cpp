@@ -107,15 +107,14 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 		// 클라이언트가 연결을 종료한 경우, 관련 정보를 삭제
 		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
 	} else if (status == WAIT_FOR_CGI) {
-		timeoutHandler.updateActivity(fd, status);
 		reactor.addSocket(client->getCgiProcessInfo()->outPipe_);
 		clientManager.addPipeMap(client->getCgiProcessInfo()->outPipe_, client->getClientFd());
 		reactor.removeReadEvent(fd);
-	} else {
+	} else if (status == WRITE_COMPLETE) {
 		timeoutHandler.updateActivity(fd, status);
-		if (status == WRITE_CONTINUE) {
-			reactor.addWriteEvent(fd);
-		}
+	} else if (status == WRITE_CONTINUE) {
+		timeoutHandler.updateActivity(fd, status);
+		reactor.addWriteEvent(fd);
 	}
 }
 

@@ -83,12 +83,14 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
         ClientSession* client = clientManager.accessClientSession(fd);
         if (!client) { 
             std::cerr << "[Error][TimeoutHandler][checkTimeouts] Invalid Client Fd" << std::endl;
-        } else if (client->accessCgiProcessInfo().isProcessing) {
-            eventHandler.handleError(504, *client);
-            reactor.addWriteEvent(fd);
         } else if (client->isReceiving()) {
-            // Request Timeout일 경우 HTTP 408 Request Timeout 처리
-            eventHandler.handleError(408, *client);
+            // Request Timeout일 경우 HTTP Timeout 처리
+            if (client->accessCgiProcessInfo().isProcessing) {
+                eventHandler.handleError(504, *client);
+                client->accessCgiProcessInfo().isProcessing = 0;
+            } else {
+                eventHandler.handleError(408, *client);
+            }
             reactor.addWriteEvent(fd);
         } else {
             //IDLE Timeout일 경우 나머지 리소스도 정리

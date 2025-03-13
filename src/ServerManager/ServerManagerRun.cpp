@@ -110,6 +110,7 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 		timeoutHandler.updateActivity(fd, status);
 		reactor.addSocket(client->getCgiProcessInfo()->outPipe_);
 		clientManager.addPipeMap(client->getCgiProcessInfo()->outPipe_, client->getClientFd());
+		reactor.removeReadEvent(fd);
 	} else {
 		timeoutHandler.updateActivity(fd, status);
 		if (status == WRITE_CONTINUE) {
@@ -138,6 +139,9 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
 	}
 	// CGI로부터 데이터를 읽어 처리한 후 반환 상태를 확인
 	EnumSesStatus status = eventHandler.handleCgiReadEvent(*client);
+	if (status == WAIT_FOR_CGI) {
+		return ;
+	}
 	if (status == CONNECTION_CLOSED) { 
 		// 클라이언트가 연결을 종료한 경우, 관련 정보를 삭제
 		removeClientInfo(clientFd, clientManager, reactor, timeoutHandler);
@@ -145,8 +149,10 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
 	} else if (status == WRITE_COMPLETE) {
 		timeoutHandler.updateActivity(clientFd, status);
 		clientManager.removePipeFromMap(pipeFd);
+		reactor.addReadEvent(clientFd);
 	} else if (status == WRITE_CONTINUE) {
 		timeoutHandler.updateActivity(clientFd, status);
+		reactor.addReadEvent(clientFd);
 		reactor.addWriteEvent(clientFd);
 	}
 }

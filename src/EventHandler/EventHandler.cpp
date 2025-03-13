@@ -144,6 +144,7 @@ EnumSesStatus	EventHandler::handleCgiReadEvent(ClientSession& clientSession) {
 
 	if (bytesRead == 0) {
 		close(pipeFd);
+        cgiProcessInfo.isProcessing = false;
 		//WNOHANG으로 wait
 		waitpid(cgiProcessInfo.pid_, &status, WNOHANG);
 		if (!WIFEXITED(status)) {

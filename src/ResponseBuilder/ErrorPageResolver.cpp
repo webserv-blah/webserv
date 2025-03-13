@@ -1,7 +1,7 @@
 #include "ErrorPageResolver.hpp"
 #include "../include/commonEnums.hpp"
-#include <algorithm>
 #include "file_utils.hpp"
+#include <algorithm>
 
 namespace ErrorPageResolver {
 	// 상태 코드에 따른 텍스트 설명을 반환하는 함수
@@ -20,6 +20,7 @@ namespace ErrorPageResolver {
 			case INTERNAL_SERVER_ERROR: return "Internal Server Error";
 			case NOT_IMPLEMENTED: return "Not Implemented";
 			case SERVICE_UNAVAILABLE: return "Service Unavailable";
+			case GATEWAY_TIMEOUT: return "Gateway Timeout";
 			default: return "Unknown Error";
 		}
 	}

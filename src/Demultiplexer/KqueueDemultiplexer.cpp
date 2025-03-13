@@ -57,6 +57,22 @@ void KqueueDemultiplexer::removeSocketImpl(int fd) {
 	changedEvents_.insert(changedEvents_.end(), changes, changes + 2);
 }
 
+// 읽기 이벤트를 추가 (cgi 처리가 완료되었을 시)
+void KqueueDemultiplexer::addReadEventImpl(int fd) {
+	struct kevent change;
+
+	EV_SET(&change, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+	changedEvents_.push_back(change);
+}
+
+// 읽기 이벤트를 제거(cgi 처리가 진행 중일 경우)
+void KqueueDemultiplexer::removeReadEventImpl(int fd) {
+	struct kevent change;
+	
+	EV_SET(&change, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+	changedEvents_.push_back(change);
+}
+
 // 쓰기 이벤트를 추가 (fd가 쓰기 가능할 때 감지)
 void KqueueDemultiplexer::addWriteEventImpl(int fd) {
 	struct kevent change;

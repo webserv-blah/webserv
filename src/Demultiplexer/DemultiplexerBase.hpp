@@ -12,6 +12,8 @@ class DemultiplexerBase {
 		int			waitForEvent(timespec* timeout); 
 		void		addSocket(int fd);
 		void		removeSocket(int fd);
+		void		addReadEvent(int fd);
+		void		removeReadEvent(int fd);
 		void		addWriteEvent(int fd);
 		void		removeWriteEvent(int fd);
 		int			getSocketFd(int idx);

@@ -37,6 +37,7 @@ std::string ResponseBuilder::getReasonPhrase(int errorCode) const {
 		case INTERNAL_SERVER_ERROR: return "Internal Server Error"; 	// 500: 내부 서버 오류
 		case NOT_IMPLEMENTED: return "Not Implemented";					// 501: 구현되지 않음
 		case SERVICE_UNAVAILABLE: return "Service Unavailable";			// 503: 서비스 이용 불가
+		case GATEWAY_TIMEOUT: return "Gateway Timeout";					// 504: 게이트웨이 시간 초과
 		default:  return "Error";                  						// 그 외: 일반 오류
 	}
 }

@@ -15,6 +15,8 @@ class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 		int			waitForEventImpl(timespec* timeout);
 		void		addSocketImpl(int fd);
 		void		removeSocketImpl(int fd);
+		void		addReadEventImpl(int fd);
+		void		removeReadEventImpl(int fd);
 		void		addWriteEventImpl(int fd);
 		void		removeWriteEventImpl(int fd);
 		int			getSocketFdImpl(int idx);

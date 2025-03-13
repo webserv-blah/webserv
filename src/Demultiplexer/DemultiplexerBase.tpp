@@ -27,6 +27,16 @@ void DemultiplexerBase<Derived>::removeSocket(int fd) {
 }
 
 template <typename Derived>
+void DemultiplexerBase<Derived>::addReadEvent(int fd) {
+	static_cast<Derived&>(*this).addReadEventImpl(fd);
+}
+
+template <typename Derived>
+void DemultiplexerBase<Derived>::removeReadEvent(int fd) {
+	static_cast<Derived&>(*this).removeReadEventImpl(fd);
+}
+
+template <typename Derived>
 void DemultiplexerBase<Derived>::addWriteEvent(int fd) {
 	static_cast<Derived&>(*this).addWriteEventImpl(fd);
 }

@@ -9,6 +9,7 @@ public:
 	pid_t pid_;
 	int outPipe_;
 	std::ostringstream	cgiResultBuffer;
+	bool	isProcessing;
 };
 
 #endif

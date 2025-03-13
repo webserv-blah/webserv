@@ -54,7 +54,9 @@ void TimeoutHandler::updateActivity(int fd, EnumSesStatus status) {
     }
 
     // 새로운 만료 정보 등록
-    time_t limit = (status == READ_CONTINUE) ? REQ_LIMIT : IDLE_LIMIT;
+    time_t limit = (status == READ_CONTINUE || \
+                    status == WAIT_FOR_CGI \
+                    ) ? REQ_LIMIT : IDLE_LIMIT;
     time_t newExpire;
     newExpire = cit->second + limit;
     TypeExpireQueueIter qit = expireQueue_.insert(std::make_pair(newExpire, fd));

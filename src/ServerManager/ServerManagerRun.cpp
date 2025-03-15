@@ -60,7 +60,7 @@ void ServerManager::addClientInfo(int clientFd, Demultiplexer& reactor, TimeoutH
 	// 클라이언트의 타임아웃 관리를 시작
 	timeoutHandler.addConnection(clientFd);
 	// 리액터에 클라이언트 소켓을 추가하여 이벤트 감시 대상에 포함
-	reactor.addSocket(clientFd);
+	reactor.addFd(clientFd);
 }
 
 // 클라이언트 연결 종료 또는 오류 발생 시 호출됩니다.
@@ -70,7 +70,7 @@ void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager,
 	// 타임아웃 관리 대상에서 클라이언트 삭제
 	timeoutHandler.removeConnection(clientFd);
 	// 리액터에서 클라이언트 소켓 제거
-	reactor.removeSocket(clientFd);
+	reactor.removeFd(clientFd);
 	DEBUG_LOG("[ServerManager]Removed Client Socket " << clientFd)
 }
 
@@ -108,7 +108,7 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
 	} else if (status == WAIT_FOR_CGI) {
 		timeoutHandler.updateActivity(fd, status);
-		reactor.addSocket(client->getCgiProcessInfo()->outPipe_);
+		reactor.addFd(client->getCgiProcessInfo()->outPipe_);
 		clientManager.addPipeMap(client->getCgiProcessInfo()->outPipe_, client->getClientFd());
 		reactor.removeReadEvent(fd);
 	} else if (status == WRITE_COMPLETE) {

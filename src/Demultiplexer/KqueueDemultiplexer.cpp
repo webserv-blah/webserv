@@ -14,7 +14,7 @@ KqueueDemultiplexer::KqueueDemultiplexer(std::set<int>& listenFds) : eventList_(
 	// 리스닝 소켓을 kqueue에 등록
 	std::set<int>::const_iterator it;
 	for (it = listenFds.begin(); it != listenFds.end(); ++it) {
-		addSocketImpl(*it);
+		addFdImpl(*it);
 	}
 }
 
@@ -41,7 +41,7 @@ int KqueueDemultiplexer::waitForEventImpl(timespec* timeout) {
 }
 
 // 소켓을 kqueue에 등록 (읽기 이벤트 및 예외 이벤트 추가)
-void KqueueDemultiplexer::addSocketImpl(int fd) {
+void KqueueDemultiplexer::addFdImpl(int fd) {
 	struct kevent change;
 
 	EV_SET(&change, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
@@ -49,7 +49,7 @@ void KqueueDemultiplexer::addSocketImpl(int fd) {
 }
 
 // 소켓을 kqueue에서 제거 (읽기, 예외, 쓰기 이벤트 삭제)
-void KqueueDemultiplexer::removeSocketImpl(int fd) {
+void KqueueDemultiplexer::removeFdImpl(int fd) {
 	struct kevent changes[2];
 
 	EV_SET(&changes[0], fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);   // 읽기 이벤트 제거

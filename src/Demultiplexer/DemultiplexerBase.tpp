@@ -17,13 +17,13 @@ int DemultiplexerBase<Derived>::waitForEvent(timespec* timeout) {
 }
 
 template <typename Derived>
-void DemultiplexerBase<Derived>::addSocket(int fd) {
-	static_cast<Derived&>(*this).addSocketImpl(fd);
+void DemultiplexerBase<Derived>::addFd(int fd) {
+	static_cast<Derived&>(*this).addFdImpl(fd);
 }
 
 template <typename Derived>
-void DemultiplexerBase<Derived>::removeSocket(int fd) {
-	static_cast<Derived&>(*this).removeSocketImpl(fd);
+void DemultiplexerBase<Derived>::removeFd(int fd) {
+	static_cast<Derived&>(*this).removeFdImpl(fd);
 }
 
 template <typename Derived>

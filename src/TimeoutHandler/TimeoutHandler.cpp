@@ -97,7 +97,7 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
         } else {
             //IDLE Timeout일 경우 나머지 리소스도 정리
             clientManager.removeClient(fd);
-            reactor.removeSocket(fd);
+            reactor.removeFd(fd);
         }
 
         // TimeoutHandler에서 관리하는 client 정보 삭제 및 정리

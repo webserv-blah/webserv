@@ -20,7 +20,7 @@ class EventHandler {
 		EnumSesStatus	handleClientReadEvent(ClientSession& clientSession);
 		EnumSesStatus 	handleClientWriteEvent(ClientSession& clientSession);
 		EnumSesStatus	handleCgiReadEvent(ClientSession& clientSession);
-		void			handleError(int statusCode, ClientSession& clientSession);
+		void			handleError(EnumStatusCode statusCode, ClientSession& clientSession);
 
 	private:
 		RequestParser	parser_;

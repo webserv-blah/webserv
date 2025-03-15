@@ -23,7 +23,7 @@ class ClientSession {
 
 		void					setListenFd(const int &listenFd);
 		void					setClientFd(const int &clientFd);
-		void					setErrorStatusCode(const int &statusCode);
+		void					setErrorStatusCode(const EnumStatusCode &statusCode);
 		void					setReqMsg(RequestMessage *reqMsg);
 		void					setConfig(const RequestConfig *config);
 		void					setReadBuffer(const std::string &remainData);
@@ -39,7 +39,7 @@ class ClientSession {
 		int						clientFd_;
 		std::string				clientIP_;
 
-		int						errorStatusCode_;
+		EnumStatusCode			errorStatusCode_;
 	
 		RequestMessage			*reqMsg_;
 	

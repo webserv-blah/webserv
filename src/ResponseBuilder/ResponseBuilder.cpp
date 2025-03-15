@@ -85,7 +85,7 @@ std::string ResponseBuilder::build(	int statusCode,
 	return assembleResponse(statusCode, reason, headers, body);	// 최종 응답 메시지 반환
 }
 
-std::string ResponseBuilder::buildError(int errorStatusCode, const RequestConfig& currConf) const {
+std::string ResponseBuilder::buildError(EnumStatusCode errorStatusCode, const RequestConfig& currConf) const {
 	// 에러 응답 메시지 생성
 	std::string errorReason = getReasonPhrase(errorStatusCode);	// 에러 코드에 따른 이유 구문 결정
 	std::map<std::string, std::string> headers;					// 헤더 저장용 맵

@@ -196,7 +196,7 @@ EnumSesStatus EventHandler::handleClientWriteEvent(ClientSession& clientSession)
 // 에러 응답 처리 함수
 // - 에러 상태 코드에 따라 적절한 에러 응답 메시지를 생성 및 전송합니다.
 //---------------------------------------------------------------------
-void EventHandler::handleError(int statusCode, ClientSession& clientSession) {
+void EventHandler::handleError(EnumStatusCode statusCode, ClientSession& clientSession) {
     // ResponseBuilder를 사용하여 상태 코드에 맞는 에러 응답 메시지 생성
     std::string errorMsg = responseBuilder_.buildError(statusCode, *clientSession.getConfig());
 

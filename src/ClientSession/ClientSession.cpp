@@ -60,7 +60,7 @@ void ClientSession::setClientFd(const int &clientFd) {
 	this->clientFd_ = clientFd;
 }
 
-void ClientSession::setErrorStatusCode(const int &statusCode) {
+void ClientSession::setErrorStatusCode(const EnumStatusCode &statusCode) {
 	this->errorStatusCode_ = statusCode;
 }
 

@@ -124,15 +124,15 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
 	int clientFd = clientManager.accessClientFd(pipeFd);
 	if (clientFd == -1) {
 		// 유효하지 않은 파이프 FD인 경우 경고 로깅 후 종료
-		webserv::throwError("Invalid Value", 
-		                 "No clientSession corresponding to pipeFd: " + utils::size_t_tos(pipeFd), 
+		webserv::logError(WARNING, "Invalid Value", 
+		                 "No clientSession corresponding to pipe fd: " + utils::size_t_tos(pipeFd), 
 		                 "ServerManager::processCgiReadEvent");
 		return;
 	}
 	ClientSession* client = clientManager.accessClientSession(clientFd);
 	if (!client) {
 		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
-		webserv::throwError("Invalid Value", 
+		webserv::logError(WARNING, "Invalid Value", 
 		                 "No clientSession corresponding to fd: " + utils::size_t_tos(clientFd), 
 		                 "ServerManager::processCgiReadEvent");
 		return;
@@ -173,7 +173,7 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
     // WAIT_FOR_CGI 상태가 아닌 경우 파이프를 리액터에서 제거
     if (status != WAIT_FOR_CGI) {
 		clientManager.removePipeFromMap(pipeFd);
-        reactor.removeFd(pipeFd);
+		reactor.removeFd(pipeFd);
     }
 }
 

@@ -13,7 +13,7 @@ class ClientSession {
 
 		int						getListenFd() const;
 		int						getClientFd() const;
-		int						getErrorStatusCode() const;
+		EnumStatusCode			getErrorStatusCode() const;
 		const RequestMessage	*getReqMsg() const;
 		const RequestConfig		*getConfig() const;
 		std::string				getReadBuffer() const;
@@ -42,8 +42,8 @@ class ClientSession {
 		EnumStatusCode			errorStatusCode_;
 	
 		RequestMessage			*reqMsg_;
-	
 		const RequestConfig		*config_;
+
 		const RequestConfig		*defConfig_;
 	
 		std::string				readBuffer_;

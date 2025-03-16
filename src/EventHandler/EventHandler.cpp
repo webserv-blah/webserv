@@ -98,7 +98,7 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
     } else if (status == REQUEST_ERROR) {
         // 요청 처리 도중 에러가 발생한 경우
         // Http 상태 코드(에러)를 가져와서 에러 응답 세팅
-        int statusCode = clientSession.getErrorStatusCode();
+        EnumStatusCode statusCode = clientSession.getErrorStatusCode();
         handleError(statusCode, clientSession);
         sendResponse(clientSession);
         status = CONNECTION_CLOSED;
@@ -133,33 +133,23 @@ EnumSesStatus	EventHandler::handleCgiReadEvent(ClientSession& clientSession) {
     CgiProcessInfo&	cgiProcessInfo = clientSession.accessCgiProcessInfo();
     int pipeFd = cgiProcessInfo.outPipe_;
 
-	std::ostringstream	&cgiResultBuffer = cgiProcessInfo.cgiResultBuffer;
+	std::ostringstream	&cgiResultBuffer = cgiProcessInfo.cgiResultBuffer_;
 	char	buffer[4096];                 // 읽기 버퍼 생성
 	ssize_t	bytesRead;
-	int		status;
 
 	while ((bytesRead = read(pipeFd, buffer, sizeof(buffer))) > 0) {
 		cgiResultBuffer.write(buffer, bytesRead);  // 버퍼에서 읽은 데이터를 스트림에 기록
 	}
 
+    // 읽기가 완료된 경우
 	if (bytesRead == 0) {
-		close(pipeFd);
-        cgiProcessInfo.isProcessing = false;
-		//WNOHANG으로 wait
-		waitpid(cgiProcessInfo.pid_, &status, WNOHANG);
-		if (!WIFEXITED(status)) {
-            //자식 프로세스 종료
-			kill(cgiProcessInfo.pid_, SIGKILL);
-			webserv::logError(ERROR, "CGI Process Error", 
-		                 "CGI Process Error", 
-		                 "ServerManager::processCgiReadEvent");
-		}
-        clientSession.setWriteBuffer(responseBuilder_.AddHeaderForCgi(cgiProcessInfo.cgiResultBuffer.str()));
-        cgiResultBuffer.str("");
+		clientSession.accessCgiProcessInfo().cleanup();
+        clientSession.setWriteBuffer(responseBuilder_.AddHeaderForCgi(cgiResultBuffer.str()));
+        cgiProcessInfo.reset();
         return sendResponse(clientSession);
 	}
-    // bytesRead가 -1인 경우
-	return WAIT_FOR_CGI;
+    // bytesRead < 0인 경우
+    return WAIT_FOR_CGI;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────
@@ -187,11 +177,20 @@ std::string EventHandler::handleRedirection(const RequestConfig& conf) {
 EnumSesStatus EventHandler::handleClientWriteEvent(ClientSession& clientSession) {
     // 클라이언트에게 응답 전송을 시도하고, 전송 결과 상태를 반환
     EnumSesStatus status = sendResponse(clientSession);
-    if (clientSession.getErrorStatusCode() == REQUEST_TIMEOUT) 
-        status = CONNECTION_CLOSED;
+    EnumStatusCode HttpStatusCode = clientSession.getErrorStatusCode();
+    switch (HttpStatusCode) {
+        case REQUEST_TIMEOUT:
+        case CONTENT_TOO_LARGE:
+        case INTERNAL_SERVER_ERROR:
+        case SERVICE_UNAVAILABLE:
+        case GATEWAY_TIMEOUT:
+            status = CONNECTION_CLOSED;
+            break;
+        default:
+            break;
+    }
     return status;
 }
-
 //---------------------------------------------------------------------
 // 에러 응답 처리 함수
 // - 에러 상태 코드에 따라 적절한 에러 응답 메시지를 생성 및 전송합니다.
@@ -202,4 +201,6 @@ void EventHandler::handleError(EnumStatusCode statusCode, ClientSession& clientS
 
     // 생성된 에러 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
     clientSession.setWriteBuffer(errorMsg);
+    // 클라이언트 세션의 에러 상태 코드 설정
+    clientSession.setErrorStatusCode(statusCode);
 }

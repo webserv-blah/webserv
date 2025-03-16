@@ -21,7 +21,7 @@ int ClientSession::getClientFd() const {
 	return this->clientFd_;
 }
 
-int ClientSession::getErrorStatusCode() const {
+EnumStatusCode ClientSession::getErrorStatusCode() const {
 	return this->errorStatusCode_;
 }
 

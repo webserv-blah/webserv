@@ -13,12 +13,13 @@ class KqueueDemultiplexer : public DemultiplexerBase<KqueueDemultiplexer> {
 		KqueueDemultiplexer(std::set<int>& listenFds);
 		~KqueueDemultiplexer();
 		int			waitForEventImpl(timespec* timeout);
-		void		addFdImpl(int fd);
-		void		removeFdImpl(int fd);
+
 		void		addReadEventImpl(int fd);
 		void		removeReadEventImpl(int fd);
 		void		addWriteEventImpl(int fd);
 		void		removeWriteEventImpl(int fd);
+		void		removeFdImpl(int fd);
+
 		int			getSocketFdImpl(int idx);
 		EnumEvent	getEventTypeImpl(int idx);
 	

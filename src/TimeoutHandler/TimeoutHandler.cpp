@@ -7,7 +7,9 @@ TimeoutHandler::TimeoutHandler() {
 }
 
 TimeoutHandler::~TimeoutHandler() {
-
+    connections_.clear();
+    expireQueue_.clear();
+    expireMap_.clear();
 }
 
 // 이벤트루프의 타임아웃 주기 관리를 위해 가장 임박한 만료시간 반환 메소드
@@ -84,24 +86,26 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
 
         ClientSession* client = clientManager.accessClientSession(fd);
         if (!client) { 
-            std::cerr << "[Error][TimeoutHandler][checkTimeouts] Invalid Client Fd" << std::endl;
+            webserv::throwError("Invalid Value", 
+                "No clientSession corresponding to fd: " 
+                + utils::int_tos(fd), "TimeoutHandler::checkTimeouts");
         } else if (client->isReceiving()) {
             // Request Timeout일 경우 HTTP Timeout 처리
-            if (client->accessCgiProcessInfo().isProcessing) {
-                eventHandler.handleError(504, *client);
-                client->accessCgiProcessInfo().isProcessing = 0;
+            if (client->accessCgiProcessInfo().isProcessing_) {
+                eventHandler.handleError(GATEWAY_TIMEOUT, *client);
+                client->accessCgiProcessInfo().cleanup();
+                clientManager.removePipeFromMap(client->accessCgiProcessInfo().outPipe_);
+                client->accessCgiProcessInfo().reset();
             } else {
-                eventHandler.handleError(408, *client);
+                eventHandler.handleError(REQUEST_TIMEOUT, *client);
             }
             reactor.addWriteEvent(fd);
         } else {
             //IDLE Timeout일 경우 나머지 리소스도 정리
             clientManager.removeClient(fd);
             reactor.removeFd(fd);
+            removeConnection(fd, it);
         }
-
-        // TimeoutHandler에서 관리하는 client 정보 삭제 및 정리
-        removeConnection(fd, it);
     }
 }
 

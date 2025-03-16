@@ -17,11 +17,6 @@ int DemultiplexerBase<Derived>::waitForEvent(timespec* timeout) {
 }
 
 template <typename Derived>
-void DemultiplexerBase<Derived>::addFd(int fd) {
-	static_cast<Derived&>(*this).addFdImpl(fd);
-}
-
-template <typename Derived>
 void DemultiplexerBase<Derived>::removeFd(int fd) {
 	static_cast<Derived&>(*this).removeFdImpl(fd);
 }

@@ -122,7 +122,7 @@ std::string CgiHandler::handleRequest(ClientSession& clientSession) {
 	buildArg(parts, argv);
 	// CGI 실행
 	if (executeCgi(argv, cgiEnv, requestBody, clientSession.accessCgiProcessInfo().pid_, clientSession.accessCgiProcessInfo().outPipe_)) {
-		clientSession.accessCgiProcessInfo().isProcessing = true;
+		clientSession.accessCgiProcessInfo().isProcessing_ = true;
 		return "";
 	}
 	return responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf);

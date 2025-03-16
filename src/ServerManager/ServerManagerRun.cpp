@@ -60,7 +60,7 @@ void ServerManager::addClientInfo(int clientFd, Demultiplexer& reactor, TimeoutH
 	// 클라이언트의 타임아웃 관리를 시작
 	timeoutHandler.addConnection(clientFd);
 	// 리액터에 클라이언트 소켓을 추가하여 이벤트 감시 대상에 포함
-	reactor.addFd(clientFd);
+	reactor.addReadEvent(clientFd);
 }
 
 // 클라이언트 연결 종료 또는 오류 발생 시 호출됩니다.
@@ -108,9 +108,8 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
 	} else if (status == WAIT_FOR_CGI) {
 		timeoutHandler.updateActivity(fd, status);
-		reactor.addFd(client->getCgiProcessInfo()->outPipe_);
+		reactor.addReadEvent(client->getCgiProcessInfo()->outPipe_);
 		clientManager.addPipeMap(client->getCgiProcessInfo()->outPipe_, client->getClientFd());
-		reactor.removeReadEvent(fd);
 	} else if (status == WRITE_COMPLETE) {
 		timeoutHandler.updateActivity(fd, status);
 	} else if (status == WRITE_CONTINUE) {
@@ -124,37 +123,58 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
 	// 파일 디스크립터에 해당하는 클라이언트 세션을 획득
 	int clientFd = clientManager.accessClientFd(pipeFd);
 	if (clientFd == -1) {
-		//에러처리
-		webserv::logError(WARNING, "Invalid Value", 
+		// 유효하지 않은 파이프 FD인 경우 경고 로깅 후 종료
+		webserv::throwError("Invalid Value", 
 		                 "No clientSession corresponding to pipeFd: " + utils::size_t_tos(pipeFd), 
 		                 "ServerManager::processCgiReadEvent");
+		return;
 	}
 	ClientSession* client = clientManager.accessClientSession(clientFd);
 	if (!client) {
 		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
-		webserv::logError(WARNING, "Invalid Value", 
+		webserv::throwError("Invalid Value", 
 		                 "No clientSession corresponding to fd: " + utils::size_t_tos(clientFd), 
-		                 "ServerManager::processClientReadEvent");
+		                 "ServerManager::processCgiReadEvent");
 		return;
 	}
 	// CGI로부터 데이터를 읽어 처리한 후 반환 상태를 확인
 	EnumSesStatus status = eventHandler.handleCgiReadEvent(*client);
-	if (status == WAIT_FOR_CGI) {
-		return ;
-	}
-	if (status == CONNECTION_CLOSED) { 
-		// 클라이언트가 연결을 종료한 경우, 관련 정보를 삭제
-		removeClientInfo(clientFd, clientManager, reactor, timeoutHandler);
+
+	 // 파이프 처리 결과에 따른 상태 처리
+	 switch (status) {
+        case WAIT_FOR_CGI:
+            // CGI 작업이 진행 중이므로 계속 대기
+            break;
+            
+        case CONNECTION_CLOSED:
+            // 연결이 종료된 경우 클라이언트와 파이프 모두 정리
+            removeClientInfo(clientFd, clientManager, reactor, timeoutHandler);
+            break;
+            
+        case WRITE_COMPLETE:
+            // 응답 준비 완료, 클라이언트 활성 시간 갱신
+            timeoutHandler.updateActivity(clientFd, status);
+            break;
+            
+        case WRITE_CONTINUE:
+            // 클라이언트에 데이터 쓰기 준비
+            timeoutHandler.updateActivity(clientFd, status);
+            reactor.addWriteEvent(clientFd);
+            break;
+            
+        default:
+            // 예상치 못한 상태 처리
+            webserv::throwError("Unexpected Status", 
+                             "Unhandled status code: " + utils::size_t_tos(status), 
+                             "ServerManager::processCgiReadEvent");
+            break;
+    }
+    
+    // WAIT_FOR_CGI 상태가 아닌 경우 파이프를 리액터에서 제거
+    if (status != WAIT_FOR_CGI) {
 		clientManager.removePipeFromMap(pipeFd);
-	} else if (status == WRITE_COMPLETE) {
-		timeoutHandler.updateActivity(clientFd, status);
-		clientManager.removePipeFromMap(pipeFd);
-		reactor.addReadEvent(clientFd);
-	} else if (status == WRITE_CONTINUE) {
-		timeoutHandler.updateActivity(clientFd, status);
-		reactor.addReadEvent(clientFd);
-		reactor.addWriteEvent(clientFd);
-	}
+        reactor.removeFd(pipeFd);
+    }
 }
 
 // 클라이언트 소켓에 쓰기(전송) 이벤트가 발생한 경우 데이터를 전송합니다.
@@ -178,4 +198,5 @@ void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager
 		// 데이터 전송이 완료된 경우, 리액터에서 쓰기 이벤트를 제거하여 더 이상 쓰기 이벤트를 감시하지 않음
 		reactor.removeWriteEvent(fd);
 	}
+	// status == WRITE_CONTINUE인 경우 계속 쓰기 이벤트를 감시
 }

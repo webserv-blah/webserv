@@ -124,9 +124,10 @@ std::string ResponseBuilder::AddHeaderForCgi(const std::string &cgiOutput) const
     // CGI가 출력한 헤더 추가
     oss << cgiHeaders << "\r\n\r\n";
 
-	// 헤더 디버그 로그 출력
-	DEBUG_LOG("\n-CGI Response-");
-	DEBUG_LOG(oss.str());
+	#ifdef DEBUG
+		std::cout << "[ResponseBuilder]CGI Response Message" << std::endl;
+		std::cout << oss.str() << std::endl;
+	#endif
 
     // 본문 추가
     oss << body;

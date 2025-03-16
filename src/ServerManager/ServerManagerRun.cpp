@@ -42,6 +42,7 @@ void ServerManager::run() {
 					processClientReadEvent(
 						fd, clientManager, eventHandler, timeoutHandler, reactor);
 				} else {
+					// CGI 파이프에서 읽기 이벤트 발생: CGI로부터 데이터 수신 처리
 					processCgiReadEvent(fd, clientManager, eventHandler, timeoutHandler, reactor);
 				}
 			} else if (type == WRITE_EVENT) {
@@ -125,12 +126,10 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
 	// 파일 디스크립터에 해당하는 클라이언트 세션을 획득
 	int clientFd = clientManager.accessClientFd(pipeFd);
 	if (clientFd == -1) {
-		// 유효하지 않은 파이프 FD인 경우 경고 로깅 후 종료
-		webserv::logError(WARNING, "Invalid Value", 
-		                 "No clientSession corresponding to pipe fd: " + utils::size_t_tos(pipeFd), 
-		                 "ServerManager::processCgiReadEvent");
+		// 유효하지 않은 파이프 FD인 경우 종료
 		return;
 	}
+	DEBUG_LOG("[ServerManager]READ Event on CGI Pipe: fd " << pipeFd)
 	ClientSession* client = clientManager.accessClientSession(clientFd);
 	if (!client) {
 		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료

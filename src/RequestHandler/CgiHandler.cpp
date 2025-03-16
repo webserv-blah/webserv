@@ -201,6 +201,8 @@ bool CgiHandler::executeCgi(std::vector<std::string>& arg,
 		childPid = pid;
 		handleParent(inPipe, outPipe, requestBody);  // 자식 관리 및 결과 수신
 	}
+	DEBUG_LOG("[CgiHandler]CGI process started with PID " + utils::int_tos(pid));
+	DEBUG_LOG("[CgiHandler]Output pipe descriptor: " + utils::int_tos(outPipe_));
 	return true;
 }
 

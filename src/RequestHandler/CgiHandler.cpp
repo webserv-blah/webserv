@@ -240,15 +240,15 @@ void CgiHandler::executeChild(std::vector<std::string>& arg, std::vector<std::st
 		envp[i] = const_cast<char*>(cgiEnv[i].c_str());  // 각 환경 변수를 char*로 변환
 	}
 
-	// argv와 cgiEnv를 모두 디버그를 위해 출력
-	DEBUG_LOG("[CgiHandler]argv:");
-	for (std::vector<std::string>::size_type i = 0; i < arg.size(); ++i) {
-		DEBUG_LOG("[CgiHandler]  " + arg[i]);
-	}
-	DEBUG_LOG("[CgiHandler]envp:");
-	for (std::vector<std::string>::size_type i = 0; i < cgiEnv.size(); ++i) {
-		DEBUG_LOG("[CgiHandler]  " + cgiEnv[i]);
-	}
+	// // argv와 cgiEnv를 모두 디버그를 위해 출력
+	// DEBUG_LOG("[CgiHandler]argv:");
+	// for (std::vector<std::string>::size_type i = 0; i < arg.size(); ++i) {
+	// 	DEBUG_LOG("[CgiHandler]  " + arg[i]);
+	// }
+	// DEBUG_LOG("[CgiHandler]envp:");
+	// for (std::vector<std::string>::size_type i = 0; i < cgiEnv.size(); ++i) {
+	// 	DEBUG_LOG("[CgiHandler]  " + cgiEnv[i]);
+	// }
 
 	execve(relativeToAbsolute(argv[0]).c_str(), &argv[0], &envp[0]);
 	_exit(1);                           // 실행 실패 시 자식 프로세스 종료

@@ -133,9 +133,9 @@ void RequestMessage::printResult() const {
 	
 	std::cout <<"\033[37;2muri: \033[0m";
 	std::cout <<this->targetURI_<<";"<<std::endl;
-	this->printFields();
-	this->printBody();
-	this->printMetaData();
+	// this->printFields();
+	// this->printBody();
+	// this->printMetaData();
 }
 
 void RequestMessage::printFields(void) const {

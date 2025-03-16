@@ -73,14 +73,16 @@ std::string ResponseBuilder::build(	int statusCode,
 		headers["Content-Length"] = contentLengthBuffer;
 	}
 
-	DEBUG_LOG("-Response-");
-	DEBUG_LOG("\nStatusCode: " << statusCode);
-	DEBUG_LOG("\nReason: " << reason);
-	DEBUG_LOG("\nHeaders: ");
-	for (std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it) {
-		DEBUG_LOG(it->first << ": " << it->second);
-	}
-	DEBUG_LOG("\n");
+	#ifdef DEBUG
+		std::cout << "[ResponseBuilder]Response Message" << std::endl;
+		std::cout << "StatusCode: " << statusCode << std::endl;
+		std::cout << "Reason: " << reason << std::endl;
+		std::cout << "Headers: " << std::endl;
+		for (std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it) {
+			std::cout << it->first << ": " << it->second << std::endl;
+		}
+		std::cout << std::endl;
+	#endif
 
 	return assembleResponse(statusCode, reason, headers, body);	// 최종 응답 메시지 반환
 }

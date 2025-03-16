@@ -17,15 +17,7 @@
 void signalHandler(int signum);
 void setupSignalHandlers();
 
-namespace webserv
-{
-
-void stringTrim(std::string& str);
-void stringToUppercase(std::string& str);
-void stringToLowercase(std::string& str);
-void stringSplit(const std::string& str, char delim, std::vector<std::string>& tokens);
-void appendString(std::string& target, const std::vector<char>& source, size_t len);
-void intToString(int num, std::string& str);
+namespace webserv {
 
 std::string errorMessage(EnumErrorLevel level, const std::string& cause, 
                         const std::string& context, const std::string& source);

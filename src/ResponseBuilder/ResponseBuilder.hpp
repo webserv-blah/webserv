@@ -3,6 +3,7 @@
 
 #include "../GlobalConfig/GlobalConfig.hpp"
 #include "ErrorPageResolver.hpp"
+#include "commonEnums.hpp"
 
 #include <map>
 #include <string>
@@ -41,7 +42,6 @@ private:
 		const std::string& body) const;
 	
 	// 상태 코드에 대응하는 Reason Phrase를 반환하는 헬퍼함수
-	std::string getReasonPhrase(int statusCode) const;
 	
 	// 전체 HTTP 응답 문자열을 조립하는 헬퍼함수
 	// @param statusCode    HTTP 상태 코드

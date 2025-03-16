@@ -2,6 +2,7 @@
 #include "CgiProcessInfo.hpp"
 #include "../include/errorUtils.hpp"
 #include <unistd.h>
+#include "enumToStr.hpp"
 
 // 서버의 메인 이벤트 루프를 실행합니다.
 // - EventHandler: 클라이언트 및 서버 이벤트 처리를 담당합니다.
@@ -116,6 +117,7 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 		timeoutHandler.updateActivity(fd, status);
 		reactor.addWriteEvent(fd);
 	}
+	DEBUG_LOG("[ServerManager]Processed Client Read Event: fd " << fd << ", status " << enumToStr::EnumSesStatusToStr(status))
 }
 
 void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager,
@@ -175,6 +177,7 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
 		clientManager.removePipeFromMap(pipeFd);
 		reactor.removeFd(pipeFd);
     }
+	DEBUG_LOG("[ServerManager]Processed CGI Read Event: pipeFd " << pipeFd << ", status " << enumToStr::EnumSesStatusToStr(status))
 }
 
 // 클라이언트 소켓에 쓰기(전송) 이벤트가 발생한 경우 데이터를 전송합니다.
@@ -199,4 +202,5 @@ void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager
 		reactor.removeWriteEvent(fd);
 	}
 	// status == WRITE_CONTINUE인 경우 계속 쓰기 이벤트를 감시
+	DEBUG_LOG("[ServerManager]Processed Client Write Event: fd " << fd << ", status " << enumToStr::EnumSesStatusToStr(status))
 }

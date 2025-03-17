@@ -46,11 +46,7 @@ void KqueueDemultiplexer::removeFdImpl(int fd) {
 
 	EV_SET(&changes[0], fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);   // 읽기 이벤트 제거
 	EV_SET(&changes[1], fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);  // 쓰기 이벤트 제거
-	
-	// 변경 사항을 즉시 적용하여 fd 재사용 문제를 방지
-	kevent(kq_, changes, 2, NULL, 0, NULL);
-	
-	// changedEvents_에 추가할 필요 없음 (즉시 적용했기 때문)
+	changedEvents_.insert(changedEvents_.end(), changes, changes + 2);
 }
 
 // 소켓을 kqueue에 등록 (읽기 이벤트 추가)

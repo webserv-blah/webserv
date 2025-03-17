@@ -11,6 +11,7 @@
 #include <sstream>                      // 문자열 스트림 사용을 위한 헤더 포함
 #include <string>                       // 문자열 사용을 위한 헤더 포함
 #include <vector>                       // 벡터 사용을 위한 헤더 포함
+#include <fcntl.h>						 // 파일 제어 관련 헤더 포함
 
 using namespace FileUtilities;          // FileUtilities 네임스페이스 사용
 
@@ -183,6 +184,14 @@ bool CgiHandler::executeCgi(std::vector<std::string>& arg,
 		close(inPipe[0]); close(inPipe[1]);  // 입력 파이프 닫음
 		DEBUG_LOG("[CgiHandler]Failed to create output pipe");
 		webserv::logSystemError(ERROR, "pipe", "CgiHandler::executeCgi");
+		return false;
+	}
+
+	// 출력 파이프를 논블로킹 모드로 설정
+	if (fcntl(outPipe[0], F_SETFL, O_NONBLOCK) == -1) {
+		closePipes(inPipe, outPipe);
+		DEBUG_LOG("[CgiHandler]Failed to set output pipe to non-blocking");
+		webserv::logSystemError(ERROR, "fcntl", "CgiHandler::executeCgi");
 		return false;
 	}
 

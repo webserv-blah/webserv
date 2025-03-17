@@ -1,9 +1,10 @@
 #include "EventHandler.hpp"
+#include "errorUtils.hpp"
 #include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "errorUtils.hpp"
+#include <fcntl.h>
 
 // ResponseBuilder를 인자로 하여 정적 핸들러와 CGI 핸들러를 초기화합니다.
 EventHandler::EventHandler() : staticHandler_(responseBuilder_), cgiHandler_(responseBuilder_) {
@@ -34,6 +35,15 @@ int EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
         return -1;
     }
 
+    // 논블로킹 플래그를 추가하여 파일 디스크립터의 모드를 변경합니다.
+    if (fcntl(clientFd, F_SETFL, O_NONBLOCK) == -1) {
+        // 논블로킹 모드 설정 실패 - 시스템 호출 에러를 로깅
+        webserv::logSystemError(ERROR, "fcntl", 
+                              "Client fd: " + utils::size_t_tos(clientFd), 
+                              "EventHandler::handleServerReadEvent");
+        return -1;
+    }
+    
     // 클라이언트의 IP 주소 문자열로 변환
     std::string clientIP(inet_ntoa(clientAddr.sin_addr));
 

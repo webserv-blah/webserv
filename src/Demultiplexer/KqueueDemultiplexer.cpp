@@ -66,9 +66,7 @@ void KqueueDemultiplexer::removeReadEventImpl(int fd) {
 	struct kevent change;
 	
 	EV_SET(&change, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-
-	// 변경 사항을 즉시 적용하여 fd 재사용 문제를 방지
-	kevent(kq_, &change, 1, NULL, 0, NULL);
+	changedEvents_.push_back(change);
 }
 
 // 쓰기 이벤트를 추가 (fd가 쓰기 가능할 때 감지)
@@ -84,8 +82,7 @@ void KqueueDemultiplexer::removeWriteEventImpl(int fd) {
 	struct kevent change;
 	
 	EV_SET(&change, fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-	// 변경 사항을 즉시 적용하여 fd 재사용 문제를 방지
-	kevent(kq_, &change, 1, NULL, 0, NULL);
+	changedEvents_.push_back(change);
 }
 
 // 특정 이벤트의 타입을 반환

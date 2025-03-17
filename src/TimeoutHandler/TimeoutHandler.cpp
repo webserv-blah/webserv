@@ -93,12 +93,12 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
             // Request Timeout일 경우 HTTP Timeout 처리
             if (client->accessCgiProcessInfo().isProcessing_) {
                 eventHandler.handleError(GATEWAY_TIMEOUT, *client);
-                client->accessCgiProcessInfo().cleanup();
                 clientManager.removePipeFromMap(client->accessCgiProcessInfo().outPipe_);
-                client->accessCgiProcessInfo().reset();
+                client->accessCgiProcessInfo().cleanup();
             } else {
                 eventHandler.handleError(REQUEST_TIMEOUT, *client);
             }
+            DEBUG_LOG("[TimeoutHandler]addWriteEvent: clientFd " << fd)
             reactor.addWriteEvent(fd);
         } else {
             //IDLE Timeout일 경우 나머지 리소스도 정리

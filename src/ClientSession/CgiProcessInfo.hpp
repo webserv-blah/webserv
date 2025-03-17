@@ -26,9 +26,6 @@ public:
             //자식 프로세스 종료
 			kill(pid_, SIGKILL);
 		}
-	}
-
-	void reset() {
 		pid_ = -1;
 		outPipe_ = -1;
 		cgiResultBuffer_.str("");

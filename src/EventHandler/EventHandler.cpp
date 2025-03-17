@@ -143,9 +143,8 @@ EnumSesStatus	EventHandler::handleCgiReadEvent(ClientSession& clientSession) {
 
     // 읽기가 완료된 경우
 	if (bytesRead == 0) {
-		clientSession.accessCgiProcessInfo().cleanup();
         clientSession.setWriteBuffer(responseBuilder_.AddHeaderForCgi(cgiResultBuffer.str()));
-        cgiProcessInfo.reset();
+		cgiProcessInfo.cleanup();
         return sendResponse(clientSession);
 	}
     // bytesRead < 0인 경우

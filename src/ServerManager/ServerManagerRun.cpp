@@ -91,14 +91,14 @@ void ServerManager::processServerReadEvent(int fd, ClientManager& clientManager,
 }
 
 // 기존 클라이언트 소켓에서 읽기 이벤트가 발생한 경우, 클라이언트 데이터를 처리합니다.
-void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
+void ServerManager::processClientReadEvent(int clientFd, ClientManager& clientManager,
 	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
 	// 파일 디스크립터에 해당하는 클라이언트 세션을 획득
-	ClientSession* client = clientManager.accessClientSession(fd);
+	ClientSession* client = clientManager.accessClientSession(clientFd);
 	if (!client) {
 		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
 		webserv::logError(WARNING, "Invalid Value", 
-		                 "No clientSession corresponding to fd: " + utils::size_t_tos(fd), 
+		                 "No clientSession corresponding to clientFd: " + utils::size_t_tos(clientFd), 
 		                 "ServerManager::processClientReadEvent");
 		return;
 	}
@@ -107,18 +107,19 @@ void ServerManager::processClientReadEvent(int fd, ClientManager& clientManager,
 	EnumSesStatus status = eventHandler.handleClientReadEvent(*client);
 	if (status == CONNECTION_CLOSED) { 
 		// 클라이언트가 연결을 종료한 경우, 관련 정보를 삭제
-		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
+		removeClientInfo(clientFd, clientManager, reactor, timeoutHandler);
 	} else if (status == WAIT_FOR_CGI) {
-		timeoutHandler.updateActivity(fd, status);
+		timeoutHandler.updateActivity(clientFd, status);
 		reactor.addReadEvent(client->getCgiProcessInfo()->outPipe_);
 		clientManager.addPipeMap(client->getCgiProcessInfo()->outPipe_, client->getClientFd());
 	} else if (status == WRITE_COMPLETE) {
-		timeoutHandler.updateActivity(fd, status);
+		timeoutHandler.updateActivity(clientFd, status);
 	} else if (status == WRITE_CONTINUE) {
-		timeoutHandler.updateActivity(fd, status);
-		reactor.addWriteEvent(fd);
+		timeoutHandler.updateActivity(clientFd, status);
+		DEBUG_LOG("[ServerManager]addWriteEvent: clientFd " << clientFd)
+		reactor.addWriteEvent(clientFd);
 	}
-	DEBUG_LOG("[ServerManager]Processed Client Read Event: fd " << fd << ", status " << enumToStr::EnumSesStatusToStr(status))
+	DEBUG_LOG("[ServerManager]Processed Client Read Event: fd " << clientFd << ", status " << enumToStr::EnumSesStatusToStr(status))
 }
 
 void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager,
@@ -126,7 +127,10 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
 	// 파일 디스크립터에 해당하는 클라이언트 세션을 획득
 	int clientFd = clientManager.accessClientFd(pipeFd);
 	if (clientFd == -1) {
-		// 유효하지 않은 파이프 FD인 경우 종료
+		// 유효하지 않은 파이프 FD인 경우 경고 로깅 후 종료
+		webserv::logError(WARNING, "Invalid Value", 
+			"No clientSession corresponding to pipe fd: " + utils::size_t_tos(pipeFd), 
+			"ServerManager::processCgiReadEvent");
 		return;
 	}
 	DEBUG_LOG("[ServerManager]READ Event on CGI Pipe: fd " << pipeFd)
@@ -160,6 +164,7 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
         case WRITE_CONTINUE:
             // 클라이언트에 데이터 쓰기 준비
             timeoutHandler.updateActivity(clientFd, status);
+			DEBUG_LOG("[ServerManager]addWriteEvent: clientFd " << clientFd)
             reactor.addWriteEvent(clientFd);
             break;
             

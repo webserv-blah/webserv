@@ -17,7 +17,6 @@ void ServerManager::run() {
 	ClientManager					clientManager;
 	Demultiplexer					reactor(listenFds_);
 	TimeoutHandler					timeoutHandler;
-	std::map<int, int>				pipeToClientSessionMap;
 
 	while (isServerRunning()) {
 		// 발생한 이벤트의 개수를 확인
@@ -130,9 +129,9 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
 	int clientFd = clientManager.accessClientFd(pipeFd);
 	if (clientFd == -1) {
 		// 유효하지 않은 파이프 FD인 경우 경고 로깅 후 종료
-		webserv::logError(WARNING, "Invalid Value", 
-			"No clientSession corresponding to pipe fd: " + utils::size_t_tos(pipeFd), 
-			"ServerManager::processCgiReadEvent");
+		// webserv::logError(WARNING, "Invalid Value", 
+		// 	"No clientSession corresponding to pipe fd: " + utils::size_t_tos(pipeFd), 
+		// 	"ServerManager::processCgiReadEvent");
 		return;
 	}
 	ClientSession* client = clientManager.accessClientSession(clientFd);
@@ -192,9 +191,9 @@ void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager
 	ClientSession* client = clientManager.accessClientSession(fd);
 	if (!client) {
 		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
-		webserv::logError(WARNING, "Invalid Value", 
-		                 "No clientSession corresponding to fd: " + utils::size_t_tos(fd), 
-		                 "ServerManager::processClientWriteEvent");
+		// webserv::logError(WARNING, "Invalid Value", 
+		//                  "No clientSession corresponding to fd: " + utils::size_t_tos(fd), 
+		//                  "ServerManager::processClientWriteEvent");
 		return;
 	}
 

@@ -82,7 +82,6 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
 
         // 만료된 연결 응답처리
         int fd = it->second;
-		DEBUG_LOG("[TimeoutHandler]Connection Expired : " << fd)
 
         ClientSession* client = clientManager.accessClientSession(fd);
         if (!client) { 
@@ -92,16 +91,20 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
         } else if (client->isReceiving()) {
             // Request Timeout일 경우 HTTP Timeout 처리
             if (client->accessCgiProcessInfo().isProcessing_) {
+                DEBUG_LOG("[TimeoutHandler]Timeout on CGI: clientFd " << fd)
                 eventHandler.handleError(GATEWAY_TIMEOUT, *client);
                 clientManager.removePipeFromMap(client->accessCgiProcessInfo().outPipe_);
+                DEBUG_LOG("[EventHandler]Close Pipe: " + utils::int_tos(client->accessCgiProcessInfo().outPipe_))
                 client->accessCgiProcessInfo().cleanup();
             } else {
+                DEBUG_LOG("[TimeoutHandler]Timeout on Request: clientFd " << fd)
                 eventHandler.handleError(REQUEST_TIMEOUT, *client);
             }
             DEBUG_LOG("[TimeoutHandler]addWriteEvent: clientFd " << fd)
             reactor.addWriteEvent(fd);
         } else {
             //IDLE Timeout일 경우 나머지 리소스도 정리
+            DEBUG_LOG("[TimeoutHandler]Timeout on IDLE: clientFd " << fd)
             clientManager.removeClient(fd);
             reactor.removeFd(fd);
             removeConnection(fd, it);

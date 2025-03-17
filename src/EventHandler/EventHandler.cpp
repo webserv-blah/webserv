@@ -154,6 +154,7 @@ EnumSesStatus	EventHandler::handleCgiReadEvent(ClientSession& clientSession) {
     // 읽기가 완료된 경우
 	if (bytesRead == 0) {
         clientSession.setWriteBuffer(responseBuilder_.AddHeaderForCgi(cgiResultBuffer.str()));
+        DEBUG_LOG("[EventHandler]Close Pipe: " + utils::int_tos(cgiProcessInfo.outPipe_))
 		cgiProcessInfo.cleanup();
         return sendResponse(clientSession);
 	}

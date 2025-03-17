@@ -42,11 +42,12 @@ void ServerManager::run() {
 					processClientReadEvent(
 						fd, clientManager, eventHandler, timeoutHandler, reactor);
 				} else {
+					DEBUG_LOG("[ServerManager]READ Event on CGI Pipe: fd " << fd)
 					// CGI 파이프에서 읽기 이벤트 발생: CGI로부터 데이터 수신 처리
 					processCgiReadEvent(fd, clientManager, eventHandler, timeoutHandler, reactor);
 				}
 			} else if (type == WRITE_EVENT) {
-				DEBUG_LOG("[ServerManager]WRITE Event on Client Socket: fd " << fd)
+				DEBUG_LOG("[ServerManager]WRITE Event on fd " << fd)
 				// 쓰기 이벤트 발생: 클라이언트에게 데이터를 전송하는 작업 처리
 				processClientWriteEvent(
 					fd, clientManager, eventHandler, timeoutHandler, reactor);
@@ -110,6 +111,7 @@ void ServerManager::processClientReadEvent(int clientFd, ClientManager& clientMa
 		removeClientInfo(clientFd, clientManager, reactor, timeoutHandler);
 	} else if (status == WAIT_FOR_CGI) {
 		timeoutHandler.updateActivity(clientFd, status);
+		DEBUG_LOG("[ServerManager]addReadEvent: outPipe " << client->getCgiProcessInfo()->outPipe_)
 		reactor.addReadEvent(client->getCgiProcessInfo()->outPipe_);
 		clientManager.addPipeMap(client->getCgiProcessInfo()->outPipe_, client->getClientFd());
 	} else if (status == WRITE_COMPLETE) {
@@ -133,7 +135,6 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
 			"ServerManager::processCgiReadEvent");
 		return;
 	}
-	DEBUG_LOG("[ServerManager]READ Event on CGI Pipe: fd " << pipeFd)
 	ClientSession* client = clientManager.accessClientSession(clientFd);
 	if (!client) {
 		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
@@ -179,6 +180,7 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
     // WAIT_FOR_CGI 상태가 아닌 경우 파이프를 리액터에서 제거
     if (status != WAIT_FOR_CGI) {
 		clientManager.removePipeFromMap(pipeFd);
+		DEBUG_LOG("[ServerManager]remove pipeFd from kqueue: " << pipeFd)
 		reactor.removeFd(pipeFd);
     }
 	DEBUG_LOG("[ServerManager]Processed CGI Read Event: pipeFd " << pipeFd << ", status " << enumToStr::EnumSesStatusToStr(status))

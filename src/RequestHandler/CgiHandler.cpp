@@ -277,7 +277,13 @@ void	CgiHandler::handleParent(int inPipe[2], int outPipe[2], const std::string& 
 		std::string::size_type written = 0;
 		while (written < total) {
 			ssize_t bytes = write(inPipe[1], data + written, total - written);  // 데이터를 파이프에 씀
-			if (bytes <= 0) break;  // 쓰기 실패 시 루프 종료
+			if (bytes < 0) {
+				DEBUG_LOG("[CgiHandler]Failed to write to input pipe");
+				webserv::logSystemError(ERROR, "write", "CgiHandler::handleParent");
+				break;
+			} else if (bytes == 0) {
+				break;
+			}
 			written += bytes;
 		}
 	}

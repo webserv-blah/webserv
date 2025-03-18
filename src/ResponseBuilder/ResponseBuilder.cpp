@@ -75,16 +75,16 @@ std::string ResponseBuilder::buildError(EnumStatusCode errorStatusCode, const Re
 
 	headers["Content-Type"] = "text/html";	// Content-Type 헤더 설정
 	setContentLength(headers, body);			// Content-Length 헤더 설정
-
-	DEBUG_LOG("-Error Response-");
-	DEBUG_LOG("\nStatusCode: " << errorStatusCode);
-	DEBUG_LOG("\nReason: " << errorReason);
-	DEBUG_LOG("\nHeaders: ");
-	for (std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it) {
-		DEBUG_LOG(it->first << ": " << it->second);
-	}
-	DEBUG_LOG("\n");
-
+	#ifdef DEBUG
+		std::cout << "[ResponseBuilder]Error Response Message" << std::endl;
+		std::cout << "StatusCode: " << errorStatusCode << std::endl;
+		std::cout << "Reason: " << errorReason << std::endl;
+		std::cout << "Headers: " << std::endl;
+		for (std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it) {
+			std::cout << it->first << ": " << it->second << std::endl;
+		}
+		std::cout << std::endl;
+	#endif
 	return assembleResponse(errorStatusCode, errorReason, headers, body);	// 에러 응답 메시지 반환
 }
 

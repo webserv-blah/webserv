@@ -11,10 +11,6 @@ ClientManager::~ClientManager() {
         delete clientIt->second; // 동적 할당된 ClientSession 객체 해제
         close(clientIt->first);  // 해당 클라이언트의 소켓 닫기
     }
-    std::map<int, int>::iterator pipeIt;
-    for (pipeIt = pipeToClientFdMap_.begin(); pipeIt != pipeToClientFdMap_.end(); ++pipeIt) {
-        close(pipeIt->first);  // 해당 파이프의 소켓 닫기
-    }
 }
 
 // 새로운 clientSession 생성 및 관리 목록에 추가

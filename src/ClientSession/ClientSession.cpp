@@ -11,6 +11,8 @@ ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) :
 ClientSession::~ClientSession() {
 	if (this->reqMsg_ != NULL)
 		delete this->reqMsg_;
+	if (this->getCgiProcessInfo().isProcessing_)
+		getCgiProcessInfo().cleanup();
 }
 
 int ClientSession::getListenFd() const {

@@ -20,9 +20,8 @@ public:
 	void cleanup() {
 		close(outPipe_);
 		//WNOHANG으로 wait
-		int status;
-		waitpid(pid_, &status, WNOHANG);
-		if (!WIFEXITED(status)) {
+		int waitPidReturn = waitpid(pid_, NULL, WNOHANG);
+		if (waitPidReturn == 0) {
             //자식 프로세스 종료
 			kill(pid_, SIGKILL);
 		}

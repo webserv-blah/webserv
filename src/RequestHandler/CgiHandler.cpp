@@ -40,6 +40,7 @@ bool CgiHandler::isCGI(const EnumMethod method, const std::string& targetUri, co
 			FileUtilities::hasExecutePermission(FileUtilities::joinPaths(conf.root_, conf.indexFile_))) {
 			return true;
 		}
+		return false;
 	}
 
 	// CGI 확장자의 위치 찾기

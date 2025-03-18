@@ -107,8 +107,8 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
             DEBUG_LOG("[TimeoutHandler]Timeout on IDLE: clientFd " << fd)
             clientManager.removeClient(fd);
             reactor.removeFd(fd);
-            removeConnection(fd, it);
         }
+        removeConnection(fd, it);
     }
 }
 

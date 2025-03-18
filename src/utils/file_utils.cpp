@@ -58,6 +58,9 @@ namespace FileUtilities {
 
 	// 파일 경로의 확장자가 주어진 확장자와 일치하는지 확인하는 함수
 	bool hasExtension(const std::string& path, const std::string& extension) {
+		if (extension.empty()) {
+			return false;
+		}
 		if (path.size() < extension.size()) {
 			return false;
 		}

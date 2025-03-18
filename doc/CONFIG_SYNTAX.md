@@ -15,11 +15,11 @@ server {
     client_max_body_size 10m;
     
     # 기본 오류 페이지 설정
-    error_page 404             /error/404.html;
-    error_page 500 502 503 504 /error/50x.html;
+    error_page 404             ./html/error/404.html;
+    error_page 500 502 503 504 ./html/error/50x.html;
     
     # 루트 디렉토리 설정
-    root /var/www/html;
+    root ./html;
     
     # 기본 위치 블록
     location / {

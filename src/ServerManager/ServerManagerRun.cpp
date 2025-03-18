@@ -128,10 +128,10 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
 	// 파일 디스크립터에 해당하는 클라이언트 세션을 획득
 	int clientFd = clientManager.accessClientFd(pipeFd);
 	if (clientFd == -1) {
-		// 유효하지 않은 파이프 FD인 경우 경고 로깅 후 종료
-		// webserv::logError(WARNING, "Invalid Value", 
-		// 	"No clientSession corresponding to pipe fd: " + utils::size_t_tos(pipeFd), 
-		// 	"ServerManager::processCgiReadEvent");
+		유효하지 않은 파이프 FD인 경우 경고 로깅 후 종료
+		webserv::logError(WARNING, "Invalid Value", 
+			"No clientSession corresponding to pipe fd: " + utils::size_t_tos(pipeFd), 
+			"ServerManager::processCgiReadEvent");
 		return;
 	}
 	ClientSession* client = clientManager.accessClientSession(clientFd);
@@ -190,10 +190,10 @@ void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager
 	EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor) {
 	ClientSession* client = clientManager.accessClientSession(fd);
 	if (!client) {
-		// 유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
-		// webserv::logError(WARNING, "Invalid Value", 
-		//                  "No clientSession corresponding to fd: " + utils::size_t_tos(fd), 
-		//                  "ServerManager::processClientWriteEvent");
+		유효하지 않은 클라이언트 FD인 경우 경고 로깅 후 종료
+		webserv::logError(WARNING, "Invalid Value", 
+		                 "No clientSession corresponding to fd: " + utils::size_t_tos(fd), 
+		                 "ServerManager::processClientWriteEvent");
 		return;
 	}
 

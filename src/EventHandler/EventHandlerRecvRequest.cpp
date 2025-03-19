@@ -20,6 +20,7 @@ EnumSesStatus EventHandler::recvRequest(ClientSession &curSession) {
 		                      "EventHandler::recvRequest");
 		return CONNECTION_CLOSED;	//errno)그 외, 통신을 할 수 없는 상태이거나, 메모리 문제로 치명적인 경우
 	} else if (res == 0) {			//클라이언트 측에서 연결을 종료한 경우
+		DEBUG_LOG("[EventHandler]Client closed connection: " << curSession.getClientFd())
 		return CONNECTION_CLOSED;
 	} else {
 		// DEBUG_LOG("[EventHandler]Received MSG:\n" << buffer.substr(0, res))

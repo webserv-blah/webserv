@@ -23,7 +23,7 @@ void ServerManager::run() {
 		DEBUG_LOG("[ServerManager]Waiting for events...")
 		timespec* timeout = timeoutHandler.getEarliestTimeout();
 		int	numEvents = reactor.waitForEvent(timeout);
-
+		DEBUG_LOG("[ServerManager]Received " << numEvents << " events")
 		// 발생한 각 이벤트를 순회하며 처리
 		for (int i = 0; i < numEvents; ++i) {
 			EnumEvent	type = reactor.getEventType(i);
@@ -66,13 +66,11 @@ void ServerManager::addClientInfo(int clientFd, Demultiplexer& reactor, TimeoutH
 }
 
 // 클라이언트 연결 종료 또는 오류 발생 시 호출됩니다.
-void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler) {
+void ServerManager::removeClientInfo(int clientFd, ClientManager& clientManager, TimeoutHandler& timeoutHandler) {
 	// 클라이언트 세션을 ClientManager에서 제거
 	clientManager.removeClient(clientFd);
 	// 타임아웃 관리 대상에서 클라이언트 삭제
 	timeoutHandler.removeConnection(clientFd);
-	// 리액터에서 클라이언트 소켓 제거
-	reactor.removeFd(clientFd);
 	DEBUG_LOG("[ServerManager]Removed Client Socket " << clientFd)
 }
 
@@ -105,9 +103,10 @@ void ServerManager::processClientReadEvent(int clientFd, ClientManager& clientMa
 
 	// 클라이언트로부터 데이터를 읽어 처리한 후 반환 상태를 확인
 	EnumSesStatus status = eventHandler.handleClientReadEvent(*client);
+	DEBUG_LOG("[ServerManager]Processed Client Read Event: fd " << clientFd << ", status " << enumToStr::EnumSesStatusToStr(status))
 	if (status == CONNECTION_CLOSED) { 
 		// 클라이언트가 연결을 종료한 경우, 관련 정보를 삭제
-		removeClientInfo(clientFd, clientManager, reactor, timeoutHandler);
+		removeClientInfo(clientFd, clientManager, timeoutHandler);
 	} else if (status == WAIT_FOR_CGI) {
 		timeoutHandler.updateActivity(clientFd, status);
 		DEBUG_LOG("[ServerManager]addReadEvent: outPipe " << client->getCgiProcessInfo()->outPipe_)
@@ -120,7 +119,6 @@ void ServerManager::processClientReadEvent(int clientFd, ClientManager& clientMa
 		DEBUG_LOG("[ServerManager]addWriteEvent: clientFd " << clientFd)
 		reactor.addWriteEvent(clientFd);
 	}
-	DEBUG_LOG("[ServerManager]Processed Client Read Event: fd " << clientFd << ", status " << enumToStr::EnumSesStatusToStr(status))
 }
 
 void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager,
@@ -144,7 +142,7 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
 	}
 	// CGI로부터 데이터를 읽어 처리한 후 반환 상태를 확인
 	EnumSesStatus status = eventHandler.handleCgiReadEvent(*client);
-
+	DEBUG_LOG("[ServerManager]Processed CGI Read Event: pipeFd " << pipeFd << ", status " << enumToStr::EnumSesStatusToStr(status))
 	 // 파이프 처리 결과에 따른 상태 처리
 	 switch (status) {
         case WAIT_FOR_CGI:
@@ -153,7 +151,7 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
             
         case CONNECTION_CLOSED:
             // 연결이 종료된 경우 클라이언트와 파이프 모두 정리
-            removeClientInfo(clientFd, clientManager, reactor, timeoutHandler);
+            removeClientInfo(clientFd, clientManager, timeoutHandler);
             break;
             
         case WRITE_COMPLETE:
@@ -179,10 +177,7 @@ void	ServerManager::processCgiReadEvent(int pipeFd, ClientManager& clientManager
     // WAIT_FOR_CGI 상태가 아닌 경우 파이프를 리액터에서 제거
     if (status != WAIT_FOR_CGI) {
 		clientManager.removePipeFromMap(pipeFd);
-		DEBUG_LOG("[ServerManager]remove pipeFd from kqueue: " << pipeFd)
-		reactor.removeFd(pipeFd);
     }
-	DEBUG_LOG("[ServerManager]Processed CGI Read Event: pipeFd " << pipeFd << ", status " << enumToStr::EnumSesStatusToStr(status))
 }
 
 // 클라이언트 소켓에 쓰기(전송) 이벤트가 발생한 경우 데이터를 전송합니다.
@@ -199,13 +194,14 @@ void ServerManager::processClientWriteEvent(int fd, ClientManager& clientManager
 
 	// 클라이언트에 데이터 전송 후 반환된 상태 확인
 	EnumSesStatus status = eventHandler.handleClientWriteEvent(*client);
+	DEBUG_LOG("[ServerManager]Processed Client Write Event: fd " << fd << ", status " << enumToStr::EnumSesStatusToStr(status))
 	if (status == CONNECTION_CLOSED) { 
 		// 클라이언트가 연결을 종료한 경우, 관련 정보를 삭제
-		removeClientInfo(fd, clientManager, reactor, timeoutHandler);
+		removeClientInfo(fd, clientManager, timeoutHandler);
 	} else if (status == WRITE_COMPLETE) { 
+		DEBUG_LOG("[ServerManager]removeWriteEvent: fd " << fd)
 		// 데이터 전송이 완료된 경우, 리액터에서 쓰기 이벤트를 제거하여 더 이상 쓰기 이벤트를 감시하지 않음
 		reactor.removeWriteEvent(fd);
 	}
 	// status == WRITE_CONTINUE인 경우 계속 쓰기 이벤트를 감시
-	DEBUG_LOG("[ServerManager]Processed Client Write Event: fd " << fd << ", status " << enumToStr::EnumSesStatusToStr(status))
 }

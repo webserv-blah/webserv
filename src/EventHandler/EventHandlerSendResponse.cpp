@@ -28,6 +28,7 @@ EnumSesStatus EventHandler::sendResponse(ClientSession& session) {
 
     if (sent == 0) {
         // 클라이언트가 연결을 닫았을 가능성이 크므로 CONNECTION_CLOSED 반환
+        DEBUG_LOG("[EventHandler]Client closed connection: " << clientFd)
         return CONNECTION_CLOSED;
     }
 

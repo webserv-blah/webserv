@@ -1,6 +1,7 @@
 #include "ResponseBuilder.hpp"	// ResponseBuilder 헤더 파일 포함
 #include "../include/commonEnums.hpp"
 #include "errorUtils.hpp"
+#include "enumToStr.hpp"
 
 // 현재 GMT 시간의 RFC1123 형식 문자열 반환
 static std::string getCurrentDateString() {
@@ -19,26 +20,6 @@ void ResponseBuilder::setContentLength(std::map<std::string, std::string>& heade
 	std::ostringstream oss;	// 문자열 스트림 생성
 	oss << body.size();		// 바디 길이를 문자열로 변환
 	headers["Content-Length"] = oss.str();	// Content-Length 헤더에 값 설정
-}
-
-std::string ResponseBuilder::getReasonPhrase(int errorCode) const {
-	// 상태 코드에 따른 이유 구문 반환
-	switch (errorCode) {
-		case OK: return "OK";                     // 200: OK
-		case MOVED_PERMANENTLY: return "Moved Permanently";				// 301: 영구적으로 이동됨
-		case FOUND: return "Found";                  					// 302: 찾음 (임시 이동)
-		case BAD_REQUEST: return "Bad Request";            				// 400: 잘못된 요청
-		case FORBIDDEN: return "Forbidden";              				// 403: 접근 거부
-		case NOT_FOUND: return "Not Found";        						// 404: 찾을 수 없음
-		case METHOD_NOT_ALLOWED: return "Method Not Allowed";   		// 405: 허용되지 않은 메소드
-		case REQUEST_TIMEOUT: return "Request Timeout";        			// 408: 요청 시간 초과
-		case CONTENT_TOO_LARGE: return "Content Too Large";     		// 413: 요청 페이로드가 너무 큼
-		case URI_TOO_LONG: return "Uri Too Large";     					// 413: 요청 페이로드가 너무 큼
-		case INTERNAL_SERVER_ERROR: return "Internal Server Error"; 	// 500: 내부 서버 오류
-		case NOT_IMPLEMENTED: return "Not Implemented";					// 501: 구현되지 않음
-		case SERVICE_UNAVAILABLE: return "Service Unavailable";			// 503: 서비스 이용 불가
-		default:  return "Error";                  						// 그 외: 일반 오류
-	}
 }
 
 std::string ResponseBuilder::assembleResponse(int statusCode, const std::string& reasonPhrase, 
@@ -63,7 +44,7 @@ std::string ResponseBuilder::build(	int statusCode,
 									std::map<std::string, std::string>& headers,  
 									const std::string& body) const {
 	// 일반 응답 메시지 생성
-	std::string reason = getReasonPhrase(statusCode);	// 상태 코드에 따른 이유 구문 결정
+	std::string reason = enumToStr::EnumStatusCodeToStr(static_cast<EnumStatusCode>(statusCode));	// 상태 코드에 따른 이유 구문 결정
 
 	if (!body.empty()) {
 		// Content-Length 값을 snprintf를 이용하여 변환
@@ -72,36 +53,38 @@ std::string ResponseBuilder::build(	int statusCode,
 		headers["Content-Length"] = contentLengthBuffer;
 	}
 
-	DEBUG_LOG("-Response-");
-	DEBUG_LOG("\nStatusCode: " << statusCode);
-	DEBUG_LOG("\nReason: " << reason);
-	DEBUG_LOG("\nHeaders: ");
-	for (std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it) {
-		DEBUG_LOG(it->first << ": " << it->second);
-	}
-	DEBUG_LOG("\n");
+	#ifdef DEBUG
+		std::cout << "[ResponseBuilder]Response Message" << std::endl;
+		std::cout << "StatusCode: " << statusCode << std::endl;
+		std::cout << "Reason: " << reason << std::endl;
+		std::cout << "Headers: " << std::endl;
+		for (std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it) {
+			std::cout << it->first << ": " << it->second << std::endl;
+		}
+		std::cout << std::endl;
+	#endif
 
 	return assembleResponse(statusCode, reason, headers, body);	// 최종 응답 메시지 반환
 }
 
-std::string ResponseBuilder::buildError(int errorStatusCode, const RequestConfig& currConf) const {
+std::string ResponseBuilder::buildError(EnumStatusCode errorStatusCode, const RequestConfig& currConf) const {
 	// 에러 응답 메시지 생성
-	std::string errorReason = getReasonPhrase(errorStatusCode);	// 에러 코드에 따른 이유 구문 결정
+	std::string errorReason = enumToStr::EnumStatusCodeToStr(errorStatusCode);	// 에러 코드에 따른 이유 구문 결정
 	std::map<std::string, std::string> headers;					// 헤더 저장용 맵
 	std::string body = ErrorPageResolver::resolveErrorPage(errorStatusCode, currConf);	// 에러 페이지 HTML 내용 불러오기
 
 	headers["Content-Type"] = "text/html";	// Content-Type 헤더 설정
 	setContentLength(headers, body);			// Content-Length 헤더 설정
-
-	DEBUG_LOG("-Error Response-");
-	DEBUG_LOG("\nStatusCode: " << errorStatusCode);
-	DEBUG_LOG("\nReason: " << errorReason);
-	DEBUG_LOG("\nHeaders: ");
-	for (std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it) {
-		DEBUG_LOG(it->first << ": " << it->second);
-	}
-	DEBUG_LOG("\n");
-
+	#ifdef DEBUG
+		std::cout << "[ResponseBuilder]Error Response Message" << std::endl;
+		std::cout << "StatusCode: " << errorStatusCode << std::endl;
+		std::cout << "Reason: " << errorReason << std::endl;
+		std::cout << "Headers: " << std::endl;
+		for (std::map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); ++it) {
+			std::cout << it->first << ": " << it->second << std::endl;
+		}
+		std::cout << std::endl;
+	#endif
 	return assembleResponse(errorStatusCode, errorReason, headers, body);	// 에러 응답 메시지 반환
 }
 
@@ -141,9 +124,10 @@ std::string ResponseBuilder::AddHeaderForCgi(const std::string &cgiOutput) const
     // CGI가 출력한 헤더 추가
     oss << cgiHeaders << "\r\n\r\n";
 
-	// 헤더 디버그 로그 출력
-	DEBUG_LOG("\n-CGI Response-");
-	DEBUG_LOG(oss.str());
+	#ifdef DEBUG
+		std::cout << "[ResponseBuilder]CGI Response Message" << std::endl;
+		std::cout << oss.str() << std::endl;
+	#endif
 
     // 본문 추가
     oss << body;

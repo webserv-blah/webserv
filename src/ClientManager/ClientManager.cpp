@@ -4,14 +4,13 @@
 ClientManager::ClientManager() {
 	// 생성자
 }
-
 ClientManager::~ClientManager() {
-	// 소멸자: 모든 클라이언트 세션을 정리
-	TypeClientMap::iterator it;
-	for (it = clientList_.begin(); it != clientList_.end(); ++it) {
-		delete it->second; // 동적 할당된 ClientSession 객체 해제
-		close(it->first);  // 해당 클라이언트의 소켓 닫기
-	}
+    // 소멸자: 모든 클라이언트 세션을 정리
+    TypeClientMap::iterator clientIt;
+    for (clientIt = clientList_.begin(); clientIt != clientList_.end(); ++clientIt) {
+        delete clientIt->second; // 동적 할당된 ClientSession 객체 해제
+        close(clientIt->first);  // 해당 클라이언트의 소켓 닫기
+    }
 }
 
 // 새로운 clientSession 생성 및 관리 목록에 추가
@@ -19,6 +18,23 @@ void ClientManager::addClient(int listenFd, int clientFd, std::string clientAddr
 	// 중복 검사 필요 여부 고려
 	ClientSession* newClient = new ClientSession(listenFd, clientFd, clientAddr);
 	clientList_.insert(std::make_pair(clientFd, newClient)); // clientFd를 key로 하여 추가
+}
+
+void	ClientManager::removePipeFromMap(int pipeFd) {
+	std::map<int, int>::iterator it = pipeToClientFdMap_.find(pipeFd);
+	if (it == pipeToClientFdMap_.end()) {
+		// 존재하지 않는 fd에 대한 요청 시 오류 로깅
+		webserv::logError(WARNING, "Pipe Fd Not Found", 
+		                 "fd: " + utils::size_t_tos(pipeFd), 
+		                 "ClientManager::removePipeToClientMap");
+		return;
+	}
+	pipeToClientFdMap_.erase(it);
+}
+
+// pipeToClientMap에 파이프 추가
+void	ClientManager::addPipeMap(int outPipe, int clientFd) {
+	pipeToClientFdMap_.insert(std::make_pair(outPipe, clientFd));
 }
 
 // clientSession 제거 및 목록에서 삭제
@@ -56,3 +72,22 @@ ClientSession* ClientManager::accessClientSession(int fd) {
 ClientManager::TypeClientMap& ClientManager::accessClientSessionMap() {
 	return clientList_;
 }
+
+int		ClientManager::accessClientFd(int pipeFd) {
+	// 해당 fd가 존재하지 않으면 NULL 반환
+	std::map<int, int>::iterator it = pipeToClientFdMap_.find(pipeFd);
+	if (it == pipeToClientFdMap_.end()) {
+		return -1;
+	}
+	return it->second;
+}
+
+bool	ClientManager::isClientSocket(int fd) {
+	// 해당 fd가 존재하지 않으면 NULL 반환
+	TypeClientMap::iterator it = clientList_.find(fd);
+	if (it == clientList_.end()) {
+		return false;
+	}
+	return true; // ClientSession 포인터 반환
+}
+

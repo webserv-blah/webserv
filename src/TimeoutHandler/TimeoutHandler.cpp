@@ -7,7 +7,9 @@ TimeoutHandler::TimeoutHandler() {
 }
 
 TimeoutHandler::~TimeoutHandler() {
-
+    connections_.clear();
+    expireQueue_.clear();
+    expireMap_.clear();
 }
 
 // 이벤트루프의 타임아웃 주기 관리를 위해 가장 임박한 만료시간 반환 메소드
@@ -54,7 +56,9 @@ void TimeoutHandler::updateActivity(int fd, EnumSesStatus status) {
     }
 
     // 새로운 만료 정보 등록
-    time_t limit = (status == READ_CONTINUE) ? REQ_LIMIT : IDLE_LIMIT;
+    time_t limit = (status == READ_CONTINUE || \
+                    status == WAIT_FOR_CGI \
+                    ) ? REQ_LIMIT : IDLE_LIMIT;
     time_t newExpire;
     newExpire = cit->second + limit;
     TypeExpireQueueIter qit = expireQueue_.insert(std::make_pair(newExpire, fd));
@@ -78,22 +82,32 @@ void TimeoutHandler::checkTimeouts(EventHandler& eventHandler, Demultiplexer& re
 
         // 만료된 연결 응답처리
         int fd = it->second;
-		DEBUG_LOG("[TimeoutHandler]Connection Expired : " << fd)
 
         ClientSession* client = clientManager.accessClientSession(fd);
         if (!client) { 
-            std::cerr << "[Error][TimeoutHandler][checkTimeouts] Invalid Client Fd" << std::endl;
+            webserv::throwError("Invalid Value", 
+                "No clientSession corresponding to fd: " 
+                + utils::int_tos(fd), "TimeoutHandler::checkTimeouts");
         } else if (client->isReceiving()) {
-            // Request Timeout일 경우 HTTP 408 Request Timeout 처리
-            eventHandler.handleError(408, *client);
+            // Request Timeout일 경우 HTTP Timeout 처리
+            if (client->accessCgiProcessInfo().isProcessing_) {
+                DEBUG_LOG("[TimeoutHandler]Timeout on CGI: clientFd " << fd)
+                eventHandler.handleError(GATEWAY_TIMEOUT, *client);
+                clientManager.removePipeFromMap(client->accessCgiProcessInfo().outPipe_);
+                DEBUG_LOG("[EventHandler]Close Pipe: " + utils::int_tos(client->accessCgiProcessInfo().outPipe_))
+                client->accessCgiProcessInfo().cleanup();
+            } else {
+                DEBUG_LOG("[TimeoutHandler]Timeout on Request: clientFd " << fd)
+                eventHandler.handleError(REQUEST_TIMEOUT, *client);
+            }
+            DEBUG_LOG("[TimeoutHandler]addWriteEvent: clientFd " << fd)
             reactor.addWriteEvent(fd);
         } else {
             //IDLE Timeout일 경우 나머지 리소스도 정리
+            DEBUG_LOG("[TimeoutHandler]Timeout on IDLE: clientFd " << fd)
             clientManager.removeClient(fd);
-            reactor.removeSocket(fd);
+            reactor.removeFd(fd);
         }
-
-        // TimeoutHandler에서 관리하는 client 정보 삭제 및 정리
         removeConnection(fd, it);
     }
 }

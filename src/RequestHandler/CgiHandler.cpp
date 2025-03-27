@@ -11,6 +11,7 @@
 #include <sstream>                      // 문자열 스트림 사용을 위한 헤더 포함
 #include <string>                       // 문자열 사용을 위한 헤더 포함
 #include <vector>                       // 벡터 사용을 위한 헤더 포함
+#include <fcntl.h>						 // 파일 제어 관련 헤더 포함
 
 using namespace FileUtilities;          // FileUtilities 네임스페이스 사용
 
@@ -35,10 +36,11 @@ bool CgiHandler::isCGI(const EnumMethod method, const std::string& targetUri, co
 	// 디렉터리인지 확인하고 indexFile이 CGI인지 검사
 	if (FileUtilities::isDirectory(FileUtilities::joinPaths(conf.root_, targetUri).c_str())) {
 		if (!conf.indexFile_.empty() &&
-			conf.indexFile_.size() >= cgiExtension.size() &&
-			conf.indexFile_.compare(conf.indexFile_.size() - cgiExtension.size(), cgiExtension.size(), cgiExtension) == 0) {
+			FileUtilities::hasExtension(conf.indexFile_, cgiExtension) &&
+			FileUtilities::hasExecutePermission(FileUtilities::joinPaths(conf.root_, conf.indexFile_))) {
 			return true;
 		}
+		return false;
 	}
 
 	// CGI 확장자의 위치 찾기
@@ -82,8 +84,7 @@ bool CgiHandler::isCGI(const EnumMethod method, const std::string& targetUri, co
 	}
 
 	// CGI 확장자가 scriptPath의 일부인지 확인
-	if (scriptPath.size() >= cgiExtension.size() &&
-		scriptPath.compare(scriptPath.size() - cgiExtension.size(), cgiExtension.size(), cgiExtension) == 0) {
+	if (hasExtension(scriptPath, cgiExtension)) {
 		return true;
 	}
 
@@ -91,7 +92,7 @@ bool CgiHandler::isCGI(const EnumMethod method, const std::string& targetUri, co
 }
 
 // 클라이언트의 요청을 처리하여 CGI 결과를 반환하는 함수
-std::string CgiHandler::handleRequest(const ClientSession& clientSession) {
+std::string CgiHandler::handleRequest(ClientSession& clientSession) {
 	// 클라이언트 요청 메시지와 설정 정보 가져옴
 	const RequestMessage& reqMsg = *clientSession.getReqMsg();
 	const RequestConfig& conf = *clientSession.getConfig();
@@ -120,12 +121,12 @@ std::string CgiHandler::handleRequest(const ClientSession& clientSession) {
 	buildCgiEnv(clientSession, parts, cgiEnv);
 	// execve에 전달할 argv 설정 함수 호출
 	buildArg(parts, argv);
-	// CGI 스크립트를 실행하고 결과를 받아옴
-	std::string cgiResult = executeCgi(argv, cgiEnv, requestBody);
-	// 실행 결과가 없으면 500 에러, 있으면 결과 반환
-	return cgiResult.empty() ? 
-	responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf) : 
-	responseBuilder_.AddHeaderForCgi(cgiResult);
+	// CGI 실행
+	if (executeCgi(argv, cgiEnv, requestBody, clientSession.accessCgiProcessInfo().pid_, clientSession.accessCgiProcessInfo().outPipe_)) {
+		clientSession.accessCgiProcessInfo().isProcessing_ = true;
+		return "";
+	}
+	return responseBuilder_.buildError(INTERNAL_SERVER_ERROR, conf);
 }
 
 void CgiHandler::buildArg(const UriParts& uriParts, std::vector<std::string>& argv) {
@@ -170,20 +171,28 @@ void CgiHandler::buildCgiEnv(const ClientSession& clientSession,
 }
 
 // CGI 스크립트를 실행하고 결과를 반환하는 함수
-std::string CgiHandler::executeCgi(std::vector<std::string>& arg,
+bool CgiHandler::executeCgi(std::vector<std::string>& arg,
 								   std::vector<std::string>& cgiEnv,
-								   const std::string& requestBody) {
+								   const std::string& requestBody, pid_t &childPid, int &outPipe_) {
 	int inPipe[2] = {-1, -1}, outPipe[2] = {-1, -1};   // 입력 및 출력 파이프 초기화
 	if (pipe(inPipe) == -1) {
 		DEBUG_LOG("[CgiHandler]Failed to create input pipe");
 		webserv::logSystemError(ERROR, "pipe", "CgiHandler::executeCgi");
-		return "";   // 입력 파이프 생성 실패 시 빈 문자열 반환
+		return false;
 	}
 	if (pipe(outPipe) == -1) {           // 출력 파이프 생성 실패 시
 		close(inPipe[0]); close(inPipe[1]);  // 입력 파이프 닫음
 		DEBUG_LOG("[CgiHandler]Failed to create output pipe");
 		webserv::logSystemError(ERROR, "pipe", "CgiHandler::executeCgi");
-		return "";                     // 빈 문자열 반환
+		return false;
+	}
+
+	// 출력 파이프를 논블로킹 모드로 설정
+	if (fcntl(outPipe[0], F_SETFL, O_NONBLOCK) == -1) {
+		closePipes(inPipe, outPipe);
+		DEBUG_LOG("[CgiHandler]Failed to set output pipe to non-blocking");
+		webserv::logSystemError(ERROR, "fcntl", "CgiHandler::executeCgi");
+		return false;
 	}
 
 	pid_t pid = fork();                // 자식 프로세스 생성
@@ -191,16 +200,19 @@ std::string CgiHandler::executeCgi(std::vector<std::string>& arg,
 		closePipes(inPipe, outPipe);   // fork 실패 시 파이프 닫고 빈 문자열 반환
 		DEBUG_LOG("[CgiHandler]Failed to fork");
 		webserv::logSystemError(ERROR, "fork", "CgiHandler::executeCgi");
-		return "";
+		return false;
 	}
-
 	if (pid == 0) {                    // 자식 프로세스인 경우
 		setupChildPipes(inPipe, outPipe);  // 파이프 설정
 		executeChild(arg, cgiEnv);    // CGI 스크립트 실행
 	} else {                           // 부모 프로세스인 경우
-		return handleParent(pid, inPipe, outPipe, requestBody);  // 자식 관리 및 결과 수신
+		outPipe_ = outPipe[0];
+		childPid = pid;
+		handleParent(inPipe, outPipe, requestBody);  // 자식 관리 및 결과 수신
 	}
-	return "";
+	DEBUG_LOG("[CgiHandler]CGI process started with PID " + utils::int_tos(pid));
+	DEBUG_LOG("[CgiHandler]Output pipe descriptor: " + utils::int_tos(outPipe_));
+	return true;
 }
 
 // 생성된 파이프들을 모두 닫는 함수
@@ -239,22 +251,22 @@ void CgiHandler::executeChild(std::vector<std::string>& arg, std::vector<std::st
 		envp[i] = const_cast<char*>(cgiEnv[i].c_str());  // 각 환경 변수를 char*로 변환
 	}
 
-	// argv와 cgiEnv를 모두 디버그를 위해 출력
-	DEBUG_LOG("[CgiHandler]argv:");
-	for (std::vector<std::string>::size_type i = 0; i < arg.size(); ++i) {
-		DEBUG_LOG("[CgiHandler]  " + arg[i]);
-	}
-	DEBUG_LOG("[CgiHandler]envp:");
-	for (std::vector<std::string>::size_type i = 0; i < cgiEnv.size(); ++i) {
-		DEBUG_LOG("[CgiHandler]  " + cgiEnv[i]);
-	}
+	// // argv와 cgiEnv를 모두 디버그를 위해 출력
+	// DEBUG_LOG("[CgiHandler]argv:");
+	// for (std::vector<std::string>::size_type i = 0; i < arg.size(); ++i) {
+	// 	DEBUG_LOG("[CgiHandler]  " + arg[i]);
+	// }
+	// DEBUG_LOG("[CgiHandler]envp:");
+	// for (std::vector<std::string>::size_type i = 0; i < cgiEnv.size(); ++i) {
+	// 	DEBUG_LOG("[CgiHandler]  " + cgiEnv[i]);
+	// }
 
 	execve(relativeToAbsolute(argv[0]).c_str(), &argv[0], &envp[0]);
 	_exit(1);                           // 실행 실패 시 자식 프로세스 종료
 }
 
 // 부모 프로세스에서 자식 프로세스를 관리하며 CGI 실행 결과를 수신하는 함수
-std::string CgiHandler::handleParent(pid_t pid, int inPipe[2], int outPipe[2], const std::string& requestBody) {
+void	CgiHandler::handleParent(int inPipe[2], int outPipe[2], const std::string& requestBody) {
 	close(inPipe[0]);   // 부모 프로세스에서 입력 파이프 읽기 닫기
 	close(outPipe[1]);  // 부모 프로세스에서 출력 파이프 쓰기 닫기
 
@@ -265,31 +277,17 @@ std::string CgiHandler::handleParent(pid_t pid, int inPipe[2], int outPipe[2], c
 		std::string::size_type written = 0;
 		while (written < total) {
 			ssize_t bytes = write(inPipe[1], data + written, total - written);  // 데이터를 파이프에 씀
-			if (bytes <= 0) break;  // 쓰기 실패 시 루프 종료
+			if (bytes < 0) {
+				DEBUG_LOG("[CgiHandler]Failed to write to input pipe");
+				webserv::logSystemError(ERROR, "write", "CgiHandler::handleParent");
+				break;
+			} else if (bytes == 0) {
+				break;
+			}
 			written += bytes;
 		}
 	}
 	close(inPipe[1]);  // 입력 파이프 쓰기 닫기
-
-	std::ostringstream oss;            // 자식 프로세스의 출력을 저장할 스트림 생성
-	char buffer[4096];                 // 읽기 버퍼 생성
-	ssize_t bytesRead;
-
-	//TODO: 여기서 read가 오류일땐..?
-	while ((bytesRead = read(outPipe[0], buffer, sizeof(buffer))) > 0) {
-		oss.write(buffer, bytesRead);  // 버퍼에서 읽은 데이터를 스트림에 기록
-	}
-	close(outPipe[0]);                 // 출력 파이프 읽기 닫기
-
-	if (bytesRead == -1) {			   // read의 반환값이 -1인 경우 cgi 오류 0인 경우 진행
-		return "";
-	}
-
-	int status;
-	waitpid(pid, &status, 0);          // 자식 프로세스 종료 상태를 대기 및 수신
-	// 자식 프로세스가 정상 종료하면 결과 문자열 반환, 그렇지 않으면 빈 문자열 반환
-
-	return (WIFEXITED(status) && WEXITSTATUS(status) == 0) ? oss.str() : "";
 }
 
 // "이름=값" 형태의 환경 변수 문자열을 생성하는 함수

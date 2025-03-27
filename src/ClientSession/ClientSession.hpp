@@ -1,6 +1,7 @@
 #ifndef CLIENT_SESSION_HPP
 #define CLIENT_SESSION_HPP
 
+#include "CgiProcessInfo.hpp"
 #include "../RequestMessage/RequestMessage.hpp"
 #include "../GlobalConfig/GlobalConfig.hpp"
 #include "../include/commonEnums.hpp"
@@ -12,15 +13,17 @@ class ClientSession {
 
 		int						getListenFd() const;
 		int						getClientFd() const;
-		int						getErrorStatusCode() const;
+		EnumStatusCode			getErrorStatusCode() const;
 		const RequestMessage	*getReqMsg() const;
 		const RequestConfig		*getConfig() const;
 		std::string				getReadBuffer() const;
 		std::string				getWriteBuffer() const;
 		std::string				getClientIP() const;
+		const CgiProcessInfo	*getCgiProcessInfo() const;
+
 		void					setListenFd(const int &listenFd);
 		void					setClientFd(const int &clientFd);
-		void					setErrorStatusCode(const int &statusCode);
+		void					setErrorStatusCode(const EnumStatusCode &statusCode);
 		void					setReqMsg(RequestMessage *reqMsg);
 		void					setConfig(const RequestConfig *config);
 		void					setReadBuffer(const std::string &remainData);
@@ -29,18 +32,25 @@ class ClientSession {
 
 		RequestMessage			&accessReqMsg();
 		std::string				&accessReadBuffer();
+		CgiProcessInfo			&accessCgiProcessInfo();
 		
 	private:
 		int						listenFd_;
 		int						clientFd_;
-		int						errorStatusCode_;
+		std::string				clientIP_;
+
+		EnumStatusCode			errorStatusCode_;
+	
 		RequestMessage			*reqMsg_;
 		const RequestConfig		*config_;
+
 		const RequestConfig		*defConfig_;
+	
 		std::string				readBuffer_;
 		std::string				writeBuffer_;
-		std::string				clientIP_;
-		
+
+		CgiProcessInfo			cgiProcessInfo_;
+
 		void					resetRequest();
 };
 

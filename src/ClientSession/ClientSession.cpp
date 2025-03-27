@@ -4,13 +4,15 @@
 #define BUFFER_SIZE 8192
 #endif
 
-ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : listenFd_(listenFd), clientFd_(clientFd), reqMsg_(NULL), config_(NULL), clientIP_(clientIP) {
+ClientSession::ClientSession(int listenFd, int clientFd, std::string clientIP) : listenFd_(listenFd), clientFd_(clientFd), clientIP_(clientIP), reqMsg_(NULL), config_(NULL) {
 	this->readBuffer_.reserve(BUFFER_SIZE * 2);
 	this->defConfig_ = GlobalConfig::getInstance().findRequestConfig(listenFd, "", "");
 }
 ClientSession::~ClientSession() {
 	if (this->reqMsg_ != NULL)
 		delete this->reqMsg_;
+	if (this->getCgiProcessInfo()->isProcessing_)
+		accessCgiProcessInfo().cleanup();
 }
 
 int ClientSession::getListenFd() const {
@@ -21,7 +23,7 @@ int ClientSession::getClientFd() const {
 	return this->clientFd_;
 }
 
-int ClientSession::getErrorStatusCode() const {
+EnumStatusCode ClientSession::getErrorStatusCode() const {
 	return this->errorStatusCode_;
 }
 
@@ -48,6 +50,10 @@ std::string	ClientSession::getClientIP() const {
 	return this->clientIP_;
 }
 
+const CgiProcessInfo *ClientSession::getCgiProcessInfo() const {
+	return &(this->cgiProcessInfo_);
+}
+
 void ClientSession::setListenFd(const int &listenFd) {
 	this->listenFd_ = listenFd;
 }
@@ -56,7 +62,7 @@ void ClientSession::setClientFd(const int &clientFd) {
 	this->clientFd_ = clientFd;
 }
 
-void ClientSession::setErrorStatusCode(const int &statusCode) {
+void ClientSession::setErrorStatusCode(const EnumStatusCode &statusCode) {
 	this->errorStatusCode_ = statusCode;
 }
 
@@ -90,6 +96,10 @@ RequestMessage &ClientSession::accessReqMsg() {
 
 std::string &ClientSession::accessReadBuffer() {
 	return this->readBuffer_;
+}
+
+CgiProcessInfo	&ClientSession::accessCgiProcessInfo() {
+	return this->cgiProcessInfo_;
 }
 
 void ClientSession::resetRequest() {

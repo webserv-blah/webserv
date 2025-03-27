@@ -3,6 +3,7 @@
 
 #include "../GlobalConfig/GlobalConfig.hpp"
 #include "ErrorPageResolver.hpp"
+#include "commonEnums.hpp"
 
 #include <map>
 #include <string>
@@ -27,7 +28,7 @@ public:
 	// @param statusCode   HTTP 상태 코드
 	// @param currConf     현재 요청에 대한 설정
 	// @return 최종 에러 응답 문자열
-	std::string buildError(int statusCode, const RequestConfig& currConf) const;
+	std::string buildError(EnumStatusCode statusCode, const RequestConfig& currConf) const;
 
 	// Cgi 스크립트로부터 나온 결과물에 헤더를 추가해주는 함수
 	// @param cgiOutput    CGI 스크립트의 출력 결과
@@ -41,7 +42,6 @@ private:
 		const std::string& body) const;
 	
 	// 상태 코드에 대응하는 Reason Phrase를 반환하는 헬퍼함수
-	std::string getReasonPhrase(int statusCode) const;
 	
 	// 전체 HTTP 응답 문자열을 조립하는 헬퍼함수
 	// @param statusCode    HTTP 상태 코드

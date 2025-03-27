@@ -1,9 +1,10 @@
 #include "EventHandler.hpp"
+#include "errorUtils.hpp"
 #include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "errorUtils.hpp"
+#include <fcntl.h>
 
 // ResponseBuilder를 인자로 하여 정적 핸들러와 CGI 핸들러를 초기화합니다.
 EventHandler::EventHandler() : staticHandler_(responseBuilder_), cgiHandler_(responseBuilder_) {
@@ -34,6 +35,15 @@ int EventHandler::handleServerReadEvent(int fd, ClientManager& clientManager) {
         return -1;
     }
 
+    // 논블로킹 플래그를 추가하여 파일 디스크립터의 모드를 변경합니다.
+    if (fcntl(clientFd, F_SETFL, O_NONBLOCK) == -1) {
+        // 논블로킹 모드 설정 실패 - 시스템 호출 에러를 로깅
+        webserv::logSystemError(ERROR, "fcntl", 
+                              "Client fd: " + utils::size_t_tos(clientFd), 
+                              "EventHandler::handleServerReadEvent");
+        return -1;
+    }
+    
     // 클라이언트의 IP 주소 문자열로 변환
     std::string clientIP(inet_ntoa(clientAddr.sin_addr));
 
@@ -82,18 +92,23 @@ EnumSesStatus EventHandler::handleClientReadEvent(ClientSession& clientSession) 
             // CGI 요청
 			DEBUG_LOG("[EventHandler]CGI request");
             responseMsg = cgiHandler_.handleRequest(clientSession);
+            if (responseMsg.empty()) {
+                status = WAIT_FOR_CGI;
+            }
         } else {
             // 정적 파일 요청
 			DEBUG_LOG("[EventHandler]Static file request");
             responseMsg = staticHandler_.handleRequest(requestMsg, reqConfig);
         }
-        // 생성된 응답 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
-        clientSession.setWriteBuffer(responseMsg);
-        status = sendResponse(clientSession);
+        if (status != WAIT_FOR_CGI) {
+            // 생성된 응답 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
+            clientSession.setWriteBuffer(responseMsg);
+            status = sendResponse(clientSession);
+        }
     } else if (status == REQUEST_ERROR) {
         // 요청 처리 도중 에러가 발생한 경우
         // Http 상태 코드(에러)를 가져와서 에러 응답 세팅
-        int statusCode = clientSession.getErrorStatusCode();
+        EnumStatusCode statusCode = clientSession.getErrorStatusCode();
         handleError(statusCode, clientSession);
         sendResponse(clientSession);
         status = CONNECTION_CLOSED;
@@ -124,6 +139,29 @@ bool EventHandler::isMethodAllowed(EnumMethod method, const RequestConfig &conf)
 	return false;
 }
 
+EnumSesStatus	EventHandler::handleCgiReadEvent(ClientSession& clientSession) {
+    CgiProcessInfo&	cgiProcessInfo = clientSession.accessCgiProcessInfo();
+    int pipeFd = cgiProcessInfo.outPipe_;
+
+	std::ostringstream	&cgiResultBuffer = cgiProcessInfo.cgiResultBuffer_;
+	char	buffer[4096];                 // 읽기 버퍼 생성
+	ssize_t	bytesRead;
+
+	while ((bytesRead = read(pipeFd, buffer, sizeof(buffer))) > 0) {
+		cgiResultBuffer.write(buffer, bytesRead);  // 버퍼에서 읽은 데이터를 스트림에 기록
+	}
+
+    // 읽기가 완료된 경우
+	if (bytesRead == 0) {
+        clientSession.setWriteBuffer(responseBuilder_.AddHeaderForCgi(cgiResultBuffer.str()));
+        DEBUG_LOG("[EventHandler]Close Pipe: " + utils::int_tos(cgiProcessInfo.outPipe_))
+		cgiProcessInfo.cleanup();
+        return sendResponse(clientSession);
+	}
+    // bytesRead < 0인 경우
+    return WAIT_FOR_CGI;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────────────
 // 리다이렉션 처리
 std::string EventHandler::handleRedirection(const RequestConfig& conf) {
@@ -149,19 +187,30 @@ std::string EventHandler::handleRedirection(const RequestConfig& conf) {
 EnumSesStatus EventHandler::handleClientWriteEvent(ClientSession& clientSession) {
     // 클라이언트에게 응답 전송을 시도하고, 전송 결과 상태를 반환
     EnumSesStatus status = sendResponse(clientSession);
-    if (clientSession.getErrorStatusCode() == REQUEST_TIMEOUT) 
-        status = CONNECTION_CLOSED;
+    EnumStatusCode HttpStatusCode = clientSession.getErrorStatusCode();
+    switch (HttpStatusCode) {
+        case REQUEST_TIMEOUT:
+        case CONTENT_TOO_LARGE:
+        case INTERNAL_SERVER_ERROR:
+        case SERVICE_UNAVAILABLE:
+        case GATEWAY_TIMEOUT:
+            status = CONNECTION_CLOSED;
+            break;
+        default:
+            break;
+    }
     return status;
 }
-
 //---------------------------------------------------------------------
 // 에러 응답 처리 함수
 // - 에러 상태 코드에 따라 적절한 에러 응답 메시지를 생성 및 전송합니다.
 //---------------------------------------------------------------------
-void EventHandler::handleError(int statusCode, ClientSession& clientSession) {
+void EventHandler::handleError(EnumStatusCode statusCode, ClientSession& clientSession) {
     // ResponseBuilder를 사용하여 상태 코드에 맞는 에러 응답 메시지 생성
     std::string errorMsg = responseBuilder_.buildError(statusCode, *clientSession.getConfig());
 
     // 생성된 에러 메시지를 클라이언트 세션의 쓰기 버퍼에 저장
     clientSession.setWriteBuffer(errorMsg);
+    // 클라이언트 세션의 에러 상태 코드 설정
+    clientSession.setErrorStatusCode(statusCode);
 }

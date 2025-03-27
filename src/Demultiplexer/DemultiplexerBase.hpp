@@ -9,9 +9,10 @@ static const int MAX_EVENT = 1024;
 template <typename Derived>
 class DemultiplexerBase {
 	public:
-		int			waitForEvent(timespec* timeout); 
-		void		addSocket(int fd);
-		void		removeSocket(int fd);
+		int			waitForEvent(timespec* timeout);
+		void		removeFd(int fd);
+		void		addReadEvent(int fd);
+		void		removeReadEvent(int fd);
 		void		addWriteEvent(int fd);
 		void		removeWriteEvent(int fd);
 		int			getSocketFd(int idx);

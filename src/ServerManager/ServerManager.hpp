@@ -9,6 +9,7 @@
 #include "../include/commonEnums.hpp"
 
 #include <set>
+#include <vector>
 
 class ServerManager {
     public:
@@ -47,14 +48,17 @@ class ServerManager {
         // 새로운 클라이언트 연결 정보를 추가하는 함수
         void addClientInfo(int clientFd, Demultiplexer& reactor, TimeoutHandler& timeoutHandler);
         // 기존 클라이언트 연결 정보를 제거하는 함수
-        void removeClientInfo(int clientFd, ClientManager& clientManager, Demultiplexer& reactor, TimeoutHandler& timeoutHandler);
+        void removeClientInfo(int clientFd, ClientManager& clientManager, TimeoutHandler& timeoutHandler);
 
         //리스닝 소켓에서 읽기 이벤트가 발생하면 새로운 클라이언트의 연결 요청을 처리
 		void processServerReadEvent(int fd, ClientManager& clientManager, \
 		EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor);
         // 클라이언트 소켓에서 읽기 이벤트가 발생한 경우, 클라이언트 데이터를 처리
-		void processClientReadEvent(int fd, ClientManager& clientManager, \
+		void processClientReadEvent(int clientFd, ClientManager& clientManager, \
 		EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor);
+        // cgi pipe에서 read 이벤트가 발생한 경우 처리
+        void processCgiReadEvent(int pipeFd, ClientManager& clientManager,\
+	    EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor);
         // 클라이언트 소켓에 쓰기 이벤트가 발생한 경우 데이터를 전송
 		void processClientWriteEvent(int fd, ClientManager& clientManager, \
 		EventHandler& eventHandler, TimeoutHandler& timeoutHandler, Demultiplexer& reactor);

@@ -104,7 +104,7 @@ void RequestMessage::resetHostField(const std::string &value) {
 #include <iostream>
 #include <iterator>
 void RequestMessage::printResult() const {
-	std::cout << "\033[37;7m Status :\033[0m"<<std::endl;
+	std::cout << "Status : "<<std::endl;
 	const char *status;
 	switch (this->status_) {
 		case REQ_INIT: status = "REQ_INIT"; break;
@@ -120,8 +120,8 @@ void RequestMessage::printResult() const {
 	}
 	std::cout <<status<<";"<<std::endl;
 	
-	std::cout << "\033[37;7m StartLine :\033[0m"<<std::endl;
-	std::cout <<"\033[37;2mmethod: \033[0m";
+	std::cout << "StartLine : "<<std::endl;
+	std::cout <<"method: ";
 	const char *method;
 	switch (this->method_) {
 		case NONE: method = "NONE"; break;
@@ -131,15 +131,15 @@ void RequestMessage::printResult() const {
 	}
 	std::cout <<method<<";"<<std::endl;
 	
-	std::cout <<"\033[37;2muri: \033[0m";
+	std::cout <<"uri: ";
 	std::cout <<this->targetURI_<<";"<<std::endl;
-	this->printFields();
-	this->printBody();
-	this->printMetaData();
+	// this->printFields();
+	// this->printBody();
+	// this->printMetaData();
 }
 
 void RequestMessage::printFields(void) const {
-	std::cout << "\033[37;7m Fields :\033[0m"<< std::endl;
+	std::cout << "Fields : "<< std::endl;
 	for (std::map<std::string, std::vector<std::string> >::const_iterator it = this->fieldLines_.begin(); it != this->fieldLines_.end(); ++it) {
 		int cnt = 0;
 		std::cout << it->first << ": {";
@@ -154,8 +154,8 @@ void RequestMessage::printFields(void) const {
 }
 
 void RequestMessage::printBody(void) const {
-	std::cout << "\033[37;7m Body :\033[0m"<< std::endl;
-	std::cout << "\033[37;2mcount: " << this->body_.length() << "\033[0m\n";
+	std::cout << "Body: "<< std::endl;
+	std::cout << "count: " << this->body_.length() << "\n";
 	for (std::string::const_iterator it = this->body_.begin(); it != this->body_.end(); ++it) {
 		if (*it == '\n')
 			std::cout << "\\n" << std::endl;
@@ -166,14 +166,14 @@ void RequestMessage::printBody(void) const {
 	}
 }
 void RequestMessage::printMetaData(void) const {
-	std::cout << "\033[37;7m MetaData :\033[0m"<<std::endl;
-	std::cout <<"\033[37;2mHost_: ";
+	std::cout << "MetaData: "<<std::endl;
+	std::cout <<"Host_: ";
 	if (!this->metaHost_.empty())
-		std::cout <<this->metaHost_ <<";\033[0m\n";
+		std::cout <<this->metaHost_ <<";\n";
 	else
-		std::cout <<"(none);\033[0m\n";
+		std::cout <<"(none);\n";
 		
-	std::cout <<"\033[37;2mConnection_: ";
+	std::cout <<"Connection_: ";
 	const char *connection;
 	switch (this->metaConnection_) {
 		case KEEP_ALIVE:
@@ -183,9 +183,9 @@ void RequestMessage::printMetaData(void) const {
 			connection = "close";
 			break;
 	}
-	std::cout<<connection <<";\033[0m\n";
-	std::cout <<"\033[37;2mContentLength_: "<<this->metaContentLength_ <<";\033[0m\n";
-	std::cout <<"\033[37;2mTransferEncoding_: ";
+	std::cout<<connection <<";\n";
+	std::cout <<"ContentLength_: "<<this->metaContentLength_ <<";\n";
+	std::cout <<"TransferEncoding_: ";
 	const char *encoding;
 	switch (this->metaTransferEncoding_) {
 		case NONE_ENCODING:
@@ -195,10 +195,10 @@ void RequestMessage::printMetaData(void) const {
 			encoding = "chunked";
 			break;
 	}
-	std::cout<< encoding <<";\033[0m\n";
-	std::cout <<"\033[37;2mContentType_: ";
+	std::cout<< encoding <<";\n";
+	std::cout <<"ContentType_: ";
 		if (this->metaContentType_.empty())
-		std::cout <<this->metaContentType_ <<";\033[0m\n";
+		std::cout <<this->metaContentType_ <<";\n";
 	else
-		std::cout <<"(none);\033[0m\n";
+		std::cout <<"(none);\n";
 }
